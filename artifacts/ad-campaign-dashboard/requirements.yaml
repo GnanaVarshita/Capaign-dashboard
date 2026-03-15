@@ -1,0 +1,17 @@
+packages:
+  "recharts": "For complex analytics dashboards (Bar, Pie charts)"
+  "framer-motion": "For smooth tab transitions and premium UI animations"
+  "lucide-react": "For beautiful consistent icons"
+  "clsx": "For merging tailwind classes"
+  "tailwind-merge": "For merging tailwind classes safely"
+  "date-fns": "For formatting dates nicely"
+
+images:
+  - path: "artifacts/ad-campaign-dashboard/public/images/auth-bg.png"
+    description: "Abstract modern corporate background with deep blue and subtle teal geometric gradients, professional and clean"
+    aspect_ratio: "16:9"
+
+notes:
+  - This is a frontend-only prototype as requested, all data is managed in React Context and persisted to localStorage.
+  - No backend API calls are made.
+  - Implements full role-based access control and 14+ distinct functional tabs.

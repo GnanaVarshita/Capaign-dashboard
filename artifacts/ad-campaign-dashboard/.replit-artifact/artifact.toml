@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Ad Campaign Dashboard"
+version = "1.0.0"
+id = "artifacts/ad-campaign-dashboard"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 20289
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/ad-campaign-dashboard run dev"
+
+[services.env]
+PORT = "20289"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/ad-campaign-dashboard", "run", "build"]
+publicDir = "artifacts/ad-campaign-dashboard/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

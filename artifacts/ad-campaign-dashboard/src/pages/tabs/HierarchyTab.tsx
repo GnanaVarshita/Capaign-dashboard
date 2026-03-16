@@ -24,7 +24,7 @@ function UserCard({ userId, users }: { userId: string; users: any[] }) {
 }
 
 export default function HierarchyTab() {
-  const { regions, users, calcLiveSpent, getVisiblePOs, currentUser } = useAppContext();
+  const { regions, users, entries, calcLiveSpent, getVisiblePOs, currentUser } = useAppContext();
   const [subTab, setSubTab] = useState('tree');
   const [expandedRegions, setExpandedRegions] = useState<Set<string>>(new Set(['North']));
   const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set());
@@ -128,8 +128,8 @@ export default function HierarchyTab() {
                         const zmUser = users.find(u => u.role === 'Zonal Manager' && u.territory?.zone === zone.name);
                         const amUsers = users.filter(u => u.role === 'Area Manager' && u.territory?.zone === zone.name);
                         const zBudget = activePOs.reduce((s, po) => {
-                          const za = (po.zoneAllocations[region.name] || {})[zone.name] || {};
-                          return s + Object.values(za).reduce((s2, p: any) => s2 + Object.values(p).reduce((s3: number, v: any) => s3 + v, 0), 0);
+                          const za = ((po.zoneAllocations[region.name] || {})[zone.name] || {}) as Record<string, Record<string, number>>;
+                          return s + Object.values(za).reduce((s2: number, p) => s2 + Object.values(p).reduce((s3: number, v: number) => s3 + v, 0), 0);
                         }, 0);
                         const zSpent = calcLiveSpent({ zone: zone.name });
                         const isZoneOpen = expandedZones.has(zone.name);
@@ -192,7 +192,7 @@ export default function HierarchyTab() {
           <p className="text-sm text-[#6B7280]">{vendors.length} registered vendors</p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {vendors.map(v => {
-              const vEntries = useAppContext().entries.filter(e => e.vendorId === v.id);
+              const vEntries = entries.filter(e => e.vendorId === v.id);
               const approved = vEntries.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0);
               return (
                 <Card key={v.id} className="p-5">

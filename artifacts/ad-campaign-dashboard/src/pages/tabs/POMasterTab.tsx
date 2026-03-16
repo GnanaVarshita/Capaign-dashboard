@@ -201,7 +201,7 @@ export default function POMasterTab() {
                     </thead>
                     <tbody>
                       {Object.entries(selected.regionBudgets || {}).map(([region, budget]) => {
-                        const distributed = Object.values((selected.allocations[region] || {})).reduce((s, p: any) => s + Object.values(p).reduce((s2: number, v: any) => s2 + v, 0), 0);
+                        const distributed = Object.values((selected.allocations[region] || {}) as Record<string, Record<string, number>>).reduce((s: number, p) => s + Object.values(p).reduce((s2: number, v: number) => s2 + v, 0), 0);
                         const spent = calcLiveSpent({ po: selected.poNumber, region });
                         const utilPct = pct(spent, budget as number);
                         return (

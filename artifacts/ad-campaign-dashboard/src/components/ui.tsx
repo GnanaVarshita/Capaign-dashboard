@@ -124,8 +124,8 @@ export function Th({ children, className }: { children?: ReactNode; className?: 
   return <th className={cn('px-3 py-2.5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-wider bg-[#F8FAFC] border-b border-[#DDE3ED] whitespace-nowrap', className)}>{children}</th>;
 }
 
-export function Td({ children, className, colSpan }: { children?: ReactNode; className?: string; colSpan?: number }) {
-  return <td colSpan={colSpan} className={cn('px-3 py-2.5 text-sm text-[#374151] border-b border-[#F0F4F8]', className)}>{children}</td>;
+export function Td({ children, className, colSpan, title }: { children?: ReactNode; className?: string; colSpan?: number; title?: string }) {
+  return <td colSpan={colSpan} title={title} className={cn('px-3 py-2.5 text-sm text-[#374151] border-b border-[#F0F4F8]', className)}>{children}</td>;
 }
 
 export function Modal({ open, onClose, title, children, width = 'max-w-xl' }: { open: boolean; onClose: () => void; title: string; children: ReactNode; width?: string }) {
@@ -209,12 +209,12 @@ export function TabPills({ tabs, active, onChange }: { tabs: { id: string; label
   );
 }
 
-export function InfoBanner({ color, children }: { color: 'blue' | 'green' | 'amber' | 'red'; children: ReactNode }) {
+export function InfoBanner({ color, children, className }: { color: 'blue' | 'green' | 'amber' | 'red'; children: ReactNode; className?: string }) {
   const classes = {
     blue: 'bg-[#EFF6FF] border-[#BFDBFE] text-[#1E40AF]',
     green: 'bg-[#F0FDF4] border-[#BBF7D0] text-[#166534]',
     amber: 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]',
     red: 'bg-[#FFF1F2] border-[#FECDD3] text-[#9F1239]'
   };
-  return <div className={cn('border rounded-xl p-3.5 text-xs font-medium', classes[color])}>{children}</div>;
+  return <div className={cn('border rounded-xl p-3.5 text-xs font-medium', classes[color], className)}>{children}</div>;
 }

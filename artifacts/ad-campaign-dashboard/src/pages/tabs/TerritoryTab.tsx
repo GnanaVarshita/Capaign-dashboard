@@ -14,7 +14,7 @@ export default function TerritoryTab() {
   const addZone = () => {
     if (!newZoneName.trim()) return;
     setRegions(prev => prev.map(r => r.name === addZoneModal ? {
-      ...r, zones: [...r.zones, { name: newZoneName.trim(), manager: '', areas: [] }]
+      ...r, zones: [...r.zones, { name: newZoneName.trim(), manager: '', budget: 0, areas: [] }]
     } : r));
     setNewZoneName('');
     setAddZoneModal('');
@@ -24,7 +24,7 @@ export default function TerritoryTab() {
     if (!addAreaModal || !newAreaName.trim()) return;
     setRegions(prev => prev.map(r => r.name === addAreaModal.region ? {
       ...r, zones: r.zones.map(z => z.name === addAreaModal.zone ? {
-        ...z, areas: [...z.areas, { name: newAreaName.trim(), manager: '' }]
+        ...z, areas: [...z.areas, { name: newAreaName.trim(), manager: '', budget: 0 }]
       } : z)
     } : r));
     setNewAreaName('');

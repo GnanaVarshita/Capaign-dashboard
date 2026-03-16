@@ -91,6 +91,37 @@ Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used b
 
 Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
 
+### `artifacts/ad-campaign-dashboard` (`@workspace/ad-campaign-dashboard`)
+
+Frontend-only React + Vite application (no backend). Full-featured Advertising Campaign Dashboard.
+
+- **Port**: `20289` (reads `PORT` env var)
+- **Auth**: localStorage-based, role-gated. 6 roles: Owner, All India Manager, Regional Manager, Zonal Manager, Area Manager, Vendor
+- **Persistence**: All state in `localStorage` under key `ad_campaign_db`
+- **Stack**: React 18, TypeScript, Tailwind CSS, Recharts, lucide-react, clsx, tailwind-merge
+- **Context**: `src/context/AppContext.tsx` — single source of truth for all data + CRUD operations
+- **Components**: `src/components/ui.tsx` — full custom component library (Card, Button, Input, Select, Modal, Table, Badge, Toast, ProgressBar, TabPills, InfoBanner, SearchInput, KpiCard etc.)
+- **Mock data**: `src/lib/mock-data.ts` — 9 users, 4 POs (2 active, 1 expiring, 1 draft), 4 entries, 4 regions with zones/areas
+
+**15 Tabs** (role-gated):
+1. Overview — KPI cards, product/region charts
+2. Purchase Orders — region/product/activity breakdowns with live spend
+3. Hierarchy — org tree with expandable regions/zones; vendor cards
+4. Activities — budget vs spend bar charts, breakdown table
+5. Vendors — vendor-grouped entry view
+6. Billing — create bills from approved entries, submit/mark paid
+7. Activity Sheet — submit entries (AM/ZM/RM), view own entries
+8. Approvals — approve/reject pending entries (ZM/RM/AIM/Owner)
+9. PO Approvals — approve/reject POs (Owner/AIM only)
+10. PO Master — create/edit POs (3-step wizard), distribute budgets
+11. Users — full CRUD user management with role/territory/perms
+12. Territory — manage region > zone > area hierarchy
+13. Quick View — PO summary with pie chart + region progress bars
+14. Transactions — full ledger with multi-filter support
+15. Settings — profile, password change, manage products/activities, export/reset
+
+**Credentials**: abc/Abc@123 (Owner), arjun.aim/AIM@2026 (AIM), rajesh.north/North@123 (RM), amit.up/Zone@123 (ZM), ravi.lko/Area@123 (AM), mahesh.vendor/Vendor@123 (Vendor)
+
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.

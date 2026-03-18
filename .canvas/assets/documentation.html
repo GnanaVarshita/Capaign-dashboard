@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AdCampaign Dashboard – Technical Documentation</title>
+<style>
+  :root {
+    --navy: #1B4F72;
+    --navy-dark: #0D2137;
+    --blue: #2E86C1;
+    --sky: #AED6F1;
+    --bg: #F0F4F8;
+    --card: #ffffff;
+    --border: #E2E8F0;
+    --text: #0F172A;
+    --muted: #64748B;
+    --code-bg: #F8FAFC;
+    --green: #059669;
+    --amber: #D97706;
+    --red: #DC2626;
+    --purple: #7C3AED;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 14px;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Layout ── */
+  .wrapper { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  nav {
+    width: 240px;
+    min-width: 240px;
+    background: var(--navy-dark);
+    color: #CBD5E1;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .nav-logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 8px;
+  }
+  .nav-logo h2 { color: #fff; font-size: 15px; font-weight: 800; line-height: 1.3; }
+  .nav-logo p { color: #64748B; font-size: 11px; margin-top: 2px; }
+  .nav-section { padding: 8px 20px 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; margin-top: 8px; }
+  nav a {
+    display: block;
+    padding: 7px 20px;
+    color: #94A3B8;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  nav a:hover { color: #fff; background: rgba(255,255,255,0.05); border-left-color: var(--blue); }
+
+  /* ── Main Content ── */
+  main { flex: 1; padding: 40px 48px; max-width: 960px; }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, var(--navy-dark), var(--navy) 55%, #245E87);
+    border-radius: 16px;
+    padding: 40px 44px;
+    color: white;
+    margin-bottom: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '📊';
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 80px;
+    opacity: 0.2;
+  }
+  .hero h1 { font-size: 26px; font-weight: 900; margin-bottom: 8px; }
+  .hero p { color: rgba(255,255,255,0.7); font-size: 14px; max-width: 560px; }
+  .hero .meta { display: flex; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+  .hero .meta span {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 52px; }
+  h2 { font-size: 20px; font-weight: 800; color: var(--navy); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  h2 .icon { font-size: 22px; }
+  h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 24px 0 10px; }
+  h4 { font-size: 13px; font-weight: 700; color: var(--muted); margin: 16px 0 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  p { margin-bottom: 10px; color: #334155; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.05);
+  }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card-sm { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; box-shadow: 0 1px 4px rgba(15,23,42,0.04); }
+  .card-sm h3 { margin: 0 0 6px; font-size: 13px; font-weight: 700; }
+  .card-sm p { font-size: 12px; color: var(--muted); margin: 0; }
+
+  /* ── Code blocks ── */
+  pre {
+    background: var(--navy-dark);
+    color: #E2E8F0;
+    border-radius: 10px;
+    padding: 18px 22px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 12px 0 20px;
+  }
+  code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+    font-size: 12px;
+    color: #1B4F72;
+  }
+  pre code { background: none; border: none; color: inherit; padding: 0; font-size: 12px; }
+
+  /* ── File tree ── */
+  .tree {
+    background: var(--navy-dark);
+    color: #CBD5E1;
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-family: 'Cascadia Code', Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    margin: 12px 0 20px;
+    overflow-x: auto;
+  }
+  .tree .dir { color: #93C5FD; font-weight: 700; }
+  .tree .file { color: #94A3B8; }
+  .tree .comment { color: #475569; font-style: italic; }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-navy  { background: #EFF6FF; color: var(--navy); border: 1px solid #BFDBFE; }
+  .badge-green { background: #ECFDF5; color: var(--green); border: 1px solid #A7F3D0; }
+  .badge-amber { background: #FFFBEB; color: var(--amber); border: 1px solid #FDE68A; }
+  .badge-red   { background: #FEF2F2; color: var(--red);   border: 1px solid #FECACA; }
+  .badge-purple{ background: #F5F3FF; color: var(--purple);border: 1px solid #DDD6FE; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px; }
+  thead tr { background: #F8FAFC; }
+  th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 2px solid var(--border); }
+  td { padding: 9px 14px; border-bottom: 1px solid #F1F5F9; color: #334155; vertical-align: top; }
+  tr:hover td { background: #F8FAFC; }
+
+  /* ── Tabs list ── */
+  .tab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .tab-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+  }
+  .tab-card .tab-num { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .tab-card .tab-name { font-size: 14px; font-weight: 800; color: var(--navy); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .tab-card p { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.5; }
+  .tab-card .roles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+
+  /* ── Role table ── */
+  .role-row td:first-child { font-weight: 700; }
+
+  /* ── Flow diagram ── */
+  .flow { display: flex; align-items: flex-start; gap: 0; flex-wrap: wrap; margin: 16px 0 24px; }
+  .flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 110px;
+  }
+  .flow-box {
+    background: var(--navy);
+    color: white;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    min-width: 90px;
+  }
+  .flow-box.green { background: var(--green); }
+  .flow-box.amber { background: var(--amber); }
+  .flow-box.red   { background: var(--red); }
+  .flow-arrow { font-size: 20px; color: var(--muted); padding: 0 6px; align-self: center; }
+  .flow-label { font-size: 10px; color: var(--muted); margin-top: 4px; text-align: center; }
+
+  /* ── Info box ── */
+  .info { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #1E40AF; margin-bottom: 16px; }
+  .warn { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #92400E; margin-bottom: 16px; }
+
+  /* ── Context methods ── */
+  .method-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .method {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .method code { background: #EFF6FF; color: var(--navy); border-color: #BFDBFE; flex-shrink: 0; }
+  .method p { font-size: 12px; color: var(--muted); margin: 0; }
+
+  @media print {
+    .wrapper { display: block; }
+    nav { display: none; }
+    main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- ──────────── SIDEBAR ──────────── -->
+<nav>
+  <div class="nav-logo">
+    <h2>📊 AdCampaign Docs</h2>
+    <p>Technical Reference v1.0</p>
+  </div>
+
+  <div class="nav-section">Overview</div>
+  <a href="#repo">Repository Structure</a>
+  <a href="#tech">Tech Stack</a>
+
+  <div class="nav-section">Frontend</div>
+  <a href="#fe-structure">App Structure</a>
+  <a href="#fe-entry">Entry Points</a>
+  <a href="#fe-types">Data Types</a>
+  <a href="#fe-context">AppContext</a>
+  <a href="#fe-ui">UI Components</a>
+  <a href="#fe-pages">Pages</a>
+  <a href="#fe-tabs">15 Tabs</a>
+  <a href="#fe-mockdata">Mock Data</a>
+  <a href="#fe-auth">Auth Flow</a>
+  <a href="#fe-storage">localStorage</a>
+  <a href="#fe-roles">Role System</a>
+
+  <div class="nav-section">Backend</div>
+  <a href="#be-structure">API Server</a>
+  <a href="#be-routes">Routes</a>
+  <a href="#be-db">Database Layer</a>
+
+  <div class="nav-section">Other</div>
+  <a href="#mockup">Mockup Sandbox</a>
+  <a href="#scripts">Scripts Package</a>
+  <a href="#credentials">Credentials</a>
+</nav>
+
+<!-- ──────────── MAIN ──────────── -->
+<main>
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>AdCampaign Dashboard — Technical Documentation</h1>
+    <p>Complete reference for the frontend application, backend API server, shared libraries, and monorepo workspace structure.</p>
+    <div class="meta">
+      <span>React 18 + Vite 7</span>
+      <span>TypeScript 5.9</span>
+      <span>Tailwind CSS v4</span>
+      <span>pnpm Workspace</span>
+      <span>Frontend-only auth</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- REPO STRUCTURE -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="repo">
+    <h2><span class="icon">🗂</span>Repository Structure</h2>
+    <p>The project is a <strong>pnpm monorepo</strong> managed with workspaces. All packages live under three top-level directories: <code>artifacts/</code>, <code>lib/</code>, and <code>scripts/</code>.</p>
+
+    <div class="tree">
+<span class="dir">workspace/</span>
+├── <span class="dir">artifacts/</span>              <span class="comment"># Deployable applications</span>
+│   ├── <span class="dir">ad-campaign-dashboard/</span>  <span class="comment"># ⭐ Main React dashboard (frontend-only)</span>
+│   ├── <span class="dir">api-server/</span>            <span class="comment"># Express 5 REST API (unused by dashboard)</span>
+│   └── <span class="dir">mockup-sandbox/</span>        <span class="comment"># Vite server for canvas component previews</span>
+│
+├── <span class="dir">lib/</span>                    <span class="comment"># Shared libraries</span>
+│   ├── <span class="dir">api-spec/</span>              <span class="comment"># OpenAPI 3.1 spec + Orval codegen config</span>
+│   ├── <span class="dir">api-client-react/</span>       <span class="comment"># Generated React Query hooks</span>
+│   ├── <span class="dir">api-zod/</span>               <span class="comment"># Generated Zod schemas</span>
+│   └── <span class="dir">db/</span>                    <span class="comment"># Drizzle ORM schema + PostgreSQL connection</span>
+│
+├── <span class="dir">scripts/</span>                <span class="comment"># Utility scripts (single workspace package)</span>
+│   └── <span class="dir">src/</span>
+│       └── <span class="file">*.ts</span>               <span class="comment"># Individual runnable scripts</span>
+│
+├── <span class="file">pnpm-workspace.yaml</span>     <span class="comment"># Declares artifacts/*, lib/*, scripts/*</span>
+├── <span class="file">tsconfig.base.json</span>      <span class="comment"># Shared TS options (composite, bundler resolution)</span>
+├── <span class="file">tsconfig.json</span>          <span class="comment"># Root project references</span>
+└── <span class="file">package.json</span>           <span class="comment"># Root hoisted devDeps</span>
+    </div>
+
+    <div class="info">The dashboard (<code>ad-campaign-dashboard</code>) is <strong>completely self-contained</strong> — it does NOT call the API server at runtime. All data lives in <code>localStorage</code>. The API server exists as a separate scalable backend for future integration.</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- TECH STACK -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="tech">
+    <h2><span class="icon">⚙️</span>Tech Stack</h2>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <h3>🖥 Frontend Runtime</h3>
+        <p>React 18 · TypeScript 5.9 · Vite 7 · Tailwind CSS v4</p>
+      </div>
+      <div class="card-sm">
+        <h3>📦 State Management</h3>
+        <p>React Context API + useReducer-style setState · No Redux</p>
+      </div>
+      <div class="card-sm">
+        <h3>📊 Charts</h3>
+        <p>Recharts — BarChart, PieChart, ResponsiveContainer</p>
+      </div>
+      <div class="card-sm">
+        <h3>🎨 Styling</h3>
+        <p>Tailwind CSS v4 · clsx · tailwind-merge · custom CSS utilities</p>
+      </div>
+      <div class="card-sm">
+        <h3>🔧 Icons</h3>
+        <p>lucide-react + emoji icons (no icon font dependency)</p>
+      </div>
+      <div class="card-sm">
+        <h3>🖧 Backend Runtime</h3>
+        <p>Node.js 24 · Express 5 · Drizzle ORM · PostgreSQL · Zod</p>
+      </div>
+      <div class="card-sm">
+        <h3>🏗 Monorepo Tool</h3>
+        <p>pnpm workspaces · tsc project references · Orval codegen</p>
+      </div>
+      <div class="card-sm">
+        <h3>💾 Persistence (FE)</h3>
+        <p>localStorage key: <code>ad_campaign_db</code> (JSON serialized)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- FRONTEND STRUCTURE -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-structure">
+    <h2><span class="icon">⚛️</span>Frontend — App Structure</h2>
+    <p>Package name: <code>@workspace/ad-campaign-dashboard</code> · Port: <code>$PORT</code> (default 20289)</p>
+
+    <div class="tree">
+<span class="dir">artifacts/ad-campaign-dashboard/</span>
+├── <span class="file">index.html</span>              <span class="comment"># Vite HTML shell</span>
+├── <span class="file">vite.config.ts</span>          <span class="comment"># Vite config — host 0.0.0.0, reads PORT env</span>
+├── <span class="file">tsconfig.json</span>           <span class="comment"># Extends tsconfig.base.json</span>
+├── <span class="file">package.json</span>            <span class="comment"># deps: react, recharts, lucide-react, clsx…</span>
+│
+└── <span class="dir">src/</span>
+    ├── <span class="file">main.tsx</span>             <span class="comment"># React DOM root — wraps &lt;App&gt; with &lt;AppProvider&gt;</span>
+    ├── <span class="file">App.tsx</span>              <span class="comment"># Renders &lt;Login&gt; or &lt;Dashboard&gt; based on currentUser</span>
+    ├── <span class="file">types.ts</span>             <span class="comment"># All TypeScript interfaces: User, Entry, PO, Region, Bill…</span>
+    ├── <span class="file">index.css</span>            <span class="comment"># Tailwind import + custom CSS (glass, mesh-bg, animations)</span>
+    │
+    ├── <span class="dir">context/</span>
+    │   └── <span class="file">AppContext.tsx</span>    <span class="comment"># Single global context — all state + CRUD functions</span>
+    │
+    ├── <span class="dir">components/</span>
+    │   └── <span class="file">ui.tsx</span>           <span class="comment"># Custom component library (Card, Button, Modal, Table…)</span>
+    │
+    ├── <span class="dir">lib/</span>
+    │   └── <span class="file">mock-data.ts</span>     <span class="comment"># Seed data: users, POs, entries, regions, products</span>
+    │
+    └── <span class="dir">pages/</span>
+        ├── <span class="file">Login.tsx</span>        <span class="comment"># Split-panel login screen</span>
+        ├── <span class="file">Dashboard.tsx</span>    <span class="comment"># Header + tab nav + main content router</span>
+        └── <span class="dir">tabs/</span>
+            ├── <span class="file">OverviewTab.tsx</span>
+            ├── <span class="file">POTab.tsx</span>
+            ├── <span class="file">HierarchyTab.tsx</span>
+            ├── <span class="file">ActivitiesTab.tsx</span>
+            ├── <span class="file">VendorSectionTab.tsx</span>
+            ├── <span class="file">BillingTab.tsx</span>
+            ├── <span class="file">ActivitySheetTab.tsx</span>
+            ├── <span class="file">ApprovalsTab.tsx</span>
+            ├── <span class="file">POApprovalsTab.tsx</span>
+            ├── <span class="file">POMasterTab.tsx</span>
+            ├── <span class="file">UserMgmtTab.tsx</span>
+            ├── <span class="file">TerritoryTab.tsx</span>
+            ├── <span class="file">QuickViewTab.tsx</span>
+            ├── <span class="file">TransactionMasterTab.tsx</span>
+            └── <span class="file">SettingsTab.tsx</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- ENTRY POINTS -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-entry">
+    <h2><span class="icon">🚀</span>Entry Points</h2>
+
+    <h3><code>src/main.tsx</code></h3>
+    <p>The React root. Wraps the entire app in <code>&lt;AppProvider&gt;</code> so every component can access global state via the context hook.</p>
+    <pre><code>ReactDOM.createRoot(document.getElementById('root')!).render(
+  &lt;AppProvider&gt;
+    &lt;App /&gt;
+  &lt;/AppProvider&gt;
+);</code></pre>
+
+    <h3><code>src/App.tsx</code></h3>
+    <p>The top-level router. Reads <code>currentUser</code> from context — if null, renders <code>&lt;Login /&gt;</code>; otherwise renders <code>&lt;Dashboard /&gt;</code>.</p>
+    <pre><code>export default function App() {
+  const { currentUser } = useAppContext();
+  return currentUser ? &lt;Dashboard /&gt; : &lt;Login /&gt;;
+}</code></pre>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- DATA TYPES -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-types">
+    <h2><span class="icon">📐</span>Data Types — <code>types.ts</code></h2>
+    <p>All TypeScript interfaces are centralised in a single file. There is no ORM or schema library on the frontend — the types mirror the localStorage JSON structure exactly.</p>
+
+    <h3>Core Interfaces</h3>
+    <table>
+      <thead>
+        <tr><th>Interface</th><th>Key Fields</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>User</code></td><td>id, name, loginId, password, role, territory, perms, status</td><td>Represents a system user across all 6 roles</td></tr>
+        <tr><td><code>Entry</code></td><td>id, userId, po, product, activity, amount, area, zmId, rmId, vendorId, status, decidedBy</td><td>A single advertising spend entry submitted by a field user</td></tr>
+        <tr><td><code>PO</code></td><td>id, poNumber, budget, from/to dates, status, approvalStatus, regionBudgets, allocations, zoneAllocations</td><td>A Purchase Order defining campaign budget across regions/activities</td></tr>
+        <tr><td><code>Region</code></td><td>name, manager, color, states[], zones[{name, manager, budget, areas[]}]</td><td>Geographic hierarchy: Region → Zone → Area</td></tr>
+        <tr><td><code>Bill</code></td><td>id, vendorId, entryIds[], totalAmount, status (draft/submitted/paid)</td><td>Vendor invoice aggregating approved entries</td></tr>
+        <tr><td><code>Permissions</code></td><td>view, enter, edit, approve, manage, settings</td><td>Per-user capability flags (can be overridden per user)</td></tr>
+        <tr><td><code>Territory</code></td><td>region, zone, area, reportingAIMId, reportingRMId, vendors[], linkedVendorIds[]</td><td>Geographic scope and reporting chain for a user</td></tr>
+        <tr><td><code>Role</code></td><td>Union type of 6 strings</td><td>Discriminated union controlling UI visibility</td></tr>
+      </tbody>
+    </table>
+
+    <h3>PO Allocation Structure</h3>
+    <p>The nested allocation maps are the most complex type. They encode budget at three levels:</p>
+    <pre><code>allocations: Record&lt;region, Record&lt;product, Record&lt;activity, number&gt;&gt;&gt;
+zoneAllocations: Record&lt;region, Record&lt;zone, Record&lt;product, Record&lt;activity, number&gt;&gt;&gt;&gt;</code></pre>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- APP CONTEXT -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-context">
+    <h2><span class="icon">🧠</span>AppContext — Global State</h2>
+    <p>File: <code>src/context/AppContext.tsx</code></p>
+    <p>The entire application state is managed in a single React Context. There is no Redux, Zustand, or external state library. Every piece of mutable data flows through this context.</p>
+
+    <h3>State Slices</h3>
+    <table>
+      <thead><tr><th>State Variable</th><th>Type</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td><code>currentUser</code></td><td><code>User | null</code></td><td>Set on login, cleared on logout</td></tr>
+        <tr><td><code>users</code></td><td><code>User[]</code></td><td>Seeded from <code>INITIAL_USERS</code>, synced to localStorage</td></tr>
+        <tr><td><code>entries</code></td><td><code>Entry[]</code></td><td>Activity spend entries</td></tr>
+        <tr><td><code>pos</code></td><td><code>PO[]</code></td><td>Purchase Orders</td></tr>
+        <tr><td><code>regions</code></td><td><code>Region[]</code></td><td>Geographic hierarchy</td></tr>
+        <tr><td><code>products</code></td><td><code>string[]</code></td><td>Product names list</td></tr>
+        <tr><td><code>activities</code></td><td><code>string[]</code></td><td>Activity names list</td></tr>
+        <tr><td><code>bills</code></td><td><code>Bill[]</code></td><td>Vendor billing records</td></tr>
+        <tr><td><code>toastMsg</code></td><td><code>{ msg, type } | null</code></td><td>Global notification toast</td></tr>
+      </tbody>
+    </table>
+
+    <h3>localStorage Sync</h3>
+    <p>Two effects handle persistence:</p>
+    <pre><code>// On mount: hydrate from localStorage
+useEffect(() => {
+  const stored = localStorage.getItem('ad_campaign_db');
+  if (stored) { const data = JSON.parse(stored); setUsers(data.users); … }
+}, []);
+
+// On any state change: persist back
+useEffect(() => {
+  localStorage.setItem('ad_campaign_db', JSON.stringify({
+    users, entries, pos, regions, products, activities, bills
+  }));
+}, [users, entries, pos, regions, products, activities, bills]);</code></pre>
+
+    <h3>Exposed Functions</h3>
+    <div class="method-list">
+      <div class="method"><code>login(id, pass)</code><p>Finds matching user by loginId + password. Sets currentUser. Returns true/false.</p></div>
+      <div class="method"><code>logout()</code><p>Clears currentUser state (does not wipe localStorage data).</p></div>
+      <div class="method"><code>addEntry(entry)</code><p>Creates a new Entry with auto-generated UUID, status 'pending'.</p></div>
+      <div class="method"><code>updateEntry(id, updates, editedBy)</code><p>Merges partial updates into an Entry, records the editor name.</p></div>
+      <div class="method"><code>updateEntryStatus(id, status, decidedBy)</code><p>Approve/reject an entry — sets status + decidedBy + decidedAt timestamp.</p></div>
+      <div class="method"><code>deleteEntry(id)</code><p>Removes an entry by ID.</p></div>
+      <div class="method"><code>addPO / updatePO / approvePO / rejectPO / lapsePO</code><p>Full CRUD for Purchase Orders including approval workflow.</p></div>
+      <div class="method"><code>addUser / updateUser / deleteUser</code><p>Full CRUD for users.</p></div>
+      <div class="method"><code>addBill / updateBill</code><p>Create and update billing records.</p></div>
+      <div class="method"><code>calcLiveSpent(filters)</code><p>Sums amount of <strong>approved</strong> entries matching optional po/region/zone/area/product/activity/vendorId filters.</p></div>
+      <div class="method"><code>calcPendingSpent(filters)</code><p>Same as above but for <strong>pending</strong> entries.</p></div>
+      <div class="method"><code>getVisiblePOs()</code><p>Returns POs filtered to what the currentUser's role/territory can see.</p></div>
+      <div class="method"><code>getVisiblePendingEntries()</code><p>Returns entries the current approver needs to act on.</p></div>
+      <div class="method"><code>getMyEntries()</code><p>Returns entries created by the current user.</p></div>
+      <div class="method"><code>getScopedEntries()</code><p>Returns all entries within the current user's territory scope.</p></div>
+      <div class="method"><code>toast(msg, type)</code><p>Shows a temporary notification (auto-dismisses after 3 seconds).</p></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- UI COMPONENTS -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-ui">
+    <h2><span class="icon">🧩</span>UI Component Library — <code>components/ui.tsx</code></h2>
+    <p>A custom, hand-crafted component library using Tailwind CSS. All components are exported from a single file for easy import.</p>
+
+    <table>
+      <thead><tr><th>Component</th><th>Props</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>cn(...)</code></td><td>ClassValue[]</td><td>Utility — merges Tailwind classes (clsx + twMerge)</td></tr>
+        <tr><td><code>Card</code></td><td>children, className</td><td>White rounded card with multi-layer shadow</td></tr>
+        <tr><td><code>CardTitle</code></td><td>children, className</td><td>Bold section header with bottom border</td></tr>
+        <tr><td><code>Button</code></td><td>variant (primary/secondary/danger/success/ghost/outline), size (sm/md/lg)</td><td>Gradient primary button with shadow depth; press animation</td></tr>
+        <tr><td><code>Input</code></td><td>All HTML input attrs</td><td>Styled text input with focus ring and bg transition</td></tr>
+        <tr><td><code>Select</code></td><td>All HTML select attrs</td><td>Styled dropdown</td></tr>
+        <tr><td><code>Textarea</code></td><td>All HTML textarea attrs</td><td>Styled multi-line text area</td></tr>
+        <tr><td><code>Label</code></td><td>children, required</td><td>Form label with optional asterisk</td></tr>
+        <tr><td><code>Badge</code></td><td>variant (default/blue/success/warning/error/purple/orange/green)</td><td>Pill badge with ring border and colored background</td></tr>
+        <tr><td><code>StatusBadge</code></td><td>status (approved/rejected/pending)</td><td>Entry status badge with icons</td></tr>
+        <tr><td><code>RoleBadge</code></td><td>role</td><td>Role-colored badge with dot indicator</td></tr>
+        <tr><td><code>ProgressBar</code></td><td>value (0–100), colorClass</td><td>Gradient fill bar; auto-colors amber at 70%, red at 90%</td></tr>
+        <tr><td><code>Table</code></td><td>children, className</td><td>Scrollable table wrapper with rounded border</td></tr>
+        <tr><td><code>Th</code></td><td>children, className</td><td>Header cell — slate-50 bg, uppercase, bold</td></tr>
+        <tr><td><code>Td</code></td><td>children, className, colSpan, title</td><td>Data cell with soft bottom border</td></tr>
+        <tr><td><code>Modal</code></td><td>open, onClose, title, children, width</td><td>Backdrop-blurred overlay with sticky header; Escape-to-close</td></tr>
+        <tr><td><code>Toast</code></td><td>msg, type (success/error/info)</td><td>Fixed bottom-right notification with gradient bg</td></tr>
+        <tr><td><code>EmptyState</code></td><td>icon, message</td><td>Centered empty placeholder with emoji and text</td></tr>
+        <tr><td><code>SearchInput</code></td><td>value, onChange, placeholder</td><td>Input with magnifier icon prepended</td></tr>
+        <tr><td><code>KpiCard</code></td><td>label, value, sub, color, icon</td><td>Metric card with colored value, label, and optional sub-text</td></tr>
+        <tr><td><code>TabPills</code></td><td>tabs[], active, onChange</td><td>Segmented pill tabs with white active state on gray bg</td></tr>
+        <tr><td><code>InfoBanner</code></td><td>color (blue/green/amber/red), children</td><td>Callout box with colored border and tinted background</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGES -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-pages">
+    <h2><span class="icon">📄</span>Pages</h2>
+
+    <h3>Login.tsx</h3>
+    <p>A <strong>split-panel layout</strong> — left branded panel visible on large screens, right glassmorphism card form visible on all sizes.</p>
+    <ul style="margin-left:20px;margin-bottom:12px;color:#334155;font-size:13px;line-height:2;">
+      <li>Left: dark mesh-gradient background, tagline, feature bullets, role avatar row</li>
+      <li>Right: glass card with "Welcome back" heading, SVG-icon inputs, gradient sign-in button with spinner</li>
+      <li>6 quick-login demo buttons (one per role) for development/demo access</li>
+      <li>Error displayed inline in a red banner below the heading</li>
+    </ul>
+
+    <h3>Dashboard.tsx</h3>
+    <p>The shell that wraps all 15 tabs. Never unmounts — tab switching just swaps the rendered child.</p>
+    <ul style="margin-left:20px;margin-bottom:12px;color:#334155;font-size:13px;line-height:2;">
+      <li><strong>Header</strong>: diagonal gradient (navy → mid-blue), logo, user avatar + name, pending-items amber pill, sign-out button</li>
+      <li><strong>Tab navigation</strong>: horizontal scrollable bar with underline active indicator, emoji icon per tab, badge count on Approvals and PO Approvals</li>
+      <li><strong>Breadcrumb strip</strong>: shows "Dashboard › [Active Tab]" beneath the nav</li>
+      <li><strong>Tab visibility</strong>: controlled by role flags (canSeeSheet, canSeeApprovals, etc.) — tabs not visible to the current role are simply excluded from the array</li>
+      <li><strong>Toast</strong>: <code>&lt;Toast&gt;</code> rendered at root level from <code>toastMsg</code> context state</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- 15 TABS -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-tabs">
+    <h2><span class="icon">📑</span>The 15 Dashboard Tabs</h2>
+
+    <div class="tab-grid">
+      <div class="tab-card">
+        <div class="tab-num">Tab 01</div>
+        <div class="tab-name">📊 Overview</div>
+        <p>KPI cards (total budget, live spend, pending, utilisation %). Recharts BarChart of spend by product, PieChart/BarChart by region. Filters by active PO.</p>
+        <div class="roles"><span class="badge badge-navy">All roles</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 02</div>
+        <div class="tab-name">💰 Purchase Orders</div>
+        <p>Lists visible POs with budget vs live/pending spend. Drill into a PO to see region, product, and activity breakdowns with progress bars.</p>
+        <div class="roles"><span class="badge badge-navy">All roles</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 03</div>
+        <div class="tab-name">🏛 Hierarchy</div>
+        <p>Expandable org tree: Region → Zone → Area manager chain. Vendor cards grouped by region. Shows budget allocation per node.</p>
+        <div class="roles"><span class="badge badge-navy">All roles</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 04</div>
+        <div class="tab-name">📈 Activities</div>
+        <p>Budget vs spend BarCharts per activity type. Detailed breakdown table with columns for budget, spent, pending, and utilisation.</p>
+        <div class="roles"><span class="badge badge-navy">All roles</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 05</div>
+        <div class="tab-name">🏪 Vendors</div>
+        <p>Entries grouped by vendor. Shows vendor code, activity totals, and approval status for each entry. Searchable and filterable.</p>
+        <div class="roles"><span class="badge badge-navy">All roles</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 06</div>
+        <div class="tab-name">🧾 Billing</div>
+        <p>Create bills from approved entries per vendor. Bill lifecycle: draft → submitted → paid. Shows invoice number and payment date.</p>
+        <div class="roles"><span class="badge badge-green">Owner · AIM · RM · ZM · Vendor</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 07</div>
+        <div class="tab-name">📝 Activity Sheet</div>
+        <p>Entry submission form for field users. Choose PO, product, activity, amount, area, vendor. View own submitted entries with status.</p>
+        <div class="roles"><span class="badge badge-amber">Owner · RM · ZM · AM (enter perm)</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 08</div>
+        <div class="tab-name">✅ Approvals</div>
+        <p>Two sub-tabs: Pending (approve/reject with remarks) and History (all decided entries). Badge shows pending count in nav.</p>
+        <div class="roles"><span class="badge badge-purple">Users with approve perm</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 09</div>
+        <div class="tab-name">📋 PO Approvals</div>
+        <p>Approve or reject Purchase Orders submitted by managers. Shows full PO details, budget, and region breakdown before decision.</p>
+        <div class="roles"><span class="badge badge-amber">Owner · AIM only</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 10</div>
+        <div class="tab-name">📁 PO Master</div>
+        <p>3-step wizard to create/edit POs. Step 1: PO details (number, dates, budget). Step 2: region budget distribution. Step 3: review & submit.</p>
+        <div class="roles"><span class="badge badge-amber">Owner · manage perm</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 11</div>
+        <div class="tab-name">👥 Users</div>
+        <p>Full CRUD user management. Create/edit/deactivate users. Assign role, territory (region/zone/area), permissions, and linked vendors.</p>
+        <div class="roles"><span class="badge badge-amber">Owner · manage perm</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 12</div>
+        <div class="tab-name">🗺 Territory</div>
+        <p>Manage geographic hierarchy. Add/rename/remove Regions, Zones, and Areas. Set manager names and budget per level.</p>
+        <div class="roles"><span class="badge badge-red">Owner only</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 13</div>
+        <div class="tab-name">⚡ Quick View</div>
+        <p>Rapid PO summary: PieChart of spend by activity, region progress bars, top metrics at a glance. Single-select PO filter.</p>
+        <div class="roles"><span class="badge badge-navy">All roles</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 14</div>
+        <div class="tab-name">📑 Transactions</div>
+        <p>Full entry ledger with 7 simultaneous filters (status, PO, product, region, date range, search text). Exportable view.</p>
+        <div class="roles"><span class="badge badge-navy">All roles</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-num">Tab 15</div>
+        <div class="tab-name">⚙ Settings</div>
+        <p>Profile editing, password change, manage product/activity master lists, export all data as JSON, reset to defaults.</p>
+        <div class="roles"><span class="badge badge-amber">Owner · settings perm</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- MOCK DATA -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-mockdata">
+    <h2><span class="icon">🗄</span>Mock Data — <code>lib/mock-data.ts</code></h2>
+    <p>Provides seed data that is used when localStorage is empty (first visit). Once the user makes any changes, their localStorage copy is used instead.</p>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <h3>👤 9 Users</h3>
+        <p>1 Owner, 1 AIM, 1 RM, 2 ZM, 2 AM, 2 Vendors — each with full territory + permission config</p>
+      </div>
+      <div class="card-sm">
+        <h3>📋 4 Purchase Orders</h3>
+        <p>2 Active, 1 Expiring Soon, 1 Draft. Each with region budgets and product/activity allocations.</p>
+      </div>
+      <div class="card-sm">
+        <h3>📝 4 Sample Entries</h3>
+        <p>Mix of approved, pending, rejected entries to demonstrate the approval workflow immediately.</p>
+      </div>
+      <div class="card-sm">
+        <h3>🗺 4 Regions</h3>
+        <p>North, South, East, West — each with 2–3 zones and 2–3 areas per zone.</p>
+      </div>
+      <div class="card-sm">
+        <h3>📦 Products & Activities</h3>
+        <p>3 products (Product A/B/C) and 5 activities (Hoardings, Banners, Events, Digital, Print).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- AUTH FLOW -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-auth">
+    <h2><span class="icon">🔐</span>Authentication Flow</h2>
+    <p>There is no server-side session. Auth is fully client-side using the <code>users</code> array in state (backed by localStorage).</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-box">Enter Credentials</div>
+        <div class="flow-label">Login form</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-box">Find user by<br/>loginId</div>
+        <div class="flow-label">users.find()</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-box amber">Match password<br/>+ active?</div>
+        <div class="flow-label">Plain comparison</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-box green">setCurrentUser</div>
+        <div class="flow-label">App.tsx → Dashboard</div>
+      </div>
+    </div>
+
+    <div class="warn">⚠️ Passwords are stored in plain text in localStorage. This is intentional for a demo/prototype — in a production system, passwords must be hashed server-side.</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- LOCALSTORAGE -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-storage">
+    <h2><span class="icon">💾</span>localStorage Schema</h2>
+    <p>All state is serialised to a single localStorage key: <code>ad_campaign_db</code>.</p>
+    <pre><code>{
+  "users":      User[],
+  "entries":    Entry[],
+  "pos":        PO[],
+  "regions":    Region[],
+  "products":   string[],
+  "activities": string[],
+  "bills":      Bill[]
+}</code></pre>
+    <p>The context reads this on mount and writes to it after any state change via a <code>useEffect</code> with all slices as dependencies. To reset the app to defaults, clear <code>ad_campaign_db</code> from browser DevTools → Application → Local Storage, or use the Settings tab.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- ROLE SYSTEM -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="fe-roles">
+    <h2><span class="icon">🎭</span>Role &amp; Permission System</h2>
+
+    <table>
+      <thead>
+        <tr><th>Role</th><th>Tabs Visible</th><th>Can Enter</th><th>Can Approve</th><th>Can Manage</th></tr>
+      </thead>
+      <tbody class="role-row">
+        <tr>
+          <td><span class="badge badge-amber">👑 Owner</span></td>
+          <td>All 15</td>
+          <td>✅</td><td>✅</td><td>✅</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-purple">🌐 All India Manager</span></td>
+          <td>All except Territory</td>
+          <td>via perm</td><td>✅</td><td>via perm</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-navy">🗺 Regional Manager</span></td>
+          <td>Minus Users/Territory/PO Master</td>
+          <td>via perm</td><td>✅ (own region)</td><td>–</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-green">📍 Zonal Manager</span></td>
+          <td>Minus admin tabs</td>
+          <td>✅</td><td>✅ (own zone)</td><td>–</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-red">📌 Area Manager</span></td>
+          <td>Sheet, Approvals, Overview, PO, Activities</td>
+          <td>✅</td><td>–</td><td>–</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-amber">🏪 Vendor</span></td>
+          <td>Overview, Billing, Vendors, Transactions</td>
+          <td>–</td><td>–</td><td>–</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>In addition to role-based visibility, individual users can have custom <code>perms</code> overrides (e.g. an RM given <code>manage: true</code>). The <code>tabPerms</code> field on User allows per-tab access control.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- BACKEND -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="be-structure">
+    <h2><span class="icon">🖧</span>Backend — API Server</h2>
+    <p>Package: <code>@workspace/api-server</code> — an Express 5 REST API scaffolded for future integration with the dashboard. Currently the dashboard does not call it.</p>
+
+    <div class="tree">
+<span class="dir">artifacts/api-server/</span>
+├── <span class="file">package.json</span>         <span class="comment"># express, cors, @workspace/db, @workspace/api-zod</span>
+├── <span class="file">build.ts</span>            <span class="comment"># esbuild bundler script → dist/index.cjs</span>
+├── <span class="file">tsconfig.json</span>       <span class="comment"># Extends tsconfig.base.json, composite: true</span>
+└── <span class="dir">src/</span>
+    ├── <span class="file">index.ts</span>         <span class="comment"># Entry: reads PORT, calls app.listen()</span>
+    ├── <span class="file">app.ts</span>           <span class="comment"># Express instance: CORS, JSON, mounts /api router</span>
+    └── <span class="dir">routes/</span>
+        ├── <span class="file">index.ts</span>     <span class="comment"># Root router: mounts sub-routers</span>
+        └── <span class="file">health.ts</span>    <span class="comment"># GET /api/health → { status: 'ok' }</span>
+    </div>
+  </div>
+
+  <div class="section" id="be-routes">
+    <h2><span class="icon">🔀</span>Backend Routes</h2>
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Handler</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/health</code></td><td><code>routes/health.ts</code></td><td>Returns <code>{ status: "ok" }</code> — used for deployment health checks</td></tr>
+      </tbody>
+    </table>
+    <div class="info">The API server is intentionally minimal. It is the scaffold for adding authenticated REST endpoints that connect to PostgreSQL via Drizzle ORM when the project moves beyond localStorage.</div>
+  </div>
+
+  <div class="section" id="be-db">
+    <h2><span class="icon">🗃</span>Database Layer — <code>lib/db</code></h2>
+    <p>Package: <code>@workspace/db</code>. Uses Drizzle ORM over a PostgreSQL pool provided by Replit's built-in database service.</p>
+
+    <div class="tree">
+<span class="dir">lib/db/</span>
+├── <span class="dir">src/</span>
+│   ├── <span class="file">index.ts</span>        <span class="comment"># Creates pg Pool from DATABASE_URL, exports db + schema</span>
+│   └── <span class="dir">schema/</span>
+│       └── <span class="file">index.ts</span>    <span class="comment"># Barrel re-export of all Drizzle table definitions</span>
+└── <span class="file">drizzle.config.ts</span>  <span class="comment"># Drizzle Kit config for migrations</span>
+    </div>
+
+    <h3>Codegen Pipeline</h3>
+    <p>The <code>lib/api-spec</code> package owns an <code>openapi.yaml</code> spec. Running <code>pnpm --filter @workspace/api-spec run codegen</code> (via Orval) generates:</p>
+    <ul style="margin-left:20px;color:#334155;font-size:13px;line-height:2;">
+      <li><code>lib/api-client-react/src/generated/</code> — React Query hooks (e.g. <code>useHealthCheck</code>)</li>
+      <li><code>lib/api-zod/src/generated/</code> — Zod schemas (e.g. <code>HealthCheckResponse</code>)</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- MOCKUP SANDBOX -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="mockup">
+    <h2><span class="icon">🧪</span>Mockup Sandbox</h2>
+    <p>Package: <code>@workspace/mockup-sandbox</code>. A Vite dev server specifically for canvas component previews. It serves isolated component URLs at <code>/preview/&lt;component-name&gt;</code> so components can be embedded as iframes on the Replit canvas board without showing the full app.</p>
+    <p>This package is managed by the Replit workspace and is not deployed to production.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- SCRIPTS -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="scripts">
+    <h2><span class="icon">📜</span>Scripts Package</h2>
+    <p>Package: <code>@workspace/scripts</code>. Individual TypeScript utility scripts, each runnable via:</p>
+    <pre><code>pnpm --filter @workspace/scripts run &lt;script-name&gt;</code></pre>
+    <p>Scripts can import any workspace package (e.g., <code>@workspace/db</code>) by declaring it as a dependency. Useful for one-off migrations, data seeding, or admin tasks.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- CREDENTIALS -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="credentials">
+    <h2><span class="icon">🔑</span>Demo Credentials</h2>
+    <table>
+      <thead><tr><th>Role</th><th>Login ID</th><th>Password</th><th>Access Level</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-amber">👑 Owner</span></td><td><code>abc</code></td><td><code>Abc@123</code></td><td>Full access — all 15 tabs</td></tr>
+        <tr><td><span class="badge badge-purple">All India Manager</span></td><td><code>arjun.aim</code></td><td><code>AIM@2026</code></td><td>All except Territory</td></tr>
+        <tr><td><span class="badge badge-navy">Regional Manager</span></td><td><code>rajesh.north</code></td><td><code>North@123</code></td><td>North region scope</td></tr>
+        <tr><td><span class="badge badge-green">Zonal Manager</span></td><td><code>amit.up</code></td><td><code>Zone@123</code></td><td>UP zone scope</td></tr>
+        <tr><td><span class="badge badge-red">Area Manager</span></td><td><code>ravi.lko</code></td><td><code>Area@123</code></td><td>Lucknow area scope</td></tr>
+        <tr><td><span class="badge badge-amber">Vendor</span></td><td><code>mahesh.vendor</code></td><td><code>Vendor@123</code></td><td>Vendor-limited view</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info">To reset to defaults, open browser DevTools → Application → Local Storage → delete the <code>ad_campaign_db</code> key, then refresh. Alternatively use Settings tab → Reset to Defaults.</div>
+  </div>
+
+  <div style="text-align:center;padding:32px 0 20px;color:#94A3B8;font-size:12px;border-top:1px solid #E2E8F0;margin-top:40px;">
+    AdCampaign Dashboard · Technical Documentation · Generated March 2026
+  </div>
+
+</main>
+</div>
+</body>
+</html>

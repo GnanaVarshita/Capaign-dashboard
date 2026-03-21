@@ -2,13 +2,13 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '18.x'
+  NODE_VERSION: "18.x"
 
 jobs:
   build-and-deploy:
@@ -18,66 +18,66 @@ jobs:
       contents: read
       pages: write
       id-token: write
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    
-    - name: Setup Node.js ${{ env.NODE_VERSION }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-    
-    - name: Install pnpm
-      run: |
-        npm install -g pnpm
-        pnpm --version
-    
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
-    
-    - name: Build frontend application
-      run: |
-        cd artifacts/ad-campaign-dashboard
-        pnpm build
-    
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
-      with:
-        path: 'artifacts/ad-campaign-dashboard/dist'
-    
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      id: deployment
-      uses: actions/deploy-pages@v1
-    
-    - name: Print deployment info
-      run: |
-        echo "Deployment URL: https://${{ github.repository_owner }}.github.io/Capaign-dashboard/"
-        echo "Build completed successfully!"
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install pnpm
+        run: |
+          npm install -g pnpm
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend application
+        run: |
+          cd artifacts/ad-campaign-dashboard
+          pnpm build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "artifacts/ad-campaign-dashboard/dist"
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        id: deployment
+        uses: actions/deploy-pages@v2
+
+      - name: Print deployment info
+        run: |
+          echo "Deployment URL: https://${{ github.repository_owner }}.github.io/Capaign-dashboard/"
+          echo "Build completed successfully!"
 
   # Optional: Run tests before deployment
   test:
     name: Run Tests (Optional)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-    
-    - name: Install pnpm
-      run: npm install -g pnpm
-    
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
-    
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
     # Uncomment if you have tests
     # - name: Run tests
     #   run: pnpm test

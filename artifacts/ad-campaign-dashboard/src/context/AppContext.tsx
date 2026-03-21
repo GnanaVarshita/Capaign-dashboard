@@ -50,6 +50,7 @@ interface AppContextType {
   getVisiblePendingEntries: () => Entry[];
   getMyEntries: () => Entry[];
   getScopedEntries: () => Entry[];
+  refreshData: () => void;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   toastMsg: { msg: string; type: string } | null;
 }
@@ -249,6 +250,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return entries;
   }, [currentUser, entries, users]);
 
+  const refreshData = useCallback(() => {
+    try {
+      const stored = localStorage.getItem('ad_campaign_db');
+      if (stored) {
+        const data = JSON.parse(stored);
+        if (data.users) setUsers(data.users);
+        if (data.entries) setEntries(data.entries);
+        if (data.pos) setPOs(data.pos);
+        if (data.regions) setRegions(data.regions);
+        if (data.products) setProducts(data.products);
+        if (data.activities) setActivities(data.activities);
+        if (data.bills) setBills(data.bills);
+        toast('Data refreshed from storage!', 'success');
+      }
+    } catch (err) {
+      toast('Error refreshing data', 'error');
+    }
+  }, [toast]);
+
   return (
     <AppContext.Provider value={{
       currentUser, login, logout,
@@ -259,6 +279,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       addUser, updateUser, deleteUser, addBill, updateBill,
       calcLiveSpent, calcPendingSpent,
       getVisiblePOs, getVisiblePendingEntries, getMyEntries, getScopedEntries,
+      refreshData,
       toast, toastMsg
     }}>
       {children}

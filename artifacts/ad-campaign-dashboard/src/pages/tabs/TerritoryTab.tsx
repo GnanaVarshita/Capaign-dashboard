@@ -8,8 +8,12 @@ export default function TerritoryTab() {
   const [editZone, setEditZone] = useState<{ region: string; zone: string } | null>(null);
   const [addZoneModal, setAddZoneModal] = useState('');
   const [addAreaModal, setAddAreaModal] = useState<{ region: string; zone: string } | null>(null);
+  const [addRegionModal, setAddRegionModal] = useState(false);
   const [newZoneName, setNewZoneName] = useState('');
   const [newAreaName, setNewAreaName] = useState('');
+  const [newRegionName, setNewRegionName] = useState('');
+  const [newRegionColor, setNewRegionColor] = useState('#1B4F72');
+  const [newRegionStates, setNewRegionStates] = useState('');
 
   const addZone = () => {
     if (!newZoneName.trim()) return;
@@ -18,6 +22,22 @@ export default function TerritoryTab() {
     } : r));
     setNewZoneName('');
     setAddZoneModal('');
+  };
+
+  const addRegion = () => {
+    if (!newRegionName.trim()) return;
+    const statesList = newRegionStates.split(',').map(s => s.trim()).filter(s => s);
+    setRegions(prev => [...prev, {
+      name: newRegionName.trim(),
+      manager: '',
+      color: newRegionColor,
+      states: statesList,
+      zones: []
+    }]);
+    setNewRegionName('');
+    setNewRegionColor('#1B4F72');
+    setNewRegionStates('');
+    setAddRegionModal(false);
   };
 
   const addArea = () => {
@@ -46,6 +66,10 @@ export default function TerritoryTab() {
   return (
     <div className="space-y-6">
       <p className="text-sm text-[#6B7280]">Configure the territory hierarchy: Regions → Zones → Areas. Changes here reflect in user assignment and PO allocation.</p>
+
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setAddRegionModal(true)}>+ Add New Region</Button>
+      </div>
 
       {regions.map(region => (
         <Card key={region.name} className="overflow-hidden">
@@ -121,6 +145,28 @@ export default function TerritoryTab() {
           <div className="flex justify-end gap-3">
             <Button variant="secondary" onClick={() => setAddAreaModal(null)}>Cancel</Button>
             <Button onClick={addArea} disabled={!newAreaName.trim()}>Add Area</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={addRegionModal} onClose={() => setAddRegionModal(false)} title="Add New Region">
+        <div className="space-y-4">
+          <div><Label required>Region Name</Label><Input value={newRegionName} onChange={e => setNewRegionName(e.target.value)} placeholder="e.g. North Region" autoFocus /></div>
+          <div>
+            <Label>Region Color</Label>
+            <div className="flex items-center gap-3 mt-2">
+              <input type="color" value={newRegionColor} onChange={e => setNewRegionColor(e.target.value)} className="w-12 h-10 rounded border border-[#DDE3ED] cursor-pointer" />
+              <span className="text-xs text-[#6B7280] font-mono">{newRegionColor}</span>
+            </div>
+          </div>
+          <div>
+            <Label>States (comma-separated)</Label>
+            <Input value={newRegionStates} onChange={e => setNewRegionStates(e.target.value)} placeholder="e.g. Uttar Pradesh, Uttarakhand, Delhi" />
+            <p className="text-xs text-[#9CA3AF] mt-1">Optional: Enter state names separated by commas</p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setAddRegionModal(false)}>Cancel</Button>
+            <Button onClick={addRegion} disabled={!newRegionName.trim()}>Add Region</Button>
           </div>
         </div>
       </Modal>

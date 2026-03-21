@@ -36,6 +36,8 @@ export default function HierarchyTab() {
   const owner = users.find(u => u.role === 'Owner' && u.status === 'active');
   const vendors = users.filter(u => u.role === 'Vendor');
 
+  const userRegion = currentUser?.role === 'Regional Manager' ? currentUser.territory?.region : null;
+
   const toggleRegion = (r: string) => {
     setExpandedRegions(prev => { const s = new Set(prev); s.has(r) ? s.delete(r) : s.add(r); return s; });
   };
@@ -48,6 +50,8 @@ export default function HierarchyTab() {
     { id: 'tree', label: 'Organisation Tree' },
     ...(canSeeVendors ? [{ id: 'vendors', label: 'Vendors' }] : [])
   ];
+
+  const visibleRegions = regions.filter(r => !userRegion || r.name === userRegion);
 
   return (
     <div className="space-y-6">
@@ -82,7 +86,7 @@ export default function HierarchyTab() {
             </Card>
           )}
 
-          {regions.map(region => {
+          {visibleRegions.map(region => {
             const rmUsers = users.filter(u => u.role === 'Regional Manager' && u.territory?.region === region.name);
             const rBudget = activePOs.reduce((s, po) => s + (po.regionBudgets[region.name] || 0), 0);
             const rSpent = calcLiveSpent({ region: region.name });

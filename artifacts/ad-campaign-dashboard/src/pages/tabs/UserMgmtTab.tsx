@@ -36,6 +36,7 @@ export default function UserMgmtTab() {
   const [credForm, setCredForm] = useState({ name: '', loginId: '', password: '', confirmPassword: '' });
   const [credUserId, setCredUserId] = useState('');
   const [formError, setFormError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const filtered = users.filter(user => {
     const matchSearch = !search || [user.name, user.loginId, user.role, user.territory?.region || '', user.territory?.zone || ''].join(' ').toLowerCase().includes(search.toLowerCase());
@@ -75,6 +76,7 @@ export default function UserMgmtTab() {
     setCredForm({ name: user.name, loginId: user.loginId, password: '', confirmPassword: '' });
     setCredUserId(uid);
     setFormError('');
+    setShowPassword(false);
     setShowCredsModal(true);
   };
 
@@ -166,7 +168,7 @@ export default function UserMgmtTab() {
                 <Td>
                   <div className="flex gap-1">
                     <Button size="sm" variant="secondary" onClick={() => openEdit(user.id)}>✏️ Edit</Button>
-                    <Button size="sm" variant="ghost" onClick={() => openCreds(user.id)}>🔑</Button>
+                    <Button size="sm" variant="ghost" onClick={() => openCreds(user.id)} title={u.role === 'Owner' ? 'View/Edit credentials' : 'Edit credentials'}>🔑</Button>
                     {user.id !== u.id && (
                       <Button size="sm" variant={user.status === 'active' ? 'danger' : 'success'} onClick={() => updateUser(user.id, { status: user.status === 'active' ? 'inactive' : 'active' })}>
                         {user.status === 'active' ? '⊘' : '✓'}
@@ -262,6 +264,27 @@ export default function UserMgmtTab() {
         <div className="space-y-4">
           <div><Label required>Display Name</Label><Input value={credForm.name} onChange={e => setCredForm(f => ({ ...f, name: e.target.value }))} /></div>
           <div><Label required>Login ID</Label><Input value={credForm.loginId} onChange={e => setCredForm(f => ({ ...f, loginId: e.target.value }))} /></div>
+          {u.role === 'Owner' && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Current Password {users.find(x => x.id === credUserId)?.password && <span className="text-[9px] text-[#9CA3AF] ml-1">(view only)</span>}</Label>
+                {users.find(x => x.id === credUserId)?.password && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-xs text-[#1B4F72] font-semibold hover:underline"
+                  >
+                    {showPassword ? '🙈 Hide' : '👁️ Show'}
+                  </button>
+                )}
+              </div>
+              {users.find(x => x.id === credUserId)?.password && (
+                <div className="px-3 py-2.5 bg-[#F3F4F6] border border-[#DDE3ED] rounded-lg font-mono text-sm text-[#1A1D23] break-all">
+                  {showPassword ? users.find(x => x.id === credUserId)?.password : '••••••••'}
+                </div>
+              )}
+            </div>
+          )}
           <div><Label>New Password <span className="text-[9px] text-[#9CA3AF] ml-1">(leave blank to keep current)</span></Label><Input type="password" value={credForm.password} onChange={e => setCredForm(f => ({ ...f, password: e.target.value }))} placeholder="New password" /></div>
           <div><Label>Confirm Password</Label><Input type="password" value={credForm.confirmPassword} onChange={e => setCredForm(f => ({ ...f, confirmPassword: e.target.value }))} placeholder="Confirm password" /></div>
           <div className="flex justify-end gap-3">

@@ -7,21 +7,32 @@ export default function BillingTab() {
   const { users, entries, bills, addBill, updateBill, currentUser } = useAppContext();
   const u = currentUser!;
   const isVendor = u.role === 'Vendor';
+  const userRegion = u.role === 'Regional Manager' ? u.territory?.region : null;
 
   const [createModal, setCreateModal] = useState(false);
   const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
   const [invoiceNum, setInvoiceNum] = useState('');
   const [remarks, setRemarks] = useState('');
 
-  const eligibleEntries = entries.filter(e =>
-    e.status === 'approved' &&
-    (isVendor ? e.vendorId === u.id : true) &&
-    !bills.some(b => b.entryIds.includes(e.id) && b.status !== 'draft')
-  );
+  const eligibleEntries = entries.filter(e => {
+    if (e.status !== 'approved') return false;
+    if (isVendor && e.vendorId !== u.id) return false;
+    if (userRegion && e.region !== userRegion) return false;
+    if (bills.some(b => b.entryIds.includes(e.id) && b.status !== 'draft')) return false;
+    return true;
+  });
 
-  const vendorBills = isVendor
-    ? bills.filter(b => b.vendorId === u.id)
-    : bills;
+  const vendorBills = useMemo(() => {
+    if (isVendor) return bills.filter(b => b.vendorId === u.id);
+    if (userRegion) {
+      // Filter bills that contain entries from this region
+      return bills.filter(b => {
+        const billEntries = entries.filter(e => b.entryIds.includes(e.id));
+        return billEntries.some(e => e.region === userRegion);
+      });
+    }
+    return bills;
+  }, [bills, isVendor, userRegion, u.id, entries]);
 
   const billStatusBadge = (s: string) =>
     s === 'paid' ? <Badge variant="success">✓ Paid</Badge> :

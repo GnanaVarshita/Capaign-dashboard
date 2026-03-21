@@ -35,11 +35,18 @@ export default function POMasterTab() {
   };
   const [form, setForm] = useState(initForm);
 
-  const filtered = pos.filter(p =>
-    p.poNumber.toLowerCase().includes(search.toLowerCase()) ||
-    (p.remarks || '').toLowerCase().includes(search.toLowerCase()) ||
-    p.status.toLowerCase().includes(search.toLowerCase())
-  );
+  const userRegion = currentUser?.role === 'Regional Manager' ? currentUser.territory?.region : null;
+
+  const filtered = pos.filter(p => {
+    const matchSearch = p.poNumber.toLowerCase().includes(search.toLowerCase()) ||
+      (p.remarks || '').toLowerCase().includes(search.toLowerCase()) ||
+      p.status.toLowerCase().includes(search.toLowerCase());
+    
+    if (userRegion) {
+      return matchSearch && p.regionBudgets[userRegion];
+    }
+    return matchSearch;
+  });
 
   const selected = pos.find(p => p.id === selectedId) || pos[0];
 
@@ -178,12 +185,12 @@ export default function POMasterTab() {
 
               <div className="p-5 space-y-6 overflow-y-auto max-h-[560px]">
                 <div>
-                  <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-3">Budget Summary</p>
+                  <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-3">Budget Summary {userRegion && `— ${userRegion}`}</p>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: 'Total PO Budget', value: formatCurrency(selected.budget), color: 'text-[#1B4F72]' },
-                      { label: 'Assigned to Regions', value: formatCurrency(Object.values(selected.regionBudgets || {}).reduce((s, v) => s + (v as number), 0)), color: 'text-[#374151]' },
-                      { label: 'Spent (Approved)', value: formatCurrency(calcLiveSpent({ po: selected.poNumber })), color: 'text-green-600' }
+                      { label: userRegion ? 'My Region Budget' : 'Total PO Budget', value: formatCurrency(userRegion ? (selected.regionBudgets[userRegion] || 0) : selected.budget), color: 'text-[#1B4F72]' },
+                      { label: userRegion ? 'Distributed Amount' : 'Assigned to Regions', value: formatCurrency(userRegion ? Object.values((selected.allocations[userRegion] || {}) as Record<string, Record<string, number>>).reduce((s, p) => s + Object.values(p).reduce((s2, v) => s2 + v, 0), 0) : Object.values(selected.regionBudgets || {}).reduce((s, v) => s + (v as number), 0)), color: 'text-[#374151]' },
+                      { label: 'Spent (Approved)', value: formatCurrency(calcLiveSpent({ po: selected.poNumber, ...(userRegion ? { region: userRegion } : {}) })), color: 'text-green-600' }
                     ].map(k => (
                       <div key={k.label} className="bg-[#F8FAFC] rounded-xl p-3 text-center border border-[#DDE3ED]">
                         <p className="text-[9px] text-[#6B7280] font-semibold uppercase mb-1">{k.label}</p>
@@ -200,7 +207,9 @@ export default function POMasterTab() {
                       <tr><Th>Region</Th><Th>Assigned</Th><Th>Distributed</Th><Th>Spent</Th><Th>Utilization</Th><Th>Actions</Th></tr>
                     </thead>
                     <tbody>
-                      {Object.entries(selected.regionBudgets || {}).map(([region, budget]) => {
+                      {Object.entries(selected.regionBudgets || {})
+                        .filter(([region]) => !userRegion || region === userRegion)
+                        .map(([region, budget]) => {
                         const distributed = Object.values((selected.allocations[region] || {}) as Record<string, Record<string, number>>).reduce((s: number, p) => s + Object.values(p).reduce((s2: number, v: number) => s2 + v, 0), 0);
                         const spent = calcLiveSpent({ po: selected.poNumber, region });
                         const utilPct = pct(spent, budget as number);

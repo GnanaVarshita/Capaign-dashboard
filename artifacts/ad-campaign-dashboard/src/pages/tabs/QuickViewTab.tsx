@@ -14,37 +14,48 @@ export default function QuickViewTab() {
 
   const po = pos.find(p => p.poNumber === selectedPO) || pos[0];
 
+  const userRegion = currentUser?.role === 'Regional Manager' ? currentUser.territory?.region : null;
+
   const productData = useMemo(() => {
     if (!po) return [];
     return products.map(prod => {
-      const budget = Object.values(po.allocations || {}).reduce((s, r) => {
-        return s + Object.values(r[prod] || {}).reduce((as, v) => as + (v as number), 0);
-      }, 0);
-      const spent = calcLiveSpent({ po: po.poNumber, product: prod });
+      const budget = userRegion 
+        ? Object.values(po.allocations[userRegion]?.[prod] || {}).reduce((as, v) => as + (v as number), 0)
+        : Object.values(po.allocations || {}).reduce((s, r) => {
+            return s + Object.values(r[prod] || {}).reduce((as, v) => as + (v as number), 0);
+          }, 0);
+      const spent = calcLiveSpent({ po: po.poNumber, product: prod, ...(userRegion ? { region: userRegion } : {}) });
       return { name: prod, Budget: budget, Spent: spent };
     }).filter(d => d.Budget > 0);
-  }, [po, products, calcLiveSpent]);
+  }, [po, products, calcLiveSpent, userRegion]);
 
   const activityData = useMemo(() => {
     if (!po) return [];
     return activities.map(act => {
-      const spent = calcLiveSpent({ po: po.poNumber, activity: act });
+      const spent = calcLiveSpent({ po: po.poNumber, activity: act, ...(userRegion ? { region: userRegion } : {}) });
       return { name: act, value: spent };
     }).filter(d => d.value > 0);
-  }, [po, activities, calcLiveSpent]);
+  }, [po, activities, calcLiveSpent, userRegion]);
 
   const regionData = useMemo(() => {
     if (!po) return [];
-    return Object.entries(po.regionBudgets || {}).map(([region, budget]) => {
-      const spent = calcLiveSpent({ po: po.poNumber, region });
-      const pending = calcPendingSpent({ po: po.poNumber, region });
-      return { region, budget: budget as number, spent, pending };
-    });
-  }, [po, calcLiveSpent, calcPendingSpent]);
+    return Object.entries(po.regionBudgets || {})
+      .filter(([region]) => !userRegion || region === userRegion)
+      .map(([region, budget]) => {
+        const spent = calcLiveSpent({ po: po.poNumber, region });
+        const pending = calcPendingSpent({ po: po.poNumber, region });
+        return { region, budget: budget as number, spent, pending };
+      });
+  }, [po, calcLiveSpent, calcPendingSpent, userRegion]);
 
-  const totalBudget = po?.budget || 0;
-  const totalSpent = po ? calcLiveSpent({ po: po.poNumber }) : 0;
-  const totalPending = po ? calcPendingSpent({ po: po.poNumber }) : 0;
+  const totalBudget = useMemo(() => {
+    if (!po) return 0;
+    if (userRegion) return po.regionBudgets[userRegion] || 0;
+    return po.budget;
+  }, [po, userRegion]);
+
+  const totalSpent = po ? calcLiveSpent({ po: po.poNumber, ...(userRegion ? { region: userRegion } : {}) }) : 0;
+  const totalPending = po ? calcPendingSpent({ po: po.poNumber, ...(userRegion ? { region: userRegion } : {}) }) : 0;
   const utilPct = pct(totalSpent, totalBudget);
 
   return (

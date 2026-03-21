@@ -12,37 +12,54 @@ export default function OverviewTab() {
   const visiblePOs = getVisiblePOs();
   const activePOs = visiblePOs.filter(p => p.status === 'Active' || p.status === 'Expiring Soon');
 
-  const totalBudget = activePOs.reduce((s, po) => s + po.budget, 0);
+  const userRegion = currentUser?.role === 'Regional Manager' ? currentUser.territory?.region : null;
+
+  const totalBudget = useMemo(() => {
+    return activePOs.reduce((s, po) => {
+      if (userRegion) return s + (po.regionBudgets[userRegion] || 0);
+      return s + po.budget;
+    }, 0);
+  }, [activePOs, userRegion]);
+
   const totalSpent = useMemo(() => {
-    return activePOs.reduce((s, po) => s + calcLiveSpent({ po: po.poNumber }), 0);
-  }, [activePOs, calcLiveSpent]);
+    return activePOs.reduce((s, po) => s + calcLiveSpent({ po: po.poNumber, ...(userRegion ? { region: userRegion } : {}) }), 0);
+  }, [activePOs, calcLiveSpent, userRegion]);
+
   const totalPending = useMemo(() => {
-    return activePOs.reduce((s, po) => s + calcPendingSpent({ po: po.poNumber }), 0);
-  }, [activePOs, calcPendingSpent]);
+    return activePOs.reduce((s, po) => s + calcPendingSpent({ po: po.poNumber, ...(userRegion ? { region: userRegion } : {}) }), 0);
+  }, [activePOs, calcPendingSpent, userRegion]);
+
   const unutilized = totalBudget - totalSpent;
 
   const prodData = useMemo(() => {
     return ['Product A', 'Product B', 'Product C'].map((prod, i) => {
       const budget = activePOs.reduce((s, po) => {
         let b = 0;
-        Object.values(po.allocations || {}).forEach(r => {
+        if (userRegion) {
+          const r = po.allocations[userRegion] || {};
           if (r[prod]) Object.values(r[prod]).forEach(v => b += (v as number));
-        });
+        } else {
+          Object.values(po.allocations || {}).forEach(r => {
+            if (r[prod]) Object.values(r[prod]).forEach(v => b += (v as number));
+          });
+        }
         return s + b;
       }, 0);
-      const spent = calcLiveSpent({ product: prod });
+      const spent = calcLiveSpent({ product: prod, ...(userRegion ? { region: userRegion } : {}) });
       return { name: prod, Budget: budget, Spent: spent, color: PROD_COLORS[i] };
     });
-  }, [activePOs, calcLiveSpent]);
+  }, [activePOs, calcLiveSpent, userRegion]);
 
   const regionData = useMemo(() => {
-    return regions.map(r => {
-      const budget = activePOs.reduce((s, po) => s + (po.regionBudgets[r.name] || 0), 0);
-      const spent = calcLiveSpent({ region: r.name });
-      const pending = calcPendingSpent({ region: r.name });
-      return { ...r, budget, spent, pending, balance: budget - spent, utilPct: pct(spent, budget) };
-    }).filter(r => r.budget > 0);
-  }, [regions, activePOs, calcLiveSpent, calcPendingSpent]);
+    return regions
+      .filter(r => !userRegion || r.name === userRegion)
+      .map(r => {
+        const budget = activePOs.reduce((s, po) => s + (po.regionBudgets[r.name] || 0), 0);
+        const spent = calcLiveSpent({ region: r.name });
+        const pending = calcPendingSpent({ region: r.name });
+        return { ...r, budget, spent, pending, balance: budget - spent, utilPct: pct(spent, budget) };
+      }).filter(r => r.budget > 0);
+  }, [regions, activePOs, calcLiveSpent, calcPendingSpent, userRegion]);
 
   const approvedCount = entries.filter(e => e.status === 'approved').length;
   const pendingCount = entries.filter(e => e.status === 'pending').length;

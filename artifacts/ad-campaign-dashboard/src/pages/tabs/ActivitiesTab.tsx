@@ -11,33 +11,40 @@ export default function ActivitiesTab() {
 
   const po = pos.find(p => p.poNumber === selectedPO) || pos[0];
 
+  const userRegion = currentUser?.role === 'Regional Manager' ? currentUser.territory?.region : null;
+
   const chartData = useMemo(() => {
     if (!po) return [];
     return activities.map(act => {
       const budget = products.reduce((s, prod) => {
+        if (userRegion) {
+          return s + ((po.allocations[userRegion] || {})[prod] || {})[act] || 0;
+        }
         return s + Object.values(po.allocations || {}).reduce((rs, r) => {
           return rs + ((r[prod] || {})[act] || 0);
         }, 0);
       }, 0);
-      const spent = calcLiveSpent({ po: po.poNumber, activity: act });
+      const spent = calcLiveSpent({ po: po.poNumber, activity: act, ...(userRegion ? { region: userRegion } : {}) });
       return { name: act, Budget: budget, Spent: spent };
     }).filter(d => d.Budget > 0 || d.Spent > 0);
-  }, [po, activities, products, calcLiveSpent]);
+  }, [po, activities, products, calcLiveSpent, userRegion]);
 
   const tableData = useMemo(() => {
     if (!po) return [];
     const rows: { product: string; activity: string; budget: number; spent: number }[] = [];
     products.forEach(prod => {
       activities.forEach(act => {
-        const budget = Object.values(po.allocations || {}).reduce((s, r) => {
-          return s + ((r[prod] || {})[act] || 0);
-        }, 0);
-        const spent = calcLiveSpent({ po: po.poNumber, product: prod, activity: act });
+        const budget = userRegion 
+          ? (((po.allocations[userRegion] || {})[prod] || {})[act] || 0)
+          : Object.values(po.allocations || {}).reduce((s, r) => {
+              return s + ((r[prod] || {})[act] || 0);
+            }, 0);
+        const spent = calcLiveSpent({ po: po.poNumber, product: prod, activity: act, ...(userRegion ? { region: userRegion } : {}) });
         if (budget > 0 || spent > 0) rows.push({ product: prod, activity: act, budget, spent });
       });
     });
     return rows;
-  }, [po, products, activities, calcLiveSpent]);
+  }, [po, products, activities, calcLiveSpent, userRegion]);
 
   return (
     <div className="space-y-6">

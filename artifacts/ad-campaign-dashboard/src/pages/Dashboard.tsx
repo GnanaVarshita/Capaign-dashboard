@@ -27,7 +27,7 @@ const TAB_ICONS: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { currentUser, logout, getVisiblePendingEntries, toastMsg, pos } = useAppContext();
+  const { currentUser, logout, getVisiblePendingEntries, toastMsg, pos, refreshData } = useAppContext();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -120,6 +120,16 @@ export default function Dashboard() {
                 </span>
               </div>
             )}
+            <button
+              onClick={refreshData}
+              title="Refresh data from storage"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-lg text-xs font-semibold text-white/90 transition-all"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
             <div className="hidden md:flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-white/20 border border-white/20 flex items-center justify-center text-xs font-bold text-white">
                 {u.name[0].toUpperCase()}

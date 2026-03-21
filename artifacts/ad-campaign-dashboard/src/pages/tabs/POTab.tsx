@@ -28,10 +28,19 @@ export default function POTab() {
     </div>
   );
 
-  const totalBudget = po.budget;
-  const totalSpent = calcLiveSpent({ po: po.poNumber });
-  const totalPending = calcPendingSpent({ po: po.poNumber });
-  const totalAlloc = Object.values(po.regionBudgets || {}).reduce((s, v) => s + v, 0);
+  const totalBudget = useMemo(() => {
+    if (userRegion) return po.regionBudgets[userRegion] || 0;
+    return po.budget;
+  }, [po, userRegion]);
+
+  const totalSpent = useMemo(() => {
+    return calcLiveSpent({ po: po.poNumber, ...(userRegion ? { region: userRegion } : {}) });
+  }, [po, userRegion, calcLiveSpent]);
+
+  const totalPending = useMemo(() => {
+    return calcPendingSpent({ po: po.poNumber, ...(userRegion ? { region: userRegion } : {}) });
+  }, [po, userRegion, calcPendingSpent]);
+
   const utilPct = pct(totalSpent, totalBudget);
 
   return (

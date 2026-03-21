@@ -15,10 +15,6 @@ export default function TransactionMasterTab() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
-  const allPOs = [...new Set(entries.map(e => e.po))];
-  const allProducts = [...new Set(entries.map(e => e.product))];
-  const allRegions = [...new Set(users.filter(x => x.territory?.region).map(x => x.territory!.region!))];
-
   const scopedEntries = useMemo(() => {
     if (u.role === 'Owner' || u.role === 'All India Manager') return entries;
     if (u.role === 'Regional Manager') return entries.filter(e => {
@@ -32,6 +28,10 @@ export default function TransactionMasterTab() {
     if (u.role === 'Area Manager') return entries.filter(e => e.userId === u.id);
     return entries.filter(e => e.vendorId === u.id);
   }, [entries, u, users]);
+
+  const allPOs = useMemo(() => [...new Set(scopedEntries.map(e => e.po))], [scopedEntries]);
+  const allProducts = useMemo(() => [...new Set(scopedEntries.map(e => e.product))], [scopedEntries]);
+  const allRegions = useMemo(() => [...new Set(users.filter(x => x.territory?.region).map(x => x.territory!.region!))], [users]);
 
   const filtered = useMemo(() => {
     return scopedEntries.filter(e => {

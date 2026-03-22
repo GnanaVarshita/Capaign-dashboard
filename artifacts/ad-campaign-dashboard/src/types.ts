@@ -64,6 +64,7 @@ export interface Entry {
   remarks: string;
   status: 'pending' | 'approved' | 'rejected';
   decidedBy: string;
+  decidedByDesignation?: string;
   decidedAt: string;
   editedBy?: string;
   region?: string;

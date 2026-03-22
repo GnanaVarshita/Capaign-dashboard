@@ -62,8 +62,8 @@ export default function ApprovalsTab() {
                   </Td>
                   <Td>
                     <div className="flex flex-col gap-1">
-                      <Button variant="success" size="sm" onClick={() => updateEntryStatus(e.id, 'approved', u.name)}>✓ Approve</Button>
-                      <Button variant="danger" size="sm" onClick={() => updateEntryStatus(e.id, 'rejected', u.name)}>✗ Reject</Button>
+                      <Button variant="success" size="sm" onClick={() => updateEntryStatus(e.id, 'approved', u.name, u.role)}>✓ Approve</Button>
+                      <Button variant="danger" size="sm" onClick={() => updateEntryStatus(e.id, 'rejected', u.name, u.role)}>✗ Reject</Button>
                     </div>
                   </Td>
                 </tr>
@@ -95,7 +95,10 @@ export default function ApprovalsTab() {
                   <Td className="text-xs">{e.activity}</Td>
                   <Td className="font-bold">{formatCurrency(e.amount)}</Td>
                   <Td><StatusBadge status={e.status} /></Td>
-                  <Td className="text-xs text-[#6B7280]">{e.decidedBy || '—'}</Td>
+                  <Td>
+                    <div className="text-xs font-bold text-[#1A1D23]">{e.decidedBy || '—'}</div>
+                    {e.decidedByDesignation && <div className="text-[9px] text-[#9CA3AF] uppercase font-bold">{e.decidedByDesignation}</div>}
+                  </Td>
                 </tr>
               ))}
             </tbody>

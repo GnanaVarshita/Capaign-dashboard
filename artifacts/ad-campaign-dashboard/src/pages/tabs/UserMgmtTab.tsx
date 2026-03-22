@@ -9,19 +9,34 @@ type UserForm = {
   name: string; loginId: string; password: string; confirmPassword: string;
   role: string; status: string;
   phone: string; email: string;
+  pan: string; aadhaar: string;
   region: string; zone: string; area: string;
   tradeName: string; vendorCode: string;
   perms: Record<string, boolean>;
+  tabPerms: Record<string, boolean>;
 };
 
 const defaultForm = (): UserForm => ({
   name: '', loginId: '', password: '', confirmPassword: '',
   role: 'Area Manager', status: 'active',
   phone: '', email: '',
+  pan: '', aadhaar: '',
   region: '', zone: '', area: '',
   tradeName: '', vendorCode: '',
-  perms: { view: true, enter: false, edit: false, approve: false, manage: false }
+  perms: { view: true, enter: false, edit: false, approve: false, manage: false },
+  tabPerms: {}
 });
+
+const ALL_TABS: { id: string; label: string }[] = [
+  { id: 'overview', label: 'Overview' }, { id: 'po', label: 'Purchase Orders' },
+  { id: 'hierarchy', label: 'Hierarchy' }, { id: 'activities', label: 'Activities' },
+  { id: 'vendor', label: 'Vendors' }, { id: 'billing', label: 'Billing' },
+  { id: 'sheet', label: 'Activity Sheet' }, { id: 'approvals', label: 'Approvals' },
+  { id: 'po-approvals', label: 'PO Approvals' }, { id: 'po-master', label: 'PO Master' },
+  { id: 'users', label: 'Users' }, { id: 'territory', label: 'Territory' },
+  { id: 'quick', label: 'Quick View' }, { id: 'transactions', label: 'Transactions' },
+  { id: 'settings', label: 'Settings' }
+];
 
 export default function UserMgmtTab() {
   const { users, addUser, updateUser, deleteUser, currentUser, regions } = useAppContext();
@@ -46,6 +61,10 @@ export default function UserMgmtTab() {
 
   const set = (k: keyof UserForm, v: any) => setForm(f => ({ ...f, [k]: v }));
   const setPerms = (k: string) => setForm(f => ({ ...f, perms: { ...f.perms, [k]: !f.perms[k] } }));
+  const setTabPerm = (tabId: string) => setForm(f => ({
+    ...f,
+    tabPerms: { ...f.tabPerms, [tabId]: f.tabPerms[tabId] === false ? true : false }
+  }));
 
   const openCreate = () => {
     setForm(defaultForm());
@@ -61,9 +80,11 @@ export default function UserMgmtTab() {
       name: user.name, loginId: user.loginId, password: user.password || '', confirmPassword: user.password || '',
       role: user.role, status: user.status,
       phone: user.phone || '', email: user.email || '',
+      pan: user.pan || '', aadhaar: user.aadhaar || '',
       region: user.territory?.region || '', zone: user.territory?.zone || '', area: user.territory?.area || '',
       tradeName: user.territory?.tradeName || '', vendorCode: user.territory?.vendorCode || '',
-      perms: { ...{ view: false, enter: false, edit: false, approve: false, manage: false }, ...user.perms }
+      perms: { ...{ view: false, enter: false, edit: false, approve: false, manage: false }, ...user.perms },
+      tabPerms: user.tabPerms || {}
     });
     setEditId(uid);
     setFormError('');
@@ -97,8 +118,9 @@ export default function UserMgmtTab() {
     const userData: any = {
       name: form.name.trim(), loginId: form.loginId.trim(),
       role: form.role as any, status: form.status as any,
-      territory, perms: form.perms,
-      phone: form.phone, email: form.email
+      territory, perms: form.perms, tabPerms: form.tabPerms,
+      phone: form.phone, email: form.email,
+      pan: form.pan, aadhaar: form.aadhaar
     };
     if (form.password) userData.password = form.password;
 
@@ -207,6 +229,8 @@ export default function UserMgmtTab() {
           </div>
           <div><Label>Phone</Label><Input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="Phone number" /></div>
           <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="email@example.com" /></div>
+          <div><Label>PAN</Label><Input value={form.pan} onChange={e => set('pan', e.target.value)} placeholder="ABCDE1234F" /></div>
+          <div><Label>AADHAAR</Label><Input value={form.aadhaar} onChange={e => set('aadhaar', e.target.value)} placeholder="1234 5678 9012" /></div>
 
           {['Regional Manager', 'Zonal Manager', 'Area Manager'].includes(form.role) && (
             <div>
@@ -250,6 +274,23 @@ export default function UserMgmtTab() {
                   {p.label}
                 </label>
               ))}
+            </div>
+          </div>
+
+          <div className="col-span-2">
+            <Label>Tab Restrictions (Uncheck to hide tab for user)</Label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {ALL_TABS.map(tab => {
+                const isHidden = form.tabPerms[tab.id] === false;
+                return (
+                  <label key={tab.id} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-pointer text-[10px] font-semibold transition-all',
+                    !isHidden ? 'bg-green-500 text-white border-green-600' : 'bg-white text-[#374151] border-[#DDE3ED] hover:border-red-500'
+                  )}>
+                    <input type="checkbox" className="hidden" checked={!isHidden} onChange={() => setTabPerm(tab.id)} />
+                    {tab.label}
+                  </label>
+                );
+              })}
             </div>
           </div>
         </div>

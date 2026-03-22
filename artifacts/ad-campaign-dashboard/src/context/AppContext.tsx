@@ -10,6 +10,8 @@ interface SpentFilters {
   product?: string;
   activity?: string;
   vendorId?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 interface AppContextType {
@@ -28,6 +30,12 @@ interface AppContextType {
   setProducts: React.Dispatch<React.SetStateAction<string[]>>;
   activities: string[];
   setActivities: React.Dispatch<React.SetStateAction<string[]>>;
+  addProduct: (name: string) => void;
+  updateProduct: (oldName: string, newName: string) => void;
+  deleteProduct: (name: string) => void;
+  addActivity: (name: string) => void;
+  updateActivity: (oldName: string, newName: string) => void;
+  deleteActivity: (name: string) => void;
   bills: Bill[];
   setBills: React.Dispatch<React.SetStateAction<Bill[]>>;
   serviceReceivers: ServiceReceiver[];
@@ -38,7 +46,7 @@ interface AppContextType {
   updateVendorProfile: (vendorId: string, updates: Partial<VendorProfile>) => void;
   addEntry: (entry: Omit<Entry, 'id' | 'status' | 'decidedBy' | 'decidedAt'>) => void;
   updateEntry: (id: string, updates: Partial<Entry>, editedByName: string) => void;
-  updateEntryStatus: (id: string, status: 'approved' | 'rejected', decidedBy: string) => void;
+  updateEntryStatus: (id: string, status: 'approved' | 'rejected', decidedBy: string, decidedByDesignation?: string) => void;
   deleteEntry: (id: string) => void;
   addPO: (po: Omit<PO, 'id'>) => void;
   updatePO: (id: string, updates: Partial<PO>) => void;
@@ -126,8 +134,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     toast('Entry updated successfully!');
   };
 
-  const updateEntryStatus = (id: string, status: 'approved' | 'rejected', decidedBy: string) => {
-    setEntries(prev => prev.map(e => e.id === id ? { ...e, status, decidedBy, decidedAt: new Date().toISOString().split('T')[0] } : e));
+  const updateEntryStatus = (id: string, status: 'approved' | 'rejected', decidedBy: string, decidedByDesignation?: string) => {
+    setEntries(prev => prev.map(e => e.id === id ? {
+      ...e, status, decidedBy, decidedByDesignation, decidedAt: new Date().toISOString().split('T')[0]
+    } : e));
     toast(`Entry ${status}!`, status === 'approved' ? 'success' : 'error');
   };
 
@@ -213,12 +223,46 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     toast('Profile updated!');
   };
 
+  const addProduct = (name: string) => {
+    if (products.includes(name)) return;
+    setProducts(prev => [...prev, name]);
+    toast(`Product "${name}" added.`);
+  };
+
+  const updateProduct = (oldName: string, newName: string) => {
+    setProducts(prev => prev.map(p => p === oldName ? newName : p));
+    toast(`Product "${oldName}" updated to "${newName}".`);
+  };
+
+  const deleteProduct = (name: string) => {
+    setProducts(prev => prev.filter(p => p !== name));
+    toast(`Product "${name}" removed.`, 'info');
+  };
+
+  const addActivity = (name: string) => {
+    if (activities.includes(name)) return;
+    setActivities(prev => [...prev, name]);
+    toast(`Activity "${name}" added.`);
+  };
+
+  const updateActivity = (oldName: string, newName: string) => {
+    setActivities(prev => prev.map(a => a === oldName ? newName : a));
+    toast(`Activity "${oldName}" updated to "${newName}".`);
+  };
+
+  const deleteActivity = (name: string) => {
+    setActivities(prev => prev.filter(a => a !== name));
+    toast(`Activity "${name}" removed.`, 'info');
+  };
+
   const matchesFilters = (e: Entry, f: SpentFilters) => {
     if (f.po && e.po !== f.po) return false;
     if (f.product && e.product !== f.product) return false;
     if (f.activity && e.activity !== f.activity) return false;
     if (f.vendorId && e.vendorId !== f.vendorId) return false;
     if (f.area && e.area !== f.area) return false;
+    if (f.dateFrom && e.date < f.dateFrom) return false;
+    if (f.dateTo && e.date > f.dateTo) return false;
     if (f.region) {
       const u = users.find(x => x.id === e.userId);
       if (u?.territory?.region !== f.region) return false;
@@ -263,10 +307,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const pending = entries.filter(e => e.status === 'pending');
     if (currentUser.role === 'Owner' || currentUser.role === 'All India Manager') return pending;
     if (currentUser.role === 'Regional Manager') {
-      return pending.filter(e => e.rmId === currentUser.id || users.find(u => u.id === e.userId)?.territory.region === currentUser.territory.region);
+      return pending.filter(e => {
+        const entryUser = users.find(u => u.id === e.userId);
+        if (!entryUser) return false;
+        const isSubordinate = ['Zonal Manager', 'Area Manager', 'Vendor'].includes(entryUser.role);
+        const inRegion = entryUser.territory?.region === currentUser.territory.region;
+        return isSubordinate && inRegion;
+      });
     }
     if (currentUser.role === 'Zonal Manager') {
-      return pending.filter(e => e.zmId === currentUser.id || users.find(u => u.id === e.userId)?.territory.zone === currentUser.territory.zone);
+      return pending.filter(e => {
+        const entryUser = users.find(u => u.id === e.userId);
+        if (!entryUser) return false;
+        const isSubordinate = ['Area Manager', 'Vendor'].includes(entryUser.role);
+        const inZone = entryUser.territory?.zone === currentUser.territory.zone;
+        return isSubordinate && inZone;
+      });
     }
     return [];
   }, [currentUser, entries, users]);
@@ -279,8 +335,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const getScopedEntries = useCallback(() => {
     if (!currentUser) return [];
     if (currentUser.role === 'Owner' || currentUser.role === 'All India Manager') return entries;
-    if (currentUser.role === 'Regional Manager') return entries.filter(e => users.find(u => u.id === e.userId)?.territory.region === currentUser.territory.region || e.rmId === currentUser.id);
-    if (currentUser.role === 'Zonal Manager') return entries.filter(e => users.find(u => u.id === e.userId)?.territory.zone === currentUser.territory.zone || e.zmId === currentUser.id);
+    if (currentUser.role === 'Regional Manager') return entries.filter(e => {
+      const entryUser = users.find(u => u.id === e.userId);
+      if (!entryUser) return false;
+      const isSubordinate = ['Zonal Manager', 'Area Manager', 'Vendor'].includes(entryUser.role);
+      const inRegion = entryUser.territory?.region === currentUser.territory.region;
+      return (isSubordinate && inRegion) || e.rmId === currentUser.id;
+    });
+    if (currentUser.role === 'Zonal Manager') return entries.filter(e => {
+      const entryUser = users.find(u => u.id === e.userId);
+      if (!entryUser) return false;
+      const isSubordinate = ['Area Manager', 'Vendor'].includes(entryUser.role);
+      const inZone = entryUser.territory?.zone === currentUser.territory.zone;
+      return (isSubordinate && inZone) || e.zmId === currentUser.id;
+    });
     if (currentUser.role === 'Area Manager') return entries.filter(e => e.userId === currentUser.id);
     if (currentUser.role === 'Vendor') return entries.filter(e => e.vendorId === currentUser.id);
     return entries;
@@ -313,6 +381,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       addEntry, updateEntry, updateEntryStatus, deleteEntry,
       addPO, updatePO, approvePO, rejectPO, lapsePO,
       addUser, updateUser, deleteUser, addBill, updateBill,
+      addProduct, updateProduct, deleteProduct, addActivity, updateActivity, deleteActivity,
       serviceReceivers, addServiceReceiver, updateServiceReceiver, deleteServiceReceiver,
       vendorProfiles, updateVendorProfile,
       calcLiveSpent, calcPendingSpent,

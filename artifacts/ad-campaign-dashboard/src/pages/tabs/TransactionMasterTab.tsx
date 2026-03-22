@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Card, CardTitle, Table, Th, Td, Badge, StatusBadge, SearchInput, Select, Label, cn } from '../../components/ui';
+import { Card, CardTitle, Table, Th, Td, Badge, StatusBadge, SearchInput, Select, Label, Button, cn } from '../../components/ui';
 import { formatCurrency } from '../../lib/mock-data';
+import { exportToCSV, exportToPDF } from '../../lib/utils';
 
 export default function TransactionMasterTab() {
   const { entries, getVisiblePOs, users, currentUser } = useAppContext();
@@ -12,6 +13,7 @@ export default function TransactionMasterTab() {
   const [poFilter, setPOFilter] = useState('');
   const [productFilter, setProductFilter] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
+  const [areaFilter, setAreaFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -32,12 +34,14 @@ export default function TransactionMasterTab() {
   const allPOs = useMemo(() => [...new Set(scopedEntries.map(e => e.po))], [scopedEntries]);
   const allProducts = useMemo(() => [...new Set(scopedEntries.map(e => e.product))], [scopedEntries]);
   const allRegions = useMemo(() => [...new Set(users.filter(x => x.territory?.region).map(x => x.territory!.region!))], [users]);
+  const allAreas = useMemo(() => [...new Set(scopedEntries.filter(e => e.area).map(e => e.area))], [scopedEntries]);
 
   const filtered = useMemo(() => {
     return scopedEntries.filter(e => {
       if (statusFilter && e.status !== statusFilter) return false;
       if (poFilter && e.po !== poFilter) return false;
       if (productFilter && e.product !== productFilter) return false;
+      if (areaFilter && e.area !== areaFilter) return false;
       if (regionFilter) {
         const eu = users.find(x => x.id === e.userId);
         if (eu?.territory?.region !== regionFilter) return false;
@@ -50,7 +54,7 @@ export default function TransactionMasterTab() {
       }
       return true;
     });
-  }, [scopedEntries, statusFilter, poFilter, productFilter, regionFilter, dateFrom, dateTo, search, users]);
+  }, [scopedEntries, statusFilter, poFilter, productFilter, areaFilter, regionFilter, dateFrom, dateTo, search, users]);
 
   const totals = useMemo(() => ({
     all: filtered.reduce((s, e) => s + e.amount, 0),
@@ -108,9 +112,10 @@ export default function TransactionMasterTab() {
               Group by PO
             </button>
           </div>
-          <div className="flex gap-3">
-             <SearchInput value={search} onChange={setSearch} placeholder="Search transactions..." />
-             {/* Filters ... */}
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={() => exportToCSV(filtered, 'transactions.csv')}>📥 Excel (CSV)</Button>
+            <Button variant="secondary" size="sm" onClick={() => exportToPDF()}>📄 PDF (Print)</Button>
+            <SearchInput value={search} onChange={setSearch} placeholder="Search transactions..." />
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -128,6 +133,10 @@ export default function TransactionMasterTab() {
             <option value="">All Products</option>
             {allProducts.map(p => <option key={p} value={p}>{p}</option>)}
           </Select>
+          <Select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="w-36">
+            <option value="">All Areas</option>
+            {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
+          </Select>
           {(u.role === 'Owner' || u.role === 'All India Manager') && (
             <Select value={regionFilter} onChange={e => setRegionFilter(e.target.value)} className="w-32">
               <option value="">All Regions</option>
@@ -139,8 +148,8 @@ export default function TransactionMasterTab() {
             <span className="text-[#9CA3AF] text-xs">→</span>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 rounded-lg border border-[#DDE3ED] px-2 text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#1B4F72]/30" />
           </div>
-          {(statusFilter || poFilter || productFilter || regionFilter || dateFrom || dateTo || search) && (
-            <button onClick={() => { setStatusFilter(''); setPOFilter(''); setProductFilter(''); setRegionFilter(''); setDateFrom(''); setDateTo(''); setSearch(''); }} className="text-xs text-red-500 hover:text-red-700 font-semibold underline">
+          {(statusFilter || poFilter || productFilter || areaFilter || regionFilter || dateFrom || dateTo || search) && (
+            <button onClick={() => { setStatusFilter(''); setPOFilter(''); setProductFilter(''); setAreaFilter(''); setRegionFilter(''); setDateFrom(''); setDateTo(''); setSearch(''); }} className="text-xs text-red-500 hover:text-red-700 font-semibold underline">
               Clear Filters
             </button>
           )}
@@ -181,7 +190,10 @@ export default function TransactionMasterTab() {
                       <span className="line-clamp-2">{e.description}</span>
                     </Td>
                     <Td><StatusBadge status={e.status} /></Td>
-                    <Td className="text-xs text-[#9CA3AF]">{e.decidedBy || '—'}</Td>
+                    <Td>
+                      <div className="text-xs font-bold text-[#1A1D23]">{e.decidedBy || '—'}</div>
+                      {e.decidedByDesignation && <div className="text-[9px] text-[#9CA3AF] uppercase font-bold">{e.decidedByDesignation}</div>}
+                    </Td>
                   </tr>
                 ))}
               </tbody>

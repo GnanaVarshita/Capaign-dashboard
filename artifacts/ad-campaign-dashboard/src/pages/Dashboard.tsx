@@ -64,7 +64,7 @@ export default function Dashboard() {
     { id: 'quick', label: 'Quick View' },
     { id: 'transactions', label: 'Transactions' },
     ...(canSeeSettings ? [{ id: 'settings' as TabId, label: 'Settings' }] : []),
-  ];
+  ].filter(t => u.role === 'Owner' || !u.tabPerms || u.tabPerms[t.id] !== false);
 
   const activeTabObj = tabs.find(t => t.id === activeTab);
 

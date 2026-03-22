@@ -45,6 +45,7 @@ export default function Dashboard() {
   const canSeeTerritory = u.role === 'Owner';
   const canSeeSettings = u.role === 'Owner' || !!u.perms.settings;
   const canSeeBilling = ['Owner', 'All India Manager', 'Regional Manager', 'Zonal Manager', 'Vendor'].includes(u.role);
+  const canSeeVendors = !['All India Manager', 'Regional Manager', 'Zonal Manager', 'Area Manager'].includes(u.role);
 
   interface Tab { id: TabId; label: string; badge?: number | null }
   const tabs: Tab[] = [
@@ -52,7 +53,7 @@ export default function Dashboard() {
     { id: 'po', label: 'Purchase Orders' },
     { id: 'hierarchy', label: 'Hierarchy' },
     { id: 'activities', label: 'Activities' },
-    { id: 'vendor', label: 'Vendors' },
+    ...(canSeeVendors ? [{ id: 'vendor' as TabId, label: 'Vendors' }] : []),
     ...(canSeeBilling ? [{ id: 'billing' as TabId, label: 'Billing' }] : []),
     ...(canSeeSheet ? [{ id: 'sheet' as TabId, label: 'Activity Sheet' }] : []),
     ...(canSeeApprovals ? [{ id: 'approvals' as TabId, label: 'Approvals', badge: pendingCount }] : []),

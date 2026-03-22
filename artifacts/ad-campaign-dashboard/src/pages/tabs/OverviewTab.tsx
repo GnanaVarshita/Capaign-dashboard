@@ -8,11 +8,16 @@ const COLORS = ['#1B4F72', '#2E7D32', '#B45309', '#6D28D9'];
 const PROD_COLORS = ['#1B4F72', '#2E7D32', '#B45309'];
 
 export default function OverviewTab() {
-  const { getVisiblePOs, calcLiveSpent, calcPendingSpent, regions, entries, currentUser } = useAppContext();
+  const { getVisiblePOs, calcLiveSpent, calcPendingSpent, regions, entries, currentUser, users } = useAppContext();
   const visiblePOs = getVisiblePOs();
   const activePOs = visiblePOs.filter(p => p.status === 'Active' || p.status === 'Expiring Soon');
 
-  const userRegion = currentUser?.role === 'Regional Manager' ? currentUser.territory?.region : null;
+  const userRegion = useMemo(() => {
+    if (['Regional Manager', 'Zonal Manager', 'Area Manager'].includes(currentUser.role)) {
+      return currentUser.territory?.region;
+    }
+    return null;
+  }, [currentUser]);
 
   const totalBudget = useMemo(() => {
     return activePOs.reduce((s, po) => {
@@ -61,17 +66,17 @@ export default function OverviewTab() {
       }).filter(r => r.budget > 0);
   }, [regions, activePOs, calcLiveSpent, calcPendingSpent, userRegion]);
 
-  const approvedCount = entries.filter(e => e.status === 'approved').length;
-  const pendingCount = entries.filter(e => e.status === 'pending').length;
-  const rejectedCount = entries.filter(e => e.status === 'rejected').length;
+  const approvedCount = entries.filter(e => e.status === 'approved' && (!userRegion || users.find(u => u.id === e.userId)?.territory.region === userRegion)).length;
+  const pendingCount = entries.filter(e => e.status === 'pending' && (!userRegion || users.find(u => u.id === e.userId)?.territory.region === userRegion)).length;
+  const rejectedCount = entries.filter(e => e.status === 'rejected' && (!userRegion || users.find(u => u.id === e.userId)?.territory.region === userRegion)).length;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard label="Total PO Budget" value={formatLakhs(totalBudget)} sub={`${activePOs.length} active POs`} color="#1B4F72" />
-        <KpiCard label="Total Utilized" value={formatLakhs(totalSpent)} sub={`${pct(totalSpent, totalBudget)}% used`} color="#166534" />
-        <KpiCard label="Unutilized" value={formatLakhs(unutilized)} sub={`+ ₹${(totalPending/1000).toFixed(0)}K pending`} color="#92400E" />
-        <KpiCard label="Active Regions" value={regionData.length.toString()} sub={`${approvedCount} approved entries`} color="#6D28D9" />
+        <KpiCard label="Total PO Budget" value={formatLakhs(totalBudget)} sub={`${activePOs.length} active POs`} color="#1B4F72" icon="📋" />
+        <KpiCard label="Total Utilized" value={formatLakhs(totalSpent)} sub={`${pct(totalSpent, totalBudget)}% used`} color="#16A34A" icon="✅" />
+        <KpiCard label="Unutilized" value={formatLakhs(unutilized)} sub={`+ ₹${(totalPending/1000).toFixed(0)}K pending`} color="#B45309" icon="⚠️" />
+        <KpiCard label="Active Regions" value={regionData.length.toString()} sub={`${approvedCount} approved entries`} color="#6D28D9" icon="🗺️" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

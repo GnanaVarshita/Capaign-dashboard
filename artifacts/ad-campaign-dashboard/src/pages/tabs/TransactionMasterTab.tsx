@@ -59,6 +59,23 @@ export default function TransactionMasterTab() {
     rejected: filtered.filter(e => e.status === 'rejected').reduce((s, e) => s + e.amount, 0),
   }), [filtered]);
 
+  const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
+
+  const groupedData = useMemo(() => {
+    const groups: Record<string, typeof filtered> = {};
+    filtered.forEach(e => {
+      const key = e.po; // Group by PO
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(e);
+    });
+    return Object.entries(groups).map(([po, entries]) => ({
+      po, entries,
+      total: entries.reduce((s, e) => s + e.amount, 0),
+      approved: entries.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0),
+      pending: entries.filter(e => e.status === 'pending').reduce((s, e) => s + e.amount, 0)
+    }));
+  }, [filtered]);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -76,8 +93,27 @@ export default function TransactionMasterTab() {
       </div>
 
       <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('flat')}
+              className={cn('px-3 py-1.5 rounded-lg text-xs font-bold transition-all', viewMode === 'flat' ? 'bg-[#1B4F72] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}
+            >
+              Flat List
+            </button>
+            <button
+              onClick={() => setViewMode('grouped')}
+              className={cn('px-3 py-1.5 rounded-lg text-xs font-bold transition-all', viewMode === 'grouped' ? 'bg-[#1B4F72] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}
+            >
+              Group by PO
+            </button>
+          </div>
+          <div className="flex gap-3">
+             <SearchInput value={search} onChange={setSearch} placeholder="Search transactions..." />
+             {/* Filters ... */}
+          </div>
+        </div>
         <div className="flex flex-wrap gap-3">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search transactions..." />
           <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-36">
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -111,46 +147,101 @@ export default function TransactionMasterTab() {
         </div>
       </Card>
 
-      <Card className="p-6">
-        <CardTitle>Transaction Ledger ({filtered.length} records)</CardTitle>
-        <div className="overflow-x-auto">
-          <Table>
-            <thead>
-              <tr>
-                <Th>#</Th><Th>Date</Th><Th>Submitted By</Th><Th>Area</Th><Th>PIN</Th><Th>PO</Th><Th>ZM</Th><Th>RM</Th><Th>Vendor</Th><Th>Product</Th><Th>Activity</Th><Th>Amount</Th><Th>Description</Th><Th>Status</Th><Th>Decided By</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><Td colSpan={15} className="text-center py-12 text-[#9CA3AF]">No transactions found with current filters.</Td></tr>
-              ) : filtered.map((e, i) => (
-                <tr key={e.id} className="hover:bg-[#F8FAFC]">
-                  <Td className="text-[#9CA3AF] text-xs">{i + 1}</Td>
-                  <Td className="whitespace-nowrap text-xs">{e.date}</Td>
-                  <Td>
-                    <div className="font-medium text-sm">{e.userName}</div>
-                    <div className="text-[9px] text-[#9CA3AF]">{e.userRole}</div>
-                  </Td>
-                  <Td className="text-xs">{e.area || '—'}</Td>
-                  <Td className="font-mono text-xs text-[#9CA3AF]">{e.pin || '—'}</Td>
-                  <Td className="font-bold text-[#1B4F72] whitespace-nowrap">{e.po}</Td>
-                  <Td className="text-xs text-purple-600">{e.zmName || '—'}</Td>
-                  <Td className="text-xs text-blue-600">{e.rmName || '—'}</Td>
-                  <Td className="text-xs">{e.vendorName || '—'}</Td>
-                  <Td><Badge variant="blue">{e.product}</Badge></Td>
-                  <Td className="text-xs whitespace-nowrap">{e.activity}</Td>
-                  <Td className="font-bold text-[#1B4F72] whitespace-nowrap">{formatCurrency(e.amount)}</Td>
-                  <Td className="max-w-[160px] text-xs text-[#6B7280]" title={e.description}>
-                    <span className="line-clamp-2">{e.description}</span>
-                  </Td>
-                  <Td><StatusBadge status={e.status} /></Td>
-                  <Td className="text-xs text-[#9CA3AF]">{e.decidedBy || '—'}</Td>
+      {viewMode === 'flat' ? (
+        <Card className="p-6">
+          <CardTitle>Transaction Ledger ({filtered.length} records)</CardTitle>
+          <div className="overflow-x-auto">
+            <Table>
+              <thead>
+                <tr>
+                  <Th>#</Th><Th>Date</Th><Th>Submitted By</Th><Th>Area</Th><Th>PIN</Th><Th>PO</Th><Th>ZM</Th><Th>RM</Th><Th>Vendor</Th><Th>Product</Th><Th>Activity</Th><Th>Amount</Th><Th>Description</Th><Th>Status</Th><Th>Decided By</Th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><Td colSpan={15} className="text-center py-12 text-[#9CA3AF]">No transactions found with current filters.</Td></tr>
+                ) : filtered.map((e, i) => (
+                  <tr key={e.id} className="hover:bg-[#F8FAFC]">
+                    <Td className="text-[#9CA3AF] text-xs">{i + 1}</Td>
+                    <Td className="whitespace-nowrap text-xs">{e.date}</Td>
+                    <Td>
+                      <div className="font-medium text-sm">{e.userName}</div>
+                      <div className="text-[9px] text-[#9CA3AF]">{e.userRole}</div>
+                    </Td>
+                    <Td className="text-xs">{e.area || '—'}</Td>
+                    <Td className="font-mono text-xs text-[#9CA3AF]">{e.pin || '—'}</Td>
+                    <Td className="font-bold text-[#1B4F72] whitespace-nowrap">{e.po}</Td>
+                    <Td className="text-xs text-purple-600">{e.zmName || '—'}</Td>
+                    <Td className="text-xs text-blue-600">{e.rmName || '—'}</Td>
+                    <Td className="text-xs">{e.vendorName || '—'}</Td>
+                    <Td><Badge variant="blue">{e.product}</Badge></Td>
+                    <Td className="text-xs whitespace-nowrap">{e.activity}</Td>
+                    <Td className="font-bold text-[#1B4F72] whitespace-nowrap">{formatCurrency(e.amount)}</Td>
+                    <Td className="max-w-[160px] text-xs text-[#6B7280]" title={e.description}>
+                      <span className="line-clamp-2">{e.description}</span>
+                    </Td>
+                    <Td><StatusBadge status={e.status} /></Td>
+                    <Td className="text-xs text-[#9CA3AF]">{e.decidedBy || '—'}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {groupedData.length === 0 ? (
+            <Card className="p-12 text-center text-[#9CA3AF]">No transactions found.</Card>
+          ) : groupedData.map(group => (
+            <Card key={group.po} className="overflow-hidden">
+              <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-bold text-[#1B4F72] shadow-sm">PO</div>
+                  <div>
+                    <div className="font-bold text-[#1B4F72]">{group.po}</div>
+                    <div className="text-xs text-slate-500">{group.entries.length} transactions</div>
+                  </div>
+                </div>
+                <div className="flex gap-6 text-right">
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</div>
+                    <div className="font-bold text-[#1B4F72]">{formatCurrency(group.total)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Approved</div>
+                    <div className="font-bold text-green-600">{formatCurrency(group.approved)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending</div>
+                    <div className="font-bold text-amber-600">{formatCurrency(group.pending)}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <Table className="border-0 rounded-none">
+                  <thead>
+                    <tr>
+                      <Th>Date</Th><Th>User</Th><Th>Product</Th><Th>Activity</Th><Th>Amount</Th><Th>Status</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.entries.map(e => (
+                      <tr key={e.id} className="hover:bg-[#F8FAFC]">
+                        <Td className="text-xs whitespace-nowrap">{e.date}</Td>
+                        <Td className="text-xs">{e.userName}</Td>
+                        <Td><Badge variant="blue">{e.product}</Badge></Td>
+                        <Td className="text-xs">{e.activity}</Td>
+                        <Td className="font-bold">{formatCurrency(e.amount)}</Td>
+                        <Td><StatusBadge status={e.status} /></Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            </Card>
+          ))}
         </div>
-      </Card>
+      )}
     </div>
   );
 }

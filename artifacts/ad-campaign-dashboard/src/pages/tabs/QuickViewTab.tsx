@@ -60,11 +60,24 @@ export default function QuickViewTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Label className="whitespace-nowrap">Select PO:</Label>
-        <Select value={selectedPO} onChange={e => setSelectedPO(e.target.value)} className="max-w-xs">
-          {pos.map(p => <option key={p.id} value={p.poNumber}>{p.poNumber} — {p.status}</option>)}
-        </Select>
+      <div className="flex flex-wrap gap-4 mb-6">
+        {pos.map(p => {
+          const isActive = selectedPO === p.poNumber;
+          return (
+            <button
+              key={p.id}
+              onClick={() => setSelectedPO(p.poNumber)}
+              className={cn(
+                'min-w-[180px] text-left border-2 rounded-xl p-4 transition-all bg-white',
+                isActive ? 'border-[#1B4F72] bg-[#EBF3FA]' : 'border-[#DDE3ED] hover:border-[#1B4F72]'
+              )}
+            >
+              <div className={cn('font-bold text-sm mb-1', isActive ? 'text-[#1B4F72]' : 'text-[#1B4F72]')}>{p.poNumber}</div>
+              <div className="text-[11px] text-[#6B7280]">{p.remarks || 'No description'}</div>
+              <div className="font-bold text-base text-[#1A1D23] mt-1">{formatCurrency(p.budget)}</div>
+            </button>
+          );
+        })}
       </div>
 
       {po && (

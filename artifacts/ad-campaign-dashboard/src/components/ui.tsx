@@ -262,20 +262,16 @@ export function SearchInput({ value, onChange, placeholder = 'Search...' }: { va
 }
 
 /* ─── KPI Card ───────────────────────────────────────────── */
-export function KpiCard({ label, value, sub, color = '#1B4F72', icon }: { label: string; value: string; sub?: string; color?: string; icon?: string }) {
+export function KpiCard({ label, value, sub, color = '#1B4F72', icon }: { label: string; value: string; sub?: ReactNode; color?: string; icon?: string }) {
   return (
-    <Card className="p-5 card-hover">
-      <div className="flex items-start justify-between mb-3">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider leading-tight">{label}</p>
-        {icon && (
-          <span className="w-8 h-8 rounded-xl flex items-center justify-center text-base" style={{ background: `${color}15` }}>
-            {icon}
-          </span>
-        )}
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 relative overflow-hidden transition-all hover:shadow-md" style={{ borderTop: `4px solid ${color}` }}>
+      <div className="flex items-start justify-between mb-2">
+        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{label}</div>
+        <div className="text-2xl opacity-80">{icon}</div>
       </div>
-      <p className="text-2xl font-display font-black" style={{ color }}>{value}</p>
-      {sub && <p className="text-xs text-slate-400 mt-1.5 font-medium">{sub}</p>}
-    </Card>
+      <div className="text-2xl font-black text-slate-800 mb-1" style={{ color }}>{value}</div>
+      {sub && <div className="text-xs text-slate-500 font-medium">{sub}</div>}
+    </div>
   );
 }
 

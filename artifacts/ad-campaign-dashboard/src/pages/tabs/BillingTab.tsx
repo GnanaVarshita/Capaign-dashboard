@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Button, Table, Th, Td, Badge, Modal, Label, Input, Textarea, cn } from '../../components/ui';
 import { formatCurrency } from '../../lib/mock-data';

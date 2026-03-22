@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Card, CardTitle, Table, Th, Td, Badge, StatusBadge, SearchInput, Select, InfoBanner, cn, KpiCard, Button } from '../../components/ui';
+import { Card, CardTitle, Table, Th, Td, Badge, StatusBadge, SearchInput, Select, InfoBanner, cn, KpiCard, Button, Modal, Label, Input, Textarea } from '../../components/ui';
 import { formatCurrency } from '../../lib/mock-data';
 
 export default function VendorSectionTab() {
-  const { users, entries, currentUser, bills, addBill, updateBill } = useAppContext();
+  const { users, entries, currentUser, bills, addBill, updateBill, serviceReceivers } = useAppContext();
   const u = currentUser!;
   const isVendor = u.role === 'Vendor';
 
@@ -14,6 +14,14 @@ export default function VendorSectionTab() {
   const [areaFilter, setAreaFilter] = useState('');
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showRaiseBillModal, setShowRaiseBillModal] = useState(false);
+  const [billForm, setBillForm] = useState({
+    invoiceNumber: '',
+    serviceReceiverId: '',
+    serviceCharge: 0,
+    gstRate: 18,
+    remarks: ''
+  });
 
   const scopedEntries = useMemo(() => {
     if (isVendor) {
@@ -56,7 +64,7 @@ export default function VendorSectionTab() {
   // Billing Logic for Vendor
   const billedEntryIds = useMemo(() => new Set(bills.flatMap(b => b.entryIds)), [bills]);
   const pendingBilling = useMemo(() => scopedEntries.filter(e => e.status === 'approved' && !billedEntryIds.has(e.id)), [scopedEntries, billedEntryIds]);
-  const myBillings = useMemo(() => bills.filter(b => b.vendorId === u.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [bills, u.id]);
+  const myBillings = useMemo(() => bills.filter(b => b.vendorId === u.id).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')), [bills, u.id]);
 
   const toggleEntry = (id: string) => {
     const next = new Set(selectedIds);
@@ -71,22 +79,35 @@ export default function VendorSectionTab() {
   const handleRaiseBill = () => {
     if (selectedIds.size === 0) return;
     const selEntries = pendingBilling.filter(e => selectedIds.has(e.id));
-    const total = selEntries.reduce((s, e) => s + e.amount, 0);
-    const invoiceNo = prompt('Enter Invoice Number:', `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`);
-    if (invoiceNo === null) return;
+    const activityAmount = selEntries.reduce((s, e) => s + e.amount, 0);
+    const taxable = activityAmount + Number(billForm.serviceCharge);
+    const gstAmt = Math.round(taxable * (billForm.gstRate / 100));
+    const totalAmount = taxable + gstAmt;
+
+    const receiver = serviceReceivers.find(r => r.id === billForm.serviceReceiverId);
 
     addBill({
       vendorId: u.id,
       vendorName: u.territory?.tradeName || u.name,
+      vendorCode: u.territory?.vendorCode,
       entryIds: Array.from(selectedIds),
-      totalAmount: total,
+      activityAmount,
+      serviceChargeAmt: Number(billForm.serviceCharge),
+      gstRate: billForm.gstRate,
+      totalAmount,
       status: 'submitted',
       createdAt: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split('T')[0],
       submittedAt: new Date().toISOString().split('T')[0],
-      invoiceNumber: invoiceNo,
-      remarks: 'Combined billing from Vendor Section'
+      invoiceNumber: billForm.invoiceNumber,
+      remarks: billForm.remarks,
+      serviceReceiverId: billForm.serviceReceiverId,
+      receiverDetails: receiver ? { ...receiver } : undefined
     });
+    
     setSelectedIds(new Set());
+    setShowRaiseBillModal(false);
+    setBillForm({ invoiceNumber: '', serviceReceiverId: '', serviceCharge: 0, gstRate: 18, remarks: '' });
   };
 
   if (isVendor) {
@@ -145,7 +166,7 @@ export default function VendorSectionTab() {
               </span>
               <Button size="sm" variant="secondary" onClick={selectAllPending}>Select All</Button>
               <Button size="sm" variant="secondary" onClick={clearSelection}>Clear</Button>
-              <Button size="sm" onClick={handleRaiseBill} disabled={selectedIds.size === 0} className="bg-[#C2410C] hover:bg-[#A0360A] border-none">
+              <Button size="sm" onClick={() => setShowRaiseBillModal(true)} disabled={selectedIds.size === 0} className="bg-[#C2410C] hover:bg-[#A0360A] border-none">
                 Raise Bill
               </Button>
             </div>
@@ -228,6 +249,72 @@ export default function VendorSectionTab() {
             </Table>
           </div>
         </Card>
+
+        <Modal open={showRaiseBillModal} onClose={() => setShowRaiseBillModal(false)} title="Raise Combined Bill">
+          <div className="space-y-4">
+            <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+              <p className="text-xs font-bold text-blue-800">Raising bill for {selectedIds.size} activities</p>
+              <p className="text-sm font-black text-blue-900 mt-1">Activity Total: {formatCurrency(pendingBilling.filter(e => selectedIds.has(e.id)).reduce((s, e) => s + e.amount, 0))}</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label required>Invoice Number</Label>
+                <Input value={billForm.invoiceNumber} onChange={e => setBillForm({...billForm, invoiceNumber: e.target.value})} placeholder="e.g. INV/26/001" />
+              </div>
+              <div className="space-y-1">
+                <Label required>Service Receiver</Label>
+                <Select value={billForm.serviceReceiverId} onChange={e => setBillForm({...billForm, serviceReceiverId: e.target.value})}>
+                  <option value="">Select Receiver...</option>
+                  {serviceReceivers.filter(r => r.vendorId === u.id).map(r => (
+                    <option key={r.id} value={r.id}>{r.companyName}</option>
+                  ))}
+                </Select>
+                {serviceReceivers.filter(r => r.vendorId === u.id).length === 0 && (
+                  <p className="text-[10px] text-red-500 mt-1">Please add a service receiver in Billing Section first.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Service Charges (Optional)</Label>
+                <Input type="number" value={billForm.serviceCharge} onChange={e => setBillForm({...billForm, serviceCharge: Number(e.target.value)})} placeholder="0.00" />
+              </div>
+              <div className="space-y-1">
+                <Label>GST Rate (%)</Label>
+                <Select value={billForm.gstRate} onChange={e => setBillForm({...billForm, gstRate: Number(e.target.value)})}>
+                  <option value={18}>18% (Standard)</option>
+                  <option value={12}>12%</option>
+                  <option value={5}>5%</option>
+                  <option value={0}>0% (Exempt)</option>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label>Notes / Remarks</Label>
+              <Textarea value={billForm.remarks} onChange={e => setBillForm({...billForm, remarks: e.target.value})} placeholder="Additional details..." rows={2} />
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Estimated Total (Incl. GST)</p>
+                <p className="text-xl font-black text-[#1B4F72]">
+                  {formatCurrency(
+                    (pendingBilling.filter(e => selectedIds.has(e.id)).reduce((s, e) => s + e.amount, 0) + Number(billForm.serviceCharge)) * (1 + billForm.gstRate/100)
+                  )}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowRaiseBillModal(false)}>Cancel</Button>
+                <Button onClick={handleRaiseBill} disabled={!billForm.invoiceNumber || !billForm.serviceReceiverId} className="bg-[#C2410C] hover:bg-[#A0360A] text-white border-none">
+                  Raise & Submit Bill
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Modal>
       </div>
     );
   }

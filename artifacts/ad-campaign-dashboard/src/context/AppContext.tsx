@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User, Entry, PO, Region, Bill } from '../types';
+import { User, Entry, PO, Region, Bill, ServiceReceiver, VendorProfile } from '../types';
 import { INITIAL_USERS, INITIAL_ENTRIES, INITIAL_POS, INITIAL_REGIONS, INITIAL_PRODUCTS, INITIAL_ACTIVITIES } from '../lib/mock-data';
 
 interface SpentFilters {
@@ -30,6 +30,12 @@ interface AppContextType {
   setActivities: React.Dispatch<React.SetStateAction<string[]>>;
   bills: Bill[];
   setBills: React.Dispatch<React.SetStateAction<Bill[]>>;
+  serviceReceivers: ServiceReceiver[];
+  addServiceReceiver: (receiver: Omit<ServiceReceiver, 'id'>) => void;
+  updateServiceReceiver: (id: string, updates: Partial<ServiceReceiver>) => void;
+  deleteServiceReceiver: (id: string) => void;
+  vendorProfiles: Record<string, VendorProfile>;
+  updateVendorProfile: (vendorId: string, updates: Partial<VendorProfile>) => void;
   addEntry: (entry: Omit<Entry, 'id' | 'status' | 'decidedBy' | 'decidedAt'>) => void;
   updateEntry: (id: string, updates: Partial<Entry>, editedByName: string) => void;
   updateEntryStatus: (id: string, status: 'approved' | 'rejected', decidedBy: string) => void;
@@ -66,6 +72,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<string[]>(INITIAL_PRODUCTS);
   const [activities, setActivities] = useState<string[]>(INITIAL_ACTIVITIES);
   const [bills, setBills] = useState<Bill[]>([]);
+  const [serviceReceivers, setServiceReceivers] = useState<ServiceReceiver[]>([]);
+  const [vendorProfiles, setVendorProfiles] = useState<Record<string, VendorProfile>>({});
   const [toastMsg, setToastMsg] = useState<{ msg: string; type: string } | null>(null);
 
   useEffect(() => {
@@ -80,15 +88,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (data.products) setProducts(data.products);
         if (data.activities) setActivities(data.activities);
         if (data.bills) setBills(data.bills);
+        if (data.serviceReceivers) setServiceReceivers(data.serviceReceivers);
+        if (data.vendorProfiles) setVendorProfiles(data.vendorProfiles);
       }
     } catch {}
   }, []);
 
   useEffect(() => {
     try {
-      localStorage.setItem('ad_campaign_db', JSON.stringify({ users, entries, pos, regions, products, activities, bills }));
+      localStorage.setItem('ad_campaign_db', JSON.stringify({
+        users, entries, pos, regions, products, activities, bills, serviceReceivers, vendorProfiles
+      }));
     } catch {}
-  }, [users, entries, pos, regions, products, activities, bills]);
+  }, [users, entries, pos, regions, products, activities, bills, serviceReceivers, vendorProfiles]);
 
   const toast = useCallback((msg: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToastMsg({ msg, type });
@@ -175,6 +187,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateBill = (id: string, updates: Partial<Bill>) => {
     setBills(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
     toast('Bill updated!');
+  };
+
+  const addServiceReceiver = (receiverData: Omit<ServiceReceiver, 'id'>) => {
+    const receiver: ServiceReceiver = { ...receiverData, id: `sr-${Date.now()}` };
+    setServiceReceivers(prev => [...prev, receiver]);
+    toast('Service receiver added!');
+  };
+
+  const updateServiceReceiver = (id: string, updates: Partial<ServiceReceiver>) => {
+    setServiceReceivers(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    toast('Service receiver updated!');
+  };
+
+  const deleteServiceReceiver = (id: string) => {
+    setServiceReceivers(prev => prev.filter(r => r.id !== id));
+    toast('Service receiver removed.');
+  };
+
+  const updateVendorProfile = (vendorId: string, updates: Partial<VendorProfile>) => {
+    setVendorProfiles(prev => ({
+      ...prev,
+      [vendorId]: { ...(prev[vendorId] || { vendorId, tradeName: '', vendorCode: '', gst: '', address: '', phone: '', email: '' }), ...updates }
+    }));
+    toast('Profile updated!');
   };
 
   const matchesFilters = (e: Entry, f: SpentFilters) => {
@@ -277,6 +313,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       addEntry, updateEntry, updateEntryStatus, deleteEntry,
       addPO, updatePO, approvePO, rejectPO, lapsePO,
       addUser, updateUser, deleteUser, addBill, updateBill,
+      serviceReceivers, addServiceReceiver, updateServiceReceiver, deleteServiceReceiver,
+      vendorProfiles, updateVendorProfile,
       calcLiveSpent, calcPendingSpent,
       getVisiblePOs, getVisiblePendingEntries, getMyEntries, getScopedEntries,
       refreshData,

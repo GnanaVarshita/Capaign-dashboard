@@ -106,12 +106,84 @@ export interface Bill {
   id: string;
   vendorId: string;
   vendorName: string;
+  vendorCode?: string;
   entryIds: string[];
-  totalAmount: number;
+  totalAmount: number; // Final total with GST
+  activityAmount: number; // Sum of selected entries
+  serviceChargeAmt: number; 
+  serviceChargePct?: number;
+  gstRate: number; // e.g. 18
   status: 'draft' | 'submitted' | 'paid';
   createdAt: string;
+  date?: string; // Invoice date
   submittedAt?: string;
   paidAt?: string;
   invoiceNumber?: string;
   remarks?: string;
+  serviceReceiverId?: string;
+  receiverDetails?: Partial<ServiceReceiver>;
+  
+  // Service Provider (Vendor) details specifically for this bill
+  spTradeName?: string;
+  spVendorCode?: string;
+  spGST?: string;
+  spPAN?: string;
+  spAddress?: string;
+  spPhone?: string;
+  spEmail?: string;
+  
+  // Bank details for this bill
+  bankDetails?: {
+    accountName?: string;
+    accountNo?: string;
+    ifsc?: string;
+    bankName?: string;
+    branch?: string;
+  };
+  
+  // Per-entry details (HSN, custom particulars)
+  entryDetails?: Record<string, {
+    particulars?: string;
+    hsn?: string;
+  }>;
+
+  signatoryName?: string;
+  signatoryDesignation?: string;
+}
+
+export const GST_STATES: Record<string, string> = {
+  "01": "Jammu & Kashmir", "02": "Himachal Pradesh", "03": "Punjab", "04": "Chandigarh", "05": "Uttarakhand",
+  "06": "Haryana", "07": "Delhi", "08": "Rajasthan", "09": "Uttar Pradesh", "10": "Bihar",
+  "11": "Sikkim", "12": "Arunachal Pradesh", "13": "Nagaland", "14": "Manipur", "15": "Mizoram",
+  "16": "Tripura", "17": "Meghalaya", "18": "Assam", "19": "West Bengal", "20": "Jharkhand",
+  "21": "Odisha", "22": "Chhattisgarh", "23": "Madhya Pradesh", "24": "Gujarat", "25": "Daman & Diu",
+  "26": "Dadra & Nagar Haveli", "27": "Maharashtra", "28": "Andhra Pradesh", "29": "Karnataka", "30": "Goa",
+  "31": "Lakshadweep", "32": "Kerala", "33": "Tamil Nadu", "34": "Puducherry", "35": "Andaman & Nicobar Islands",
+  "36": "Telangana", "37": "Andhra Pradesh (New)", "38": "Ladakh"
+};
+
+export interface ServiceReceiver {
+  id: string;
+  vendorId: string;
+  companyName: string;
+  gst: string;
+  address: string;
+  phone: string;
+  email: string;
+  contactPerson: string;
+  createdAt: string;
+}
+
+export interface VendorProfile {
+  vendorId: string;
+  tradeName: string;
+  vendorCode: string;
+  gst: string;
+  address: string;
+  phone: string;
+  email: string;
+  bankName?: string;
+  accountNo?: string;
+  ifsc?: string;
+  pan?: string;
 }

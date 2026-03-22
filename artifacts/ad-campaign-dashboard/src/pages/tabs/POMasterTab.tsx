@@ -15,7 +15,7 @@ const approvalBadge = (s: string) =>
   <Badge variant="warning">⏳ Pending</Badge>;
 
 export default function POMasterTab() {
-  const { pos, setPOs, addPO, updatePO, lapsePO, approvePO, rejectPO, calcLiveSpent, calcPendingSpent, regions, products, activities, currentUser } = useAppContext();
+  const { pos, setPOs, addPO, updatePO, lapsePO, approvePO, rejectPO, calcLiveSpent, calcPendingSpent, regions, products, setProducts, activities, setActivities, currentUser } = useAppContext();
   const u = currentUser!;
   const canManage = u.role === 'Owner' || u.perms.manage;
   const canApprove = u.role === 'Owner' || u.role === 'All India Manager';
@@ -28,6 +28,16 @@ export default function POMasterTab() {
   const [showDistModal, setShowDistModal] = useState(false);
   const [distRegion, setDistRegion] = useState('');
   const [distData, setDistData] = useState<Record<string, Record<string, number>>>({});
+
+  // Product Master Modal state
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [productForm, setProductForm] = useState({ name: '', description: '' });
+  const [editingProduct, setEditingProduct] = useState<string | null>(null);
+
+  // Activity Master Modal state
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [activityForm, setActivityForm] = useState({ name: '', description: '' });
+  const [editingActivity, setEditingActivity] = useState<string | null>(null);
 
   const initForm = {
     poNumber: '', budget: '', from: '', to: '', status: 'Draft' as any,
@@ -115,8 +125,145 @@ export default function POMasterTab() {
 
   const autoGenPO = () => setForm(f => ({ ...f, poNumber: `PO-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}` }));
 
+  // Product Master Handlers
+  const openAddProduct = () => {
+    setProductForm({ name: '', description: '' });
+    setEditingProduct(null);
+    setShowProductModal(true);
+  };
+
+  const openEditProduct = (product: string) => {
+    setProductForm({ name: product, description: '' });
+    setEditingProduct(product);
+    setShowProductModal(true);
+  };
+
+  const saveProduct = () => {
+    if (!productForm.name.trim()) return;
+    if (editingProduct) {
+      setProducts(products.map(p => (p === editingProduct ? productForm.name : p)));
+    } else {
+      setProducts([...products, productForm.name]);
+    }
+    setShowProductModal(false);
+    setProductForm({ name: '', description: '' });
+    setEditingProduct(null);
+  };
+
+  const deleteProduct = (product: string) => {
+    if (confirm(`Delete product "${product}"?`)) {
+      setProducts(products.filter(p => p !== product));
+    }
+  };
+
+  // Activity Master Handlers
+  const openAddActivity = () => {
+    setActivityForm({ name: '', description: '' });
+    setEditingActivity(null);
+    setShowActivityModal(true);
+  };
+
+  const openEditActivity = (activity: string) => {
+    setActivityForm({ name: activity, description: '' });
+    setEditingActivity(activity);
+    setShowActivityModal(true);
+  };
+
+  const saveActivity = () => {
+    if (!activityForm.name.trim()) return;
+    if (editingActivity) {
+      setActivities(activities.map(a => (a === editingActivity ? activityForm.name : a)));
+    } else {
+      setActivities([...activities, activityForm.name]);
+    }
+    setShowActivityModal(false);
+    setActivityForm({ name: '', description: '' });
+    setEditingActivity(null);
+  };
+
+  const deleteActivity = (activity: string) => {
+    if (confirm(`Delete activity "${activity}"?`)) {
+      setActivities(activities.filter(a => a !== activity));
+    }
+  };
+
   return (
     <div className="space-y-0">
+      {/* PO Master Header */}
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-[#1A1D23]">📋 PO Master Management</h2>
+        <p className="text-sm text-[#6B7280] mt-1">Create and manage Purchase Orders, Products, and Activities</p>
+      </div>
+
+      {/* Product Master & Activity Master Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        {/* Product Master Card */}
+        <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
+          <div className="p-4 bg-gradient-to-r from-[#EBF3FA] to-[#F0F9FF] border-b border-[#DDE3ED] flex items-center justify-between">
+            <h3 className="font-bold text-[#1B4F72] flex items-center gap-2">🧩 Product Master</h3>
+            {canManage && <Button size="sm" onClick={openAddProduct}>+ Add Product</Button>}
+          </div>
+          <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
+            {products.length === 0 ? (
+              <div className="p-6 text-center text-[#9CA3AF] text-sm">
+                <p>No products added yet.</p>
+              </div>
+            ) : (
+              products.map((product, idx) => (
+                <div key={idx} className="p-3.5 hover:bg-[#F9FAFB] transition-colors flex items-center justify-between group">
+                  <div className="flex-1">
+                    <p className="font-semibold text-[#1A1D23] text-sm">{product}</p>
+                    <p className="text-xs text-[#9CA3AF] mt-0.5">Product Code: PRD-{String(idx + 1).padStart(3, '0')}</p>
+                  </div>
+                  {canManage && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="sm" variant="outline" onClick={() => openEditProduct(product)} className="text-xs">Edit</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteProduct(product)} className="text-xs">×</Button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Activity Master Card */}
+        <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
+          <div className="p-4 bg-gradient-to-r from-[#FEF3C7] to-[#FEF9E7] border-b border-[#DDE3ED] flex items-center justify-between">
+            <h3 className="font-bold text-[#B45309] flex items-center gap-2">⚡ Activity Master</h3>
+            {canManage && <Button size="sm" onClick={openAddActivity}>+ Add Activity</Button>}
+          </div>
+          <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
+            {activities.length === 0 ? (
+              <div className="p-6 text-center text-[#9CA3AF] text-sm">
+                <p>No activities added yet.</p>
+              </div>
+            ) : (
+              activities.map((activity, idx) => (
+                <div key={idx} className="p-3.5 hover:bg-[#F9FAFB] transition-colors flex items-center justify-between group">
+                  <div className="flex-1">
+                    <p className="font-semibold text-[#1A1D23] text-sm">{activity}</p>
+                    <p className="text-xs text-[#9CA3AF] mt-0.5">Activity Code: ACT-{String(idx + 1).padStart(3, '0')}</p>
+                  </div>
+                  {canManage && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="sm" variant="outline" onClick={() => openEditActivity(activity)} className="text-xs">Edit</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteActivity(activity)} className="text-xs">×</Button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Visual Divider */}
+      <div className="border-t-2 border-[#EEF2F7] py-4">
+        <p className="text-sm font-bold text-[#1A1D23]">Purchase Orders</p>
+      </div>
+
+      {/* Purchase Orders Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
         {/* LEFT - List */}
         <div className="border border-[#DDE3ED] rounded-xl lg:rounded-r-none lg:border-r-0 bg-white overflow-hidden">
@@ -369,6 +516,66 @@ export default function POMasterTab() {
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={() => setShowDistModal(false)}>Cancel</Button>
             <Button onClick={saveDistribution}>Save Distribution</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Product Master Modal */}
+      <Modal open={showProductModal} onClose={() => setShowProductModal(false)} title={editingProduct ? 'Edit Product' : 'Add Product'} width="max-w-lg">
+        <div className="space-y-4">
+          <div>
+            <Label required>Product Name</Label>
+            <Input 
+              value={productForm.name} 
+              onChange={(e) => setProductForm(f => ({ ...f, name: e.target.value }))} 
+              placeholder="e.g. Rice, Wheat, Fertilizer"
+              autoFocus
+            />
+          </div>
+          <div>
+            <Label>Description (Optional)</Label>
+            <Textarea 
+              value={productForm.description} 
+              onChange={(e) => setProductForm(f => ({ ...f, description: e.target.value }))} 
+              placeholder="Add optional description..."
+              rows={2}
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setShowProductModal(false)}>Cancel</Button>
+            <Button onClick={saveProduct} disabled={!productForm.name.trim()}>
+              {editingProduct ? 'Update Product' : 'Add Product'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Activity Master Modal */}
+      <Modal open={showActivityModal} onClose={() => setShowActivityModal(false)} title={editingActivity ? 'Edit Activity' : 'Add Activity'} width="max-w-lg">
+        <div className="space-y-4">
+          <div>
+            <Label required>Activity Name</Label>
+            <Input 
+              value={activityForm.name} 
+              onChange={(e) => setActivityForm(f => ({ ...f, name: e.target.value }))} 
+              placeholder="e.g. Village Meeting, Demo, Training"
+              autoFocus
+            />
+          </div>
+          <div>
+            <Label>Description (Optional)</Label>
+            <Textarea 
+              value={activityForm.description} 
+              onChange={(e) => setActivityForm(f => ({ ...f, description: e.target.value }))} 
+              placeholder="Add optional description..."
+              rows={2}
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setShowActivityModal(false)}>Cancel</Button>
+            <Button onClick={saveActivity} disabled={!activityForm.name.trim()}>
+              {editingActivity ? 'Update Activity' : 'Add Activity'}
+            </Button>
           </div>
         </div>
       </Modal>

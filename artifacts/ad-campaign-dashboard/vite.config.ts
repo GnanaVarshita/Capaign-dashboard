@@ -4,13 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-const rawPort = process.env.PORT;
-
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
+// Default to 5173 for local development (Vite standard port)
+// Can be overridden with PORT environment variable
+const rawPort = process.env.PORT || "5173";
 
 const port = Number(rawPort);
 
@@ -18,13 +14,9 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH;
-
-if (!basePath) {
-  throw new Error(
-    "BASE_PATH environment variable is required but was not provided.",
-  );
-}
+// Default to "/" for local development
+// Can be overridden with BASE_PATH environment variable
+const basePath = process.env.BASE_PATH || "/";
 
 export default defineConfig({
   base: basePath,

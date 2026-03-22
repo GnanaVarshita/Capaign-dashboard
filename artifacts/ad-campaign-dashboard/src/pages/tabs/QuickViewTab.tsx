@@ -7,62 +7,248 @@ import { formatCurrency, formatLakhs, pct } from '../../lib/mock-data';
 const COLORS = ['#1B4F72', '#2E86C1', '#AED6F1', '#F39C12', '#E74C3C', '#27AE60', '#8E44AD', '#D35400'];
 
 export default function QuickViewTab() {
-  const { getVisiblePOs, calcLiveSpent, calcPendingSpent, products, activities, regions, entries, currentUser } = useAppContext();
+  const { getVisiblePOs, calcLiveSpent, calcPendingSpent, products, activities, regions, currentUser } = useAppContext();
   const u = currentUser!;
+  const isOwner = u.role === 'Owner' || u.role === 'All India Manager';
+  const isRM = u.role === 'Regional Manager';
+  const isZM = u.role === 'Zonal Manager';
+  const isVendor = u.role === 'Vendor';
+
   const pos = getVisiblePOs().filter(p => p.approvalStatus === 'approved');
   const [selectedPO, setSelectedPO] = useState(pos[0]?.poNumber || '');
 
+  const [regionFilter, setRegionFilter] = useState(isRM || isZM ? u.territory.region || '' : '');
+  const [zoneFilter, setZoneFilter] = useState(isZM ? u.territory.zone || '' : '');
+  const [areaFilter, setAreaFilter] = useState('');
+  const [productFilter, setProductFilter] = useState('');
+  const [activityFilter, setActivityFilter] = useState('');
+
   const po = pos.find(p => p.poNumber === selectedPO) || pos[0];
 
-  const userRegion = currentUser?.role === 'Regional Manager' ? currentUser.territory?.region : null;
+  const getPOBudget = (p: typeof po) => {
+    if (!p) return 0;
+    if (isOwner) return p.budget;
+    
+    let total = 0;
+    if (isRM) {
+      total = p.regionBudgets[u.territory.region!] || 0;
+    } else if (isZM) {
+      const reg = u.territory.region!;
+      const zone = u.territory.zone!;
+      const za = p.zoneAllocations[reg]?.[zone] || {};
+      Object.values(za).forEach(prods => {
+        Object.values(prods).forEach(val => { total += (val as number); });
+      });
+    } else if (isVendor) {
+      const azs = u.territory.assignedZones || [];
+      azs.forEach(az => {
+        const za = p.zoneAllocations[az.region]?.[az.zone] || {};
+        Object.entries(za).forEach(([prod, acts]) => {
+          Object.entries(acts).forEach(([act, val]) => {
+            if (az.activities.includes(act)) { total += (val as number); }
+          });
+        });
+      });
+    }
+    return total;
+  };
+
+  const allRegions = useMemo(() => {
+    if (isOwner) return regions.map(r => r.name);
+    if (isRM || isZM) return [u.territory.region!];
+    if (isVendor) return [...new Set((u.territory.assignedZones || []).map(az => az.region))];
+    return [];
+  }, [regions, isOwner, isRM, isZM, isVendor, u.territory]);
+
+  const allZones = useMemo(() => {
+    let regs = regions;
+    if (!isOwner) {
+      const myRegs = allRegions;
+      regs = regions.filter(r => myRegs.includes(r.name));
+    }
+    if (regionFilter) regs = regs.filter(r => r.name === regionFilter);
+    
+    let zones = regs.flatMap(r => r.zones.map(z => z.name));
+    if (isZM) return [u.territory.zone!];
+    if (isVendor) {
+      const myZones = (u.territory.assignedZones || []).map(az => az.zone);
+      zones = zones.filter(z => myZones.includes(z));
+    }
+    return zones;
+  }, [regions, regionFilter, isOwner, isZM, isVendor, u.territory, allRegions]);
+
+  const allAreas = useMemo(() => {
+    let regs = regions;
+    if (!isOwner) {
+      const myRegs = allRegions;
+      regs = regions.filter(r => myRegs.includes(r.name));
+    }
+    let zones = regs.flatMap(r => r.zones);
+    if (regionFilter) zones = (regs.find(r => r.name === regionFilter)?.zones || []);
+    
+    const myZoneNames = allZones;
+    zones = zones.filter(z => myZoneNames.includes(z.name));
+    if (zoneFilter) zones = zones.filter(z => z.name === zoneFilter);
+    
+    return zones.flatMap(z => z.areas.map(a => a.name));
+  }, [regions, regionFilter, zoneFilter, isOwner, allRegions, allZones]);
+
+  const allActivities = useMemo(() => {
+    if (!isVendor) return activities;
+    const myActs = new Set<string>();
+    (u.territory.assignedZones || []).forEach(az => {
+      az.activities.forEach(a => myActs.add(a));
+    });
+    return activities.filter(a => myActs.has(a));
+  }, [activities, isVendor, u.territory]);
+
+  const filteredBudget = useMemo(() => {
+    if (!po) return 0;
+    
+    let scopeRegions = allRegions;
+    if (regionFilter) scopeRegions = scopeRegions.filter(r => r === regionFilter);
+    
+    let total = 0;
+    scopeRegions.forEach(reg => {
+      if (!zoneFilter && !productFilter && !activityFilter && isOwner) {
+        total += po.regionBudgets[reg] || 0;
+        return;
+      }
+      
+      const za = po.zoneAllocations[reg] || {};
+      let zones = Object.keys(za);
+      if (isZM) zones = zones.filter(z => z === u.territory.zone);
+      else if (isVendor) {
+        const myZones = (u.territory.assignedZones || []).filter(az => az.region === reg).map(az => az.zone);
+        zones = zones.filter(z => myZones.includes(z));
+      }
+      if (zoneFilter) zones = zones.filter(z => z === zoneFilter);
+      
+      zones.forEach(z => {
+        const prods = za[z] || {};
+        let prodKeys = Object.keys(prods);
+        if (productFilter) prodKeys = prodKeys.filter(p => p === productFilter);
+        
+        prodKeys.forEach(p => {
+          const acts = prods[p] || {};
+          let actKeys = Object.keys(acts);
+          if (isVendor) {
+            const az = (u.territory.assignedZones || []).find(x => x.region === reg && x.zone === z);
+            if (az) actKeys = actKeys.filter(a => az.activities.includes(a));
+          }
+          if (activityFilter) actKeys = actKeys.filter(a => a === activityFilter);
+          actKeys.forEach(a => { total += (acts[a] || 0); });
+        });
+      });
+    });
+    return total;
+  }, [po, u, regionFilter, zoneFilter, productFilter, activityFilter, isOwner, isRM, isZM, isVendor, allRegions]);
+
+  const spentFilters = useMemo(() => ({
+    po: po?.poNumber,
+    region: regionFilter,
+    zone: zoneFilter,
+    area: areaFilter,
+    product: productFilter,
+    activity: activityFilter,
+    vendorId: isVendor ? u.id : undefined
+  }), [po, regionFilter, zoneFilter, areaFilter, productFilter, activityFilter, isVendor, u.id]);
+
+  const totalSpent = useMemo(() => po ? calcLiveSpent(spentFilters) : 0, [po, calcLiveSpent, spentFilters]);
+  const totalPending = useMemo(() => po ? calcPendingSpent(spentFilters) : 0, [po, calcPendingSpent, spentFilters]);
+  const utilPct = pct(totalSpent, filteredBudget);
 
   const productData = useMemo(() => {
     if (!po) return [];
     return products.map(prod => {
-      const budget = userRegion 
-        ? Object.values(po.allocations[userRegion]?.[prod] || {}).reduce((as, v) => as + (v as number), 0)
-        : Object.values(po.allocations || {}).reduce((s, r) => {
-            return s + Object.values(r[prod] || {}).reduce((as, v) => as + (v as number), 0);
-          }, 0);
-      const spent = calcLiveSpent({ po: po.poNumber, product: prod, ...(userRegion ? { region: userRegion } : {}) });
-      return { name: prod, Budget: budget, Spent: spent };
-    }).filter(d => d.Budget > 0);
-  }, [po, products, calcLiveSpent, userRegion]);
+      if (productFilter && prod !== productFilter) return null;
+      
+      let pBudget = 0;
+      let scopeRegions = allRegions;
+      if (regionFilter) scopeRegions = scopeRegions.filter(r => r === regionFilter);
+
+      scopeRegions.forEach(reg => {
+        const za = po.zoneAllocations[reg] || {};
+        let zones = Object.keys(za);
+        if (isZM) zones = zones.filter(z => z === u.territory.zone);
+        else if (isVendor) {
+          const myZones = (u.territory.assignedZones || []).filter(az => az.region === reg).map(az => az.zone);
+          zones = zones.filter(z => myZones.includes(z));
+        }
+        if (zoneFilter) zones = zones.filter(z => z === zoneFilter);
+
+        zones.forEach(z => {
+          const acts = za[z]?.[prod] || {};
+          let actKeys = Object.keys(acts);
+          if (isVendor) {
+            const az = (u.territory.assignedZones || []).find(x => x.region === reg && x.zone === z);
+            if (az) actKeys = actKeys.filter(a => az.activities.includes(a));
+          }
+          if (activityFilter) actKeys = actKeys.filter(a => a === activityFilter);
+          actKeys.forEach(a => { pBudget += (acts[a] || 0); });
+        });
+      });
+
+      const pSpent = calcLiveSpent({ ...spentFilters, product: prod });
+      return { name: prod, Budget: pBudget, Spent: pSpent };
+    }).filter(d => d !== null && (d.Budget > 0 || d.Spent > 0)) as { name: string; Budget: number; Spent: number }[];
+  }, [po, products, calcLiveSpent, spentFilters, productFilter, regionFilter, zoneFilter, activityFilter, isRM, isZM, isVendor, u.territory, allRegions]);
 
   const activityData = useMemo(() => {
     if (!po) return [];
     return activities.map(act => {
-      const spent = calcLiveSpent({ po: po.poNumber, activity: act, ...(userRegion ? { region: userRegion } : {}) });
+      if (activityFilter && act !== activityFilter) return null;
+      const spent = calcLiveSpent({ ...spentFilters, activity: act });
       return { name: act, value: spent };
-    }).filter(d => d.value > 0);
-  }, [po, activities, calcLiveSpent, userRegion]);
+    }).filter(d => d !== null && d.value > 0) as { name: string; value: number }[];
+  }, [po, activities, calcLiveSpent, spentFilters, activityFilter]);
 
-  const regionData = useMemo(() => {
+  const regionPerformanceData = useMemo(() => {
     if (!po) return [];
-    return Object.entries(po.regionBudgets || {})
-      .filter(([region]) => !userRegion || region === userRegion)
-      .map(([region, budget]) => {
-        const spent = calcLiveSpent({ po: po.poNumber, region });
-        const pending = calcPendingSpent({ po: po.poNumber, region });
-        return { region, budget: budget as number, spent, pending };
+    let scopeRegions = allRegions;
+    if (regionFilter) scopeRegions = scopeRegions.filter(r => r === regionFilter);
+
+    return scopeRegions.map(reg => {
+      let rBudget = 0;
+      const za = po.zoneAllocations[reg] || {};
+      let zones = Object.keys(za);
+      if (isZM) zones = zones.filter(z => z === u.territory.zone);
+      else if (isVendor) {
+        const myZones = (u.territory.assignedZones || []).filter(az => az.region === reg).map(az => az.zone);
+        zones = zones.filter(z => myZones.includes(z));
+      }
+      if (zoneFilter) zones = zones.filter(z => z === zoneFilter);
+
+      zones.forEach(z => {
+        const prods = za[z] || {};
+        let prodKeys = Object.keys(prods);
+        if (productFilter) prodKeys = prodKeys.filter(p => p === productFilter);
+        prodKeys.forEach(p => {
+          const acts = prods[p] || {};
+          let actKeys = Object.keys(acts);
+          if (isVendor) {
+            const az = (u.territory.assignedZones || []).find(x => x.region === reg && x.zone === z);
+            if (az) actKeys = actKeys.filter(a => az.activities.includes(a));
+          }
+          if (activityFilter) actKeys = actKeys.filter(a => a === activityFilter);
+          actKeys.forEach(a => { rBudget += (acts[a] || 0); });
+        });
       });
-  }, [po, calcLiveSpent, calcPendingSpent, userRegion]);
 
-  const totalBudget = useMemo(() => {
-    if (!po) return 0;
-    if (userRegion) return po.regionBudgets[userRegion] || 0;
-    return po.budget;
-  }, [po, userRegion]);
-
-  const totalSpent = po ? calcLiveSpent({ po: po.poNumber, ...(userRegion ? { region: userRegion } : {}) }) : 0;
-  const totalPending = po ? calcPendingSpent({ po: po.poNumber, ...(userRegion ? { region: userRegion } : {}) }) : 0;
-  const utilPct = pct(totalSpent, totalBudget);
+      const rSpent = calcLiveSpent({ ...spentFilters, region: reg });
+      const rPending = calcPendingSpent({ ...spentFilters, region: reg });
+      return { region: reg, budget: rBudget, spent: rSpent, pending: rPending };
+    }).filter(d => d.budget > 0 || d.spent > 0);
+  }, [po, regionFilter, zoneFilter, productFilter, activityFilter, calcLiveSpent, calcPendingSpent, spentFilters, isRM, isZM, isVendor, u.territory, allRegions]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-4 mb-6">
         {pos.map(p => {
           const isActive = selectedPO === p.poNumber;
+          const scopedPOBudget = getPOBudget(p);
+          if (scopedPOBudget === 0 && !isOwner) return null;
+
           return (
             <button
               key={p.id}
@@ -73,21 +259,68 @@ export default function QuickViewTab() {
               )}
             >
               <div className={cn('font-bold text-sm mb-1', isActive ? 'text-[#1B4F72]' : 'text-[#1B4F72]')}>{p.poNumber}</div>
-              <div className="text-[11px] text-[#6B7280]">{p.remarks || 'No description'}</div>
-              <div className="font-bold text-base text-[#1A1D23] mt-1">{formatCurrency(p.budget)}</div>
+              <div className="text-[11px] text-[#6B7280] truncate">{p.remarks || 'No description'}</div>
+              <div className="font-bold text-base text-[#1A1D23] mt-1">{formatCurrency(scopedPOBudget)}</div>
+              {!isOwner && <div className="text-[9px] text-slate-400 mt-1 uppercase font-bold tracking-wider">My Allocation</div>}
             </button>
           );
         })}
       </div>
 
+      <Card className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {isOwner ? (
+            <div>
+              <Label className="text-[10px] uppercase font-bold text-slate-500">Region</Label>
+              <Select value={regionFilter} onChange={e => { setRegionFilter(e.target.value); setZoneFilter(''); setAreaFilter(''); }}>
+                <option value="">All Regions</option>
+                {allRegions.map(r => <option key={r} value={r}>{r}</option>)}
+              </Select>
+            </div>
+          ) : null}
+          
+          {(isOwner || isRM || isVendor) ? (
+            <div>
+              <Label className="text-[10px] uppercase font-bold text-slate-500">Zone</Label>
+              <Select value={zoneFilter} onChange={e => { setZoneFilter(e.target.value); setAreaFilter(''); }} disabled={isZM}>
+                <option value="">{allZones.length > 1 ? 'All Zones' : allZones[0]}</option>
+                {allZones.length > 1 && allZones.map(z => <option key={z} value={z}>{z}</option>)}
+              </Select>
+            </div>
+          ) : null}
+
+          <div>
+            <Label className="text-[10px] uppercase font-bold text-slate-500">Area</Label>
+            <Select value={areaFilter} onChange={e => setAreaFilter(e.target.value)}>
+              <option value="">All Areas</option>
+              {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase font-bold text-slate-500">Product</Label>
+            <Select value={productFilter} onChange={e => setProductFilter(e.target.value)}>
+              <option value="">All Products</option>
+              {products.map(p => <option key={p} value={p}>{p}</option>)}
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase font-bold text-slate-500">Activity</Label>
+            <Select value={activityFilter} onChange={e => setActivityFilter(e.target.value)}>
+              <option value="">All Activities</option>
+              {allActivities.map(a => <option key={a} value={a}>{a}</option>)}
+            </Select>
+          </div>
+        </div>
+      </Card>
+
       {po && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Total Budget', value: formatLakhs(totalBudget), sub: formatCurrency(totalBudget), color: 'border-l-[#1B4F72]', textColor: 'text-[#1B4F72]' },
+              { label: 'Scoped Budget', value: formatLakhs(filteredBudget), sub: formatCurrency(filteredBudget), color: 'border-l-[#1B4F72]', textColor: 'text-[#1B4F72]' },
               { label: 'Approved Spend', value: formatLakhs(totalSpent), sub: `${utilPct}% utilized`, color: 'border-l-green-500', textColor: 'text-green-600' },
               { label: 'Pending Approval', value: formatLakhs(totalPending), sub: formatCurrency(totalPending), color: 'border-l-amber-400', textColor: 'text-amber-600' },
-              { label: 'Balance', value: formatLakhs(totalBudget - totalSpent), sub: formatCurrency(totalBudget - totalSpent), color: totalBudget - totalSpent < 0 ? 'border-l-red-500' : 'border-l-gray-400', textColor: totalBudget - totalSpent < 0 ? 'text-red-600' : 'text-[#374151]' },
+              { label: 'Balance', value: formatLakhs(filteredBudget - totalSpent), sub: formatCurrency(filteredBudget - totalSpent), color: filteredBudget - totalSpent < 0 ? 'border-l-red-500' : 'border-l-gray-400', textColor: filteredBudget - totalSpent < 0 ? 'text-red-600' : 'text-[#374151]' },
             ].map(k => (
               <Card key={k.label} className={`p-4 border-l-4 ${k.color}`}>
                 <p className="text-xs text-[#6B7280] font-semibold mb-1">{k.label}</p>
@@ -115,9 +348,9 @@ export default function QuickViewTab() {
             </Card>
 
             <Card className="p-5">
-              <CardTitle>Region-wise Performance</CardTitle>
+              <CardTitle>Region/Zone Performance</CardTitle>
               <div className="space-y-3">
-                {regionData.map(r => {
+                {regionPerformanceData.map(r => {
                   const rPct = pct(r.spent, r.budget);
                   return (
                     <div key={r.region}>
@@ -136,6 +369,7 @@ export default function QuickViewTab() {
                     </div>
                   );
                 })}
+                {regionPerformanceData.length === 0 && <p className="py-10 text-center text-[#9CA3AF] text-sm">No data available for current selection.</p>}
               </div>
             </Card>
           </div>
@@ -166,7 +400,7 @@ export default function QuickViewTab() {
                   );
                 })}
                 {productData.length === 0 && (
-                  <tr><Td colSpan={5} className="text-center py-8 text-[#9CA3AF]">No product allocations found for this PO.</Td></tr>
+                  <tr><Td colSpan={5} className="text-center py-8 text-[#9CA3AF]">No product allocations found for this selection.</Td></tr>
                 )}
               </tbody>
             </Table>

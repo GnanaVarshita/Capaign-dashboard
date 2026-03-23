@@ -1,73 +1,136 @@
-## ✅ First-Time Codespace Setup Checklist
+## ✅ Codespace Setup Guide (Every Time You Open)
 
-Complete this checklist to ensure your development environment is properly configured.
-
----
-
-### 📋 Phase 1: Prerequisites (5 minutes)
-
-- [ ] **Node.js installed**
-  ```bash
-  node --version  # Should be v18 or higher
-  npm --version   # Should be v8 or higher
-  ```
-
-- [ ] **Terminal access in Codespace**
-  - View → Terminal (or Ctrl + `)
-
-- [ ] **Files visible in explorer**
-  - Should see: `package.json`, `pnpm-workspace.yaml`, `artifacts/`, `lib/` folders
+**The fastest way** is to use DevContainer (automatic setup). If you prefer manual setup, follow the steps below.
 
 ---
 
-### 📋 Phase 2: Install Package Manager (2 minutes)
+## ⚠️ Note: DevContainer Setup
 
-- [ ] **Install pnpm globally**
-  ```bash
-  npm install -g pnpm@latest
-  ```
+**DevContainers don't work in GitHub Codespace** (the web-based environment).
 
-- [ ] **Verify pnpm installation**
-  ```bash
-  pnpm --version  # Should show v9.x or higher
-  ```
+- If you're using **GitHub Codespace** (web browser): Skip this section ✗
+- If you're using **Local VS Code**: DevContainer will work ✓
 
-**✅ Success indicator**: pnpm version displays correctly
+Since you're in Codespace, use the **manual setup below** instead.
 
 ---
 
-### 📋 Phase 3: Install Dependencies (3-5 minutes)
+## 📋 ALTERNATIVE: Manual Setup (5 minutes)
 
-- [ ] **Navigate to project root**
-  ```bash
-  cd /workspaces/Capaign-dashboard
-  ```
+If you prefer NOT to use DevContainer, follow these steps every time you open:
 
-- [ ] **Run pnpm install**
-  ```bash
-  pnpm install
-  ```
-  Wait for completion. This should install ~1000+ packages across all workspaces.
+### Step 1: Verify Node.js (30 seconds)
+```bash
+node --version  # Should show v22.x or higher
+npm --version   # Should show v10.x or higher
+```
 
-- [ ] **Verify installation**
-  ```bash
-  pnpm ls --depth 0
-  ```
-  Should show list of workspace packages:
-  ```
-  @workspace/ad-campaign-dashboard
-  @workspace/api-server
-  @workspace/db
-  @workspace/api-client-react
-  @workspace/api-zod
-  ...
-  ```
+**❌ If commands not found:**
+- Node.js is not installed
+- Your codespace may need Node.js pre-installed (contact admin)
+- Try: `apt update && apt install -y nodejs npm` (if on Linux)
 
-**✅ Success indicator**: Command completes without errors
+### Step 2: Install pnpm globally (1 minute)
+```bash
+npm install -g pnpm@latest
+```
+
+Verify:
+```bash
+pnpm --version  # Should show v9.x or higher
+```
+
+**✅ Success**: pnpm version displays
+
+### Step 3: Install All Dependencies (3-4 minutes)
+```bash
+# Navigate to project root
+cd /workspaces/Capaign-dashboard
+
+# Install all workspace dependencies
+pnpm install
+```
+
+Wait for completion. You'll see: `✓ Packages in scope: 7`
+
+### Step 4: Verify Installation (30 seconds)
+```bash
+pnpm ls --depth 0
+```
+
+Should show:
+```
+@workspace/ad-campaign-dashboard
+@workspace/api-server
+@workspace/api-client-react
+@workspace/api-zod
+@workspace/api-spec
+@workspace/db
+@workspace/mockup-sandbox
+```
+
+**✅ Success**: All packages listed without errors
+
+### Step 5 (Optional): Build Type Definitions (1 minute)
+```bash
+pnpm run typecheck:libs
+```
 
 ---
 
-### 📋 Phase 4: Build Type Definitions (1-2 minutes)
+## 🏃 Quick Sanity Check (30 seconds)
+
+Run this anytime to verify everything is working:
+
+```bash
+# Check Node.js
+node --version
+
+# Check pnpm
+pnpm --version
+
+# Check if dependencies are installed
+pnpm ls --depth 0
+
+# Check TypeScript
+npx tsc --version
+```
+
+All 4 commands should work without errors.
+
+---
+
+## 🎯 Run the Application
+
+### Option A: Start Frontend Only
+```bash
+cd /workspaces/Capaign-dashboard
+pnpm -F @workspace/ad-campaign-dashboard run dev
+```
+- Opens at: http://localhost:5173
+- Press `Ctrl+C` to stop
+
+### Option B: Start Backend Only
+```bash
+pnpm -F @workspace/api-server run dev
+```
+- Server runs on: http://localhost:3001
+- Press `Ctrl+C` to stop
+
+### Option C: Start Both (Recommended)
+**Terminal 1:**
+```bash
+pnpm -F @workspace/ad-campaign-dashboard run dev
+```
+
+**Terminal 2:** (Open new terminal: `Ctrl + Shift + `)
+```bash
+pnpm -F @workspace/api-server run dev
+```
+
+---
+
+## 🔧 Phase 4: Build Type Definitions (1-2 minutes)
 
 - [ ] **Generate TypeScript type definitions**
   ```bash

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Table, Th, Td, Badge, StatusBadge, SearchInput, Select, Label, Button, cn } from '../../components/ui';
 import { formatCurrency } from '../../lib/mock-data';
-import { exportToCSV, exportToPDF } from '../../lib/utils';
+import { exportToExcel, exportToPDF } from '../../lib/utils';
 
 export default function TransactionMasterTab() {
   const { entries, getVisiblePOs, users, currentUser } = useAppContext();
@@ -14,6 +14,7 @@ export default function TransactionMasterTab() {
   const [productFilter, setProductFilter] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
+  const [areaManagerFilter, setAreaManagerFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -35,6 +36,7 @@ export default function TransactionMasterTab() {
   const allProducts = useMemo(() => [...new Set(scopedEntries.map(e => e.product))], [scopedEntries]);
   const allRegions = useMemo(() => [...new Set(users.filter(x => x.territory?.region).map(x => x.territory!.region!))], [users]);
   const allAreas = useMemo(() => [...new Set(scopedEntries.filter(e => e.area).map(e => e.area))], [scopedEntries]);
+  const areaManagers = useMemo(() => users.filter(x => x.role === 'Area Manager'), [users]);
 
   const filtered = useMemo(() => {
     return scopedEntries.filter(e => {
@@ -42,6 +44,7 @@ export default function TransactionMasterTab() {
       if (poFilter && e.po !== poFilter) return false;
       if (productFilter && e.product !== productFilter) return false;
       if (areaFilter && e.area !== areaFilter) return false;
+      if (areaManagerFilter && e.userId !== areaManagerFilter) return false;
       if (regionFilter) {
         const eu = users.find(x => x.id === e.userId);
         if (eu?.territory?.region !== regionFilter) return false;
@@ -113,8 +116,8 @@ export default function TransactionMasterTab() {
             </button>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => exportToCSV(filtered, 'transactions.csv')}>📥 Excel (CSV)</Button>
-            <Button variant="secondary" size="sm" onClick={() => exportToPDF()}>📄 PDF (Print)</Button>
+            <Button variant="secondary" size="sm" onClick={() => exportToExcel(filtered, 'transactions.xls')}>📥 Excel</Button>
+            <Button variant="secondary" size="sm" onClick={() => exportToPDF(filtered, 'Transaction Ledger')}>📄 PDF</Button>
             <SearchInput value={search} onChange={setSearch} placeholder="Search transactions..." />
           </div>
         </div>
@@ -133,6 +136,10 @@ export default function TransactionMasterTab() {
             <option value="">All Products</option>
             {allProducts.map(p => <option key={p} value={p}>{p}</option>)}
           </Select>
+          <Select value={areaManagerFilter} onChange={e => setAreaManagerFilter(e.target.value)} className="w-44">
+            <option value="">All Area Managers</option>
+            {areaManagers.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </Select>
           <Select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="w-36">
             <option value="">All Areas</option>
             {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
@@ -148,8 +155,8 @@ export default function TransactionMasterTab() {
             <span className="text-[#9CA3AF] text-xs">→</span>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 rounded-lg border border-[#DDE3ED] px-2 text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#1B4F72]/30" />
           </div>
-          {(statusFilter || poFilter || productFilter || areaFilter || regionFilter || dateFrom || dateTo || search) && (
-            <button onClick={() => { setStatusFilter(''); setPOFilter(''); setProductFilter(''); setAreaFilter(''); setRegionFilter(''); setDateFrom(''); setDateTo(''); setSearch(''); }} className="text-xs text-red-500 hover:text-red-700 font-semibold underline">
+          {(statusFilter || poFilter || productFilter || areaFilter || regionFilter || areaManagerFilter || dateFrom || dateTo || search) && (
+            <button onClick={() => { setStatusFilter(''); setPOFilter(''); setProductFilter(''); setAreaFilter(''); setAreaManagerFilter(''); setRegionFilter(''); setDateFrom(''); setDateTo(''); setSearch(''); }} className="text-xs text-red-500 hover:text-red-700 font-semibold underline">
               Clear Filters
             </button>
           )}

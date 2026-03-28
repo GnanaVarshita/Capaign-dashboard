@@ -4,7 +4,7 @@ import { Card, CardTitle, Table, Th, Td, Badge, StatusBadge, SearchInput, Select
 import { formatCurrency } from '../../lib/mock-data';
 
 export default function VendorSectionTab() {
-  const { users, entries, currentUser, bills, addBill, updateBill, serviceReceivers } = useAppContext();
+  const { users, entries, currentUser, bills, addBill, updateBill, serviceReceivers, generateInvoiceNumber, pendingBillData, setPendingBillData, navigateToTab } = useAppContext();
   const u = currentUser!;
   const isVendor = u.role === 'Vendor';
 
@@ -78,36 +78,18 @@ export default function VendorSectionTab() {
 
   const handleRaiseBill = () => {
     if (selectedIds.size === 0) return;
-    const selEntries = pendingBilling.filter(e => selectedIds.has(e.id));
-    const activityAmount = selEntries.reduce((s, e) => s + e.amount, 0);
-    const taxable = activityAmount + Number(billForm.serviceCharge);
-    const gstAmt = Math.round(taxable * (billForm.gstRate / 100));
-    const totalAmount = taxable + gstAmt;
-
-    const receiver = serviceReceivers.find(r => r.id === billForm.serviceReceiverId);
-
-    addBill({
-      vendorId: u.id,
-      vendorName: u.territory?.tradeName || u.name,
-      vendorCode: u.territory?.vendorCode,
+    setPendingBillData({
       entryIds: Array.from(selectedIds),
-      activityAmount,
-      serviceChargeAmt: Number(billForm.serviceCharge),
-      gstRate: billForm.gstRate,
-      totalAmount,
-      status: 'submitted',
-      createdAt: new Date().toISOString().split('T')[0],
-      date: new Date().toISOString().split('T')[0],
-      submittedAt: new Date().toISOString().split('T')[0],
       invoiceNumber: billForm.invoiceNumber,
-      remarks: billForm.remarks,
       serviceReceiverId: billForm.serviceReceiverId,
-      receiverDetails: receiver ? { ...receiver } : undefined
+      serviceCharge: billForm.serviceCharge,
+      gstRate: billForm.gstRate,
+      remarks: billForm.remarks
     });
-    
     setSelectedIds(new Set());
     setShowRaiseBillModal(false);
     setBillForm({ invoiceNumber: '', serviceReceiverId: '', serviceCharge: 0, gstRate: 18, remarks: '' });
+    navigateToTab('billing');
   };
 
   if (isVendor) {
@@ -166,7 +148,10 @@ export default function VendorSectionTab() {
               </span>
               <Button size="sm" variant="secondary" onClick={selectAllPending}>Select All</Button>
               <Button size="sm" variant="secondary" onClick={clearSelection}>Clear</Button>
-              <Button size="sm" onClick={() => setShowRaiseBillModal(true)} disabled={selectedIds.size === 0} className="bg-[#C2410C] hover:bg-[#A0360A] border-none">
+              <Button size="sm" onClick={() => {
+                setBillForm({ invoiceNumber: generateInvoiceNumber(), serviceReceiverId: '', serviceCharge: 0, gstRate: 18, remarks: '' });
+                setShowRaiseBillModal(true);
+              }} disabled={selectedIds.size === 0} className="bg-[#C2410C] hover:bg-[#A0360A] border-none">
                 Raise Bill
               </Button>
             </div>
@@ -263,7 +248,7 @@ export default function VendorSectionTab() {
                 <Input value={billForm.invoiceNumber} onChange={e => setBillForm({...billForm, invoiceNumber: e.target.value})} placeholder="e.g. INV/26/001" />
               </div>
               <div className="space-y-1">
-                <Label required>Service Receiver</Label>
+                <Label>Service Receiver (Optional)</Label>
                 <Select value={billForm.serviceReceiverId} onChange={e => setBillForm({...billForm, serviceReceiverId: e.target.value})}>
                   <option value="">Select Receiver...</option>
                   {serviceReceivers.filter(r => r.vendorId === u.id).map(r => (
@@ -271,7 +256,7 @@ export default function VendorSectionTab() {
                   ))}
                 </Select>
                 {serviceReceivers.filter(r => r.vendorId === u.id).length === 0 && (
-                  <p className="text-[10px] text-red-500 mt-1">Please add a service receiver in Billing Section first.</p>
+                  <p className="text-[10px] text-amber-500 mt-1">You can add service receivers later in Billing Section.</p>
                 )}
               </div>
             </div>
@@ -308,8 +293,8 @@ export default function VendorSectionTab() {
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setShowRaiseBillModal(false)}>Cancel</Button>
-                <Button onClick={handleRaiseBill} disabled={!billForm.invoiceNumber || !billForm.serviceReceiverId} className="bg-[#C2410C] hover:bg-[#A0360A] text-white border-none">
-                  Raise & Submit Bill
+                <Button onClick={handleRaiseBill} disabled={!billForm.invoiceNumber} className="bg-blue-600 hover:bg-blue-700 text-white border-none">
+                  📋 Raise Bill
                 </Button>
               </div>
             </div>

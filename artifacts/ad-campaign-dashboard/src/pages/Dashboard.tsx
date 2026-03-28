@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { RoleBadge, Toast, cn } from '../components/ui';
 import OverviewTab from './tabs/OverviewTab';
@@ -7,6 +7,7 @@ import HierarchyTab from './tabs/HierarchyTab';
 import ActivitiesTab from './tabs/ActivitiesTab';
 import VendorSectionTab from './tabs/VendorSectionTab';
 import BillingTab from './tabs/BillingTab';
+import BillingTab_test from './tabs/BillingTab_test';
 import ActivitySheetTab from './tabs/ActivitySheetTab';
 import ApprovalsTab from './tabs/ApprovalsTab';
 import POApprovalsTab from './tabs/POApprovalsTab';
@@ -15,21 +16,28 @@ import UserMgmtTab from './tabs/UserMgmtTab';
 import TerritoryTab from './tabs/TerritoryTab';
 import QuickViewTab from './tabs/QuickViewTab';
 import TransactionMasterTab from './tabs/TransactionMasterTab';
+import FinanceTab from './tabs/FinanceTab';
+import BudgetRequestTab from './tabs/BudgetRequestTab';
+import BudgetRequestTab_test from './tabs/BudgetRequestTab_test';
 import SettingsTab from './tabs/SettingsTab';
 
-type TabId = 'overview' | 'po' | 'hierarchy' | 'activities' | 'vendor' | 'billing' | 'sheet' | 'approvals' | 'po-approvals' | 'po-master' | 'users' | 'territory' | 'quick' | 'transactions' | 'settings';
+type TabId = 'overview' | 'po' | 'hierarchy' | 'activities' | 'vendor' | 'billing' | 'billing-test' | 'sheet' | 'approvals' | 'po-approvals' | 'po-master' | 'users' | 'territory' | 'quick' | 'transactions' | 'settings' | 'finance' | 'budget-request' | 'budget-request-test';
 
 const TAB_ICONS: Record<string, string> = {
   overview: '📊', po: '💰', hierarchy: '🏛', activities: '📈', vendor: '🏪',
-  billing: '🧾', sheet: '📝', approvals: '✅', 'po-approvals': '📋',
+  billing: '🧾', 'billing-test': '🧾🧪', sheet: '📝', approvals: '✅', 'po-approvals': '📋',
   'po-master': '📁', users: '👥', territory: '🗺', quick: '⚡',
-  transactions: '📑', settings: '⚙',
+  transactions: '📑', settings: '⚙', finance: '💰', 'budget-request': '📊', 'budget-request-test': '📊🧪',
 };
 
 export default function Dashboard() {
-  const { currentUser, logout, getVisiblePendingEntries, toastMsg, pos, refreshData } = useAppContext();
+  const { currentUser, logout, getVisiblePendingEntries, toastMsg, pos, refreshData, setNavigateToTab } = useAppContext();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setNavigateToTab(() => (tab: string) => setActiveTab(tab as TabId));
+  }, [setNavigateToTab]);
 
   if (!currentUser) return null;
 
@@ -44,48 +52,58 @@ export default function Dashboard() {
   const canSeeUsers = u.role === 'Owner' || u.perms.manage;
   const canSeeTerritory = u.role === 'Owner';
   const canSeeSettings = u.role === 'Owner' || !!u.perms.settings;
-  const canSeeBilling = ['Owner', 'All India Manager', 'Regional Manager', 'Zonal Manager', 'Vendor'].includes(u.role);
+  const canSeeBilling = ['Owner', 'Vendor'].includes(u.role);
+  const canSeeFinance = ['Owner', 'Vendor'].includes(u.role);
   const canSeeVendors = !['All India Manager', 'Regional Manager', 'Zonal Manager', 'Area Manager'].includes(u.role);
+  const canSeeBudgetRequest = ['Area Manager', 'Zonal Manager', 'Regional Manager', 'All India Manager', 'Owner', 'Finance Administrator'].includes(u.role);
 
   interface Tab { id: TabId; label: string; badge?: number | null }
   const tabs: Tab[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'po', label: 'Purchase Orders' },
-    { id: 'hierarchy', label: 'Hierarchy' },
-    { id: 'activities', label: 'Activities' },
+    { id: 'overview' as TabId, label: 'Overview' },
+    { id: 'po' as TabId, label: 'Purchase Orders' },
+    { id: 'hierarchy' as TabId, label: 'Hierarchy' },
+    { id: 'activities' as TabId, label: 'Activities' },
     ...(canSeeVendors ? [{ id: 'vendor' as TabId, label: 'Vendors' }] : []),
     ...(canSeeBilling ? [{ id: 'billing' as TabId, label: 'Billing' }] : []),
+    ...(canSeeBilling && u.role === 'Owner' ? [{ id: 'billing-test' as TabId, label: 'Billing 🧪 (Test)' }] : []),
     ...(canSeeSheet ? [{ id: 'sheet' as TabId, label: 'Activity Sheet' }] : []),
     ...(canSeeApprovals ? [{ id: 'approvals' as TabId, label: 'Approvals', badge: pendingCount }] : []),
     ...(canSeePOApprovals ? [{ id: 'po-approvals' as TabId, label: 'PO Approvals', badge: pendingPOs }] : []),
     ...(canSeePOMaster ? [{ id: 'po-master' as TabId, label: 'PO Master' }] : []),
     ...(canSeeUsers ? [{ id: 'users' as TabId, label: 'Users' }] : []),
     ...(canSeeTerritory ? [{ id: 'territory' as TabId, label: 'Territory' }] : []),
-    { id: 'quick', label: 'Quick View' },
-    { id: 'transactions', label: 'Transactions' },
+    { id: 'quick' as TabId, label: 'Quick View' },
+    { id: 'transactions' as TabId, label: 'Transactions' },
     ...(canSeeSettings ? [{ id: 'settings' as TabId, label: 'Settings' }] : []),
+    ...(canSeeFinance ? [{ id: 'finance' as TabId, label: 'Finance' }] : []),
+    ...(canSeeBudgetRequest ? [{ id: 'budget-request' as TabId, label: 'Budget Requests' }] : []),
+    ...(canSeeBudgetRequest && u.role === 'Owner' ? [{ id: 'budget-request-test' as TabId, label: 'Budget Requests 🧪 (Test)' }] : []),
   ].filter(t => u.role === 'Owner' || !u.tabPerms || u.tabPerms[t.id] !== false);
 
   const activeTabObj = tabs.find(t => t.id === activeTab);
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'overview':      return <OverviewTab />;
-      case 'po':            return <POTab />;
-      case 'hierarchy':     return <HierarchyTab />;
-      case 'activities':    return <ActivitiesTab />;
-      case 'vendor':        return <VendorSectionTab />;
-      case 'billing':       return <BillingTab />;
-      case 'sheet':         return <ActivitySheetTab />;
-      case 'approvals':     return <ApprovalsTab />;
-      case 'po-approvals':  return <POApprovalsTab />;
-      case 'po-master':     return <POMasterTab />;
-      case 'users':         return <UserMgmtTab />;
-      case 'territory':     return <TerritoryTab />;
-      case 'quick':         return <QuickViewTab />;
-      case 'transactions':  return <TransactionMasterTab />;
-      case 'settings':      return <SettingsTab />;
-      default:              return <OverviewTab />;
+      case 'overview':        return <OverviewTab />;
+      case 'po':              return <POTab />;
+      case 'hierarchy':       return <HierarchyTab />;
+      case 'activities':      return <ActivitiesTab />;
+      case 'vendor':          return <VendorSectionTab />;
+      case 'billing':         return <BillingTab />;
+      case 'sheet':           return <ActivitySheetTab />;
+      case 'approvals':       return <ApprovalsTab />;
+      case 'po-approvals':    return <POApprovalsTab />;
+      case 'po-master':       return <POMasterTab />;
+      case 'users':           return <UserMgmtTab />;
+      case 'territory':       return <TerritoryTab />;
+      case 'quick':           return <QuickViewTab />;
+      case 'transactions':    return <TransactionMasterTab />;
+      case 'settings':        return <SettingsTab />;
+      case 'finance':         return <FinanceTab />;
+      case 'billing-test':    return <BillingTab_test />;
+      case 'budget-request':  return <BudgetRequestTab />;
+      case 'budget-request-test': return <BudgetRequestTab_test />;
+      default:                return <OverviewTab />;
     }
   };
 

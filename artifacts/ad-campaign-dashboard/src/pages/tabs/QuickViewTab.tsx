@@ -3,12 +3,12 @@ import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Select, Label, ProgressBar, Table, Th, Td, Badge, Button, cn } from '../../components/ui';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatCurrency, formatLakhs, pct } from '../../lib/mock-data';
-import { exportToCSV, exportToPDF } from '../../lib/utils';
+import { exportToExcel, exportToPDF } from '../../lib/utils';
 
 const COLORS = ['#1B4F72', '#2E86C1', '#AED6F1', '#F39C12', '#E74C3C', '#27AE60', '#8E44AD', '#D35400'];
 
 export default function QuickViewTab() {
-  const { getVisiblePOs, calcLiveSpent, calcPendingSpent, products, activities, regions, currentUser, getScopedEntries } = useAppContext();
+  const { getVisiblePOs, calcLiveSpent, calcPendingSpent, products, activities, regions, users, currentUser, getScopedEntries } = useAppContext();
   const u = currentUser!;
   const isOwner = u.role === 'Owner' || u.role === 'All India Manager';
   const isRM = u.role === 'Regional Manager';
@@ -21,6 +21,7 @@ export default function QuickViewTab() {
   const [regionFilter, setRegionFilter] = useState(isRM || isZM ? u.territory.region || '' : '');
   const [zoneFilter, setZoneFilter] = useState(isZM ? u.territory.zone || '' : '');
   const [areaFilter, setAreaFilter] = useState('');
+  const [areaManagerFilter, setAreaManagerFilter] = useState('');
   const [productFilter, setProductFilter] = useState('');
   const [activityFilter, setActivityFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -105,6 +106,8 @@ export default function QuickViewTab() {
     return activities.filter(a => myActs.has(a));
   }, [activities, isVendor, u.territory]);
 
+  const areaManagers = useMemo(() => users.filter(x => x.role === 'Area Manager'), [users]);
+
   const filteredBudget = useMemo(() => {
     if (!po) return 0;
     
@@ -152,12 +155,13 @@ export default function QuickViewTab() {
     region: regionFilter,
     zone: zoneFilter,
     area: areaFilter,
+    areaManagerId: areaManagerFilter,
     product: productFilter,
     activity: activityFilter,
     vendorId: isVendor ? u.id : undefined,
     dateFrom,
     dateTo
-  }), [po, regionFilter, zoneFilter, areaFilter, productFilter, activityFilter, isVendor, u.id, dateFrom, dateTo]);
+  }), [po, regionFilter, zoneFilter, areaFilter, areaManagerFilter, productFilter, activityFilter, isVendor, u.id, dateFrom, dateTo]);
 
   const filteredEntries = useMemo(() => {
     return getScopedEntries().filter(e => {
@@ -165,6 +169,7 @@ export default function QuickViewTab() {
       if (productFilter && e.product !== productFilter) return false;
       if (activityFilter && e.activity !== activityFilter) return false;
       if (areaFilter && e.area !== areaFilter) return false;
+      if (areaManagerFilter && e.userId !== areaManagerFilter) return false;
       if (dateFrom && e.date < dateFrom) return false;
       if (dateTo && e.date > dateTo) return false;
       if (regionFilter) {
@@ -316,6 +321,13 @@ export default function QuickViewTab() {
             ) : null}
 
             <div>
+              <Label className="text-[10px] uppercase font-bold text-slate-500">Area Manager</Label>
+              <Select value={areaManagerFilter} onChange={e => setAreaManagerFilter(e.target.value)}>
+                <option value="">All Area Managers</option>
+                {areaManagers.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </Select>
+            </div>
+            <div>
               <Label className="text-[10px] uppercase font-bold text-slate-500">Area</Label>
               <Select value={areaFilter} onChange={e => setAreaFilter(e.target.value)}>
                 <option value="">All Areas</option>
@@ -348,8 +360,8 @@ export default function QuickViewTab() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => exportToCSV(filteredEntries, 'quick-view-activities.csv')}>📥 Excel</Button>
-            <Button variant="secondary" size="sm" onClick={() => exportToPDF()}>📄 PDF</Button>
+            <Button variant="secondary" size="sm" onClick={() => exportToExcel(filteredEntries, 'quick-view-activities.xls')}>📥 Excel</Button>
+            <Button variant="secondary" size="sm" onClick={() => exportToPDF(filteredEntries, 'Quick View Activities')}>📄 PDF</Button>
           </div>
         </div>
       </Card>

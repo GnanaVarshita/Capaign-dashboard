@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User, Entry, PO, Region, Bill, ServiceReceiver, VendorProfile } from '../types';
+import { User, Entry, PO, Region, Bill, ServiceReceiver, VendorProfile, BudgetRequest, BudgetRequestGroup } from '../types';
 import { INITIAL_USERS, INITIAL_ENTRIES, INITIAL_POS, INITIAL_REGIONS, INITIAL_PRODUCTS, INITIAL_ACTIVITIES } from '../lib/mock-data';
 
 interface SpentFilters {
@@ -7,6 +7,7 @@ interface SpentFilters {
   region?: string;
   zone?: string;
   area?: string;
+  areaManagerId?: string;
   product?: string;
   activity?: string;
   vendorId?: string;
@@ -67,6 +68,19 @@ interface AppContextType {
   refreshData: () => void;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   toastMsg: { msg: string; type: string } | null;
+  pendingBillData: any;
+  setPendingBillData: React.Dispatch<React.SetStateAction<any>>;
+  navigateToTab: (tab: string) => void;
+  setNavigateToTab: React.Dispatch<React.SetStateAction<(tab: string) => void>>;
+  generateInvoiceNumber: () => string;
+  budgetRequests: BudgetRequest[];
+  setBudgetRequests: React.Dispatch<React.SetStateAction<BudgetRequest[]>>;
+  budgetRequestGroups: BudgetRequestGroup[];
+  createBudgetRequestGroup: (description?: string, targetDate?: string) => string; // Returns requestNumber
+  addBudgetRequest: (request: Omit<BudgetRequest, 'id' | 'createdAt' | 'status'>) => void;
+  addBudgetRequestToGroup: (groupId: string, request: Omit<BudgetRequest, 'id' | 'createdAt' | 'status' | 'requestGroupId' | 'requestNumber'>) => void; // For group-based submission
+  updateBudgetRequest: (id: string, updates: Partial<BudgetRequest>) => void;
+  approveBudgetRequest: (id: string, approverRole: 'zonal' | 'regional' | 'aim', approverName: string, approverIdField: string) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -83,6 +97,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [serviceReceivers, setServiceReceivers] = useState<ServiceReceiver[]>([]);
   const [vendorProfiles, setVendorProfiles] = useState<Record<string, VendorProfile>>({});
   const [toastMsg, setToastMsg] = useState<{ msg: string; type: string } | null>(null);
+  const [pendingBillData, setPendingBillData] = useState<any>(null);
+  const [navigateToTab, setNavigateToTab] = useState<(tab: string) => void>(() => {});
+  const [budgetRequests, setBudgetRequests] = useState<BudgetRequest[]>([]);
+  const [budgetRequestGroups, setBudgetRequestGroups] = useState<BudgetRequestGroup[]>([]);
 
   useEffect(() => {
     try {
@@ -98,6 +116,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (data.bills) setBills(data.bills);
         if (data.serviceReceivers) setServiceReceivers(data.serviceReceivers);
         if (data.vendorProfiles) setVendorProfiles(data.vendorProfiles);
+        if (data.budgetRequests) setBudgetRequests(data.budgetRequests);
+        if (data.budgetRequestGroups) setBudgetRequestGroups(data.budgetRequestGroups);
       }
     } catch {}
   }, []);
@@ -105,10 +125,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       localStorage.setItem('ad_campaign_db', JSON.stringify({
-        users, entries, pos, regions, products, activities, bills, serviceReceivers, vendorProfiles
+        users, entries, pos, regions, products, activities, bills, serviceReceivers, vendorProfiles, budgetRequests, budgetRequestGroups
       }));
     } catch {}
-  }, [users, entries, pos, regions, products, activities, bills, serviceReceivers, vendorProfiles]);
+  }, [users, entries, pos, regions, products, activities, bills, serviceReceivers, vendorProfiles, budgetRequests, budgetRequestGroups]);
 
   const toast = useCallback((msg: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToastMsg({ msg, type });
@@ -192,6 +212,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const bill: Bill = { ...billData, id: `bill-${Date.now()}` };
     setBills(prev => [bill, ...prev]);
     toast('Bill created!');
+    return bill.id; // Return the bill ID for selection
   };
 
   const updateBill = (id: string, updates: Partial<Bill>) => {
@@ -261,6 +282,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (f.activity && e.activity !== f.activity) return false;
     if (f.vendorId && e.vendorId !== f.vendorId) return false;
     if (f.area && e.area !== f.area) return false;
+    if (f.areaManagerId && e.userId !== f.areaManagerId) return false;
     if (f.dateFrom && e.date < f.dateFrom) return false;
     if (f.dateTo && e.date > f.dateTo) return false;
     if (f.region) {
@@ -354,6 +376,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return entries;
   }, [currentUser, entries, users]);
 
+  const generateInvoiceNumber = useCallback(() => {
+    const year = new Date().getFullYear();
+    const count = bills.filter(b => b.invoiceNumber?.startsWith(`INV/${year}/`)).length + 1;
+    return `INV/${year}/${String(count).padStart(3, '0')}`;
+  }, [bills]);
+
   const refreshData = useCallback(() => {
     try {
       const stored = localStorage.getItem('ad_campaign_db');
@@ -366,12 +394,86 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (data.products) setProducts(data.products);
         if (data.activities) setActivities(data.activities);
         if (data.bills) setBills(data.bills);
+        if (data.serviceReceivers) setServiceReceivers(data.serviceReceivers);
+        if (data.vendorProfiles) setVendorProfiles(data.vendorProfiles);
+        if (data.budgetRequests) setBudgetRequests(data.budgetRequests);
         toast('Data refreshed from storage!', 'success');
       }
     } catch (err) {
       toast('Error refreshing data', 'error');
     }
   }, [toast]);
+
+  const addBudgetRequest = (requestData: Omit<BudgetRequest, 'id' | 'createdAt' | 'status'>) => {
+    const request: BudgetRequest = {
+      ...requestData,
+      id: `br-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0],
+      status: 'submitted'
+    };
+    setBudgetRequests(prev => [request, ...prev]);
+    toast('Budget request submitted!');
+  };
+
+  const updateBudgetRequest = (id: string, updates: Partial<BudgetRequest>) => {
+    setBudgetRequests(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+    toast('Budget request updated!');
+  };
+
+  const approveBudgetRequest = (id: string, approverRole: 'zonal' | 'regional' | 'aim', approverName: string, approverId: string) => {
+    setBudgetRequests(prev => prev.map(b => {
+      if (b.id !== id) return b;
+      const today = new Date().toISOString().split('T')[0];
+      if (approverRole === 'zonal') {
+        return { ...b, status: 'zm-approved', zmId: approverId, zmName: approverName, zmApprovedAt: today };
+      } else if (approverRole === 'regional') {
+        return { ...b, status: 'rm-approved', rmId: approverId, rmName: approverName, rmApprovedAt: today };
+      } else {
+        return { ...b, status: 'aim-approved', aimId: approverId, aimName: approverName, aimApprovedAt: today };
+      }
+    }));
+    toast(`Budget request approved by ${approverName}!`);
+  };
+
+  const createBudgetRequestGroup = (description?: string, targetDate?: string): string => {
+    const groupCount = budgetRequestGroups.length + 1;
+    const requestNumber = `BR-${new Date().getFullYear()}-${String(groupCount).padStart(3, '0')}`;
+    
+    const group: BudgetRequestGroup = {
+      id: `brg-${Date.now()}`,
+      requestNumber,
+      aimId: currentUser?.id || '',
+      aimName: currentUser?.name || '',
+      createdAt: new Date().toISOString().split('T')[0],
+      status: 'active',
+      description,
+      targetDate
+    };
+    
+    setBudgetRequestGroups(prev => [group, ...prev]);
+    toast(`Budget request group ${requestNumber} created!`);
+    return requestNumber;
+  };
+
+  const addBudgetRequestToGroup = (groupId: string, requestData: Omit<BudgetRequest, 'id' | 'createdAt' | 'status' | 'requestGroupId' | 'requestNumber'>) => {
+    const group = budgetRequestGroups.find(g => g.id === groupId);
+    if (!group) {
+      toast('Budget request group not found!', 'error');
+      return;
+    }
+
+    const request: BudgetRequest = {
+      ...requestData,
+      id: `br-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString().split('T')[0],
+      status: 'submitted',
+      requestGroupId: groupId,
+      requestNumber: group.requestNumber
+    };
+    
+    setBudgetRequests(prev => [request, ...prev]);
+    toast('Budget request added to group!');
+  };
 
   return (
     <AppContext.Provider value={{
@@ -387,7 +489,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       calcLiveSpent, calcPendingSpent,
       getVisiblePOs, getVisiblePendingEntries, getMyEntries, getScopedEntries,
       refreshData,
-      toast, toastMsg
+      toast, toastMsg,
+      pendingBillData, setPendingBillData,
+      navigateToTab, setNavigateToTab,
+      generateInvoiceNumber,
+      budgetRequests, setBudgetRequests, budgetRequestGroups, createBudgetRequestGroup, addBudgetRequest, addBudgetRequestToGroup, updateBudgetRequest, approveBudgetRequest
     }}>
       {children}
     </AppContext.Provider>

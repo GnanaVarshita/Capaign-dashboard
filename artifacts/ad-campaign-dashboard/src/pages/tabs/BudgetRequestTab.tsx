@@ -4,12 +4,12 @@ import { Card, CardTitle, Button, Table, Th, Td, Badge, Modal, Label, Input, Tex
 import { BudgetRequest } from '../../types';
 
 export default function BudgetRequestTab() {
-  const { currentUser, budgetRequests, budgetRequestGroups, createBudgetRequestGroup, addBudgetRequest, addBudgetRequestToGroup, approveBudgetRequest, users, products, activities } = useAppContext();
+  const { currentUser, budgetRequests, budgetRequestGroups, createBudgetRequestGroup, addBudgetRequest, addBudgetRequestToGroup, approveBudgetRequest, users, products, activities, regions } = useAppContext();
   const u = currentUser!;
 
   const [showNewRequestForm, setShowNewRequestForm] = useState(false);
   const [showCreateRequestGroup, setShowCreateRequestGroup] = useState(false);
-  const [requestGroupForm, setRequestGroupForm] = useState({ description: '', targetDate: '' });
+  const [requestGroupForm, setRequestGroupForm] = useState({ description: '', targetDate: '', selectedRegions: [] as string[] });
   const [selectedRequestGroup, setSelectedRequestGroup] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
@@ -257,15 +257,62 @@ export default function BudgetRequestTab() {
                 />
               </div>
             </div>
+
+            {/* Region Selection */}
+            <div className="border-t pt-4">
+              <Label className="text-sm font-bold mb-3 block">📍 Select Regions for this Request Cycle</Label>
+              <p className="text-xs text-slate-600 mb-3">Choose which regions this budget request cycle applies to. Leave empty for all regions.</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {regions && regions.map(region => (
+                  <label key={region.name} className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-white transition">
+                    <input
+                      type="checkbox"
+                      checked={requestGroupForm.selectedRegions?.includes(region.name) || false}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setRequestGroupForm({
+                            ...requestGroupForm,
+                            selectedRegions: [...(requestGroupForm.selectedRegions || []), region.name]
+                          });
+                        } else {
+                          setRequestGroupForm({
+                            ...requestGroupForm,
+                            selectedRegions: (requestGroupForm.selectedRegions || []).filter(r => r !== region.name)
+                          });
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                    />
+                    <span className="text-sm font-medium text-slate-700">{region.name}</span>
+                  </label>
+                ))}
+              </div>
+              {requestGroupForm.selectedRegions && requestGroupForm.selectedRegions.length > 0 && (
+                <p className="text-xs text-blue-600 mt-3">
+                  ✓ Selected {requestGroupForm.selectedRegions.length} region(s): {requestGroupForm.selectedRegions.join(', ')}
+                </p>
+              )}
+              {(!requestGroupForm.selectedRegions || requestGroupForm.selectedRegions.length === 0) && (
+                <p className="text-xs text-slate-500 mt-3">ℹ️ No specific regions selected - this cycle will apply to all regions</p>
+              )}
+            </div>
+
             <div className="flex gap-2">
               <Button onClick={() => {
-                const requestNumber = createBudgetRequestGroup(requestGroupForm.description, requestGroupForm.targetDate);
-                setRequestGroupForm({ description: '', targetDate: '' });
+                const requestNumber = createBudgetRequestGroup(
+                  requestGroupForm.description, 
+                  requestGroupForm.targetDate,
+                  requestGroupForm.selectedRegions && requestGroupForm.selectedRegions.length > 0 ? requestGroupForm.selectedRegions : undefined
+                );
+                setRequestGroupForm({ description: '', targetDate: '', selectedRegions: [] });
                 setShowCreateRequestGroup(false);
               }} className="bg-blue-600 hover:bg-blue-700">
                 ✓ Create Cycle
               </Button>
-              <Button variant="outline" onClick={() => setShowCreateRequestGroup(false)}>
+              <Button variant="outline" onClick={() => {
+                setRequestGroupForm({ description: '', targetDate: '', selectedRegions: [] });
+                setShowCreateRequestGroup(false);
+              }}>
                 Cancel
               </Button>
             </div>
@@ -285,7 +332,20 @@ export default function BudgetRequestTab() {
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {budgetRequestGroups.filter(g => g.status === 'active').map(group => (
+            {budgetRequestGroups
+              .filter(g => g.status === 'active')
+              .filter(g => {
+                // For Area Managers: Filter groups by region
+                if (isAreaManager) {
+                  // If group has no region restrictions, show it
+                  if (!g.selectedRegions || g.selectedRegions.length === 0) return true;
+                  // If group has region restrictions, check if AM's region matches
+                  return g.selectedRegions.includes(u.territory.region || '');
+                }
+                // For other managers, show all
+                return true;
+              })
+              .map(group => (
               <button
                 key={group.id}
                 onClick={() => {
@@ -298,15 +358,31 @@ export default function BudgetRequestTab() {
                     ? "bg-green-600 text-white border-green-600"
                     : "bg-white text-green-700 border-green-300 hover:border-green-600"
                 )}
+                title={group.selectedRegions && group.selectedRegions.length > 0 ? `Regions: ${group.selectedRegions.join(', ')}` : 'All Regions'}
               >
                 {group.requestNumber}
                 {group.targetDate && <span className="ml-1 text-xs opacity-75">(Target: {group.targetDate})</span>}
                 {group.description && <span className="ml-1 text-xs opacity-75">{group.description}</span>}
+                {group.selectedRegions && group.selectedRegions.length > 0 && (
+                  <span className="ml-2 text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">{group.selectedRegions.length} region{group.selectedRegions.length !== 1 ? 's' : ''}</span>
+                )}
               </button>
             ))}
           </div>
-          {budgetRequestGroups.filter(g => g.status === 'active').length === 0 && (
-            <p className="text-sm text-green-600 italic">Waiting for AIM to create a budget request cycle...</p>
+          {budgetRequestGroups
+            .filter(g => g.status === 'active')
+            .filter(g => {
+              if (isAreaManager) {
+                if (!g.selectedRegions || g.selectedRegions.length === 0) return true;
+                return g.selectedRegions.includes(u.territory.region || '');
+              }
+              return true;
+            }).length === 0 && (
+            <p className="text-sm text-green-600 italic">
+              {isAreaManager 
+                ? 'No budget request cycles available for your region. Please contact AIM.' 
+                : 'Waiting for AIM to create a budget request cycle...'}
+            </p>
           )}
         </Card>
       )}

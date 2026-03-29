@@ -76,7 +76,7 @@ interface AppContextType {
   budgetRequests: BudgetRequest[];
   setBudgetRequests: React.Dispatch<React.SetStateAction<BudgetRequest[]>>;
   budgetRequestGroups: BudgetRequestGroup[];
-  createBudgetRequestGroup: (description?: string, targetDate?: string) => string; // Returns requestNumber
+  createBudgetRequestGroup: (description?: string, targetDate?: string, selectedRegions?: string[]) => string; // Returns requestNumber
   addBudgetRequest: (request: Omit<BudgetRequest, 'id' | 'createdAt' | 'status'>) => void;
   addBudgetRequestToGroup: (groupId: string, request: Omit<BudgetRequest, 'id' | 'createdAt' | 'status' | 'requestGroupId' | 'requestNumber'>) => void; // For group-based submission
   updateBudgetRequest: (id: string, updates: Partial<BudgetRequest>) => void;
@@ -435,7 +435,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     toast(`Budget request approved by ${approverName}!`);
   };
 
-  const createBudgetRequestGroup = (description?: string, targetDate?: string): string => {
+  const createBudgetRequestGroup = (description?: string, targetDate?: string, selectedRegions?: string[]): string => {
     const groupCount = budgetRequestGroups.length + 1;
     const requestNumber = `BR-${new Date().getFullYear()}-${String(groupCount).padStart(3, '0')}`;
     
@@ -447,7 +447,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date().toISOString().split('T')[0],
       status: 'active',
       description,
-      targetDate
+      targetDate,
+      selectedRegions: selectedRegions && selectedRegions.length > 0 ? selectedRegions : undefined
     };
     
     setBudgetRequestGroups(prev => [group, ...prev]);

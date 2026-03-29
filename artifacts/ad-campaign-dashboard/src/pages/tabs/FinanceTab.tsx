@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Card, CardTitle, Table, Th, Td, Badge, Button, Modal, Label } from '../../components/ui';
+import { Card, CardTitle, Table, Th, Td, Badge, Button, Modal, Label, Input, Select } from '../../components/ui';
 import { formatCurrency } from '../../lib/mock-data';
 
 export default function FinanceTab() {
@@ -12,15 +12,45 @@ export default function FinanceTab() {
   const canManage = isOwner || isFinanceAdmin;
 
   const [showModifyModal, setShowModifyModal] = useState<string | null>(null);
+  
+  // Filters state
+  const [selectedVendor, setSelectedVendor] = useState<string>(''); // For Owner/Admin filter
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
 
   const financeBills = useMemo(() => {
     let list = bills.filter(b => b.status === 'submitted' || b.status === 'paid');
     if (isVendor) {
       list = list.filter(b => b.vendorId === u.id);
     }
+    // Apply vendor filter for Owner/Admin
+    if (canManage && selectedVendor) {
+      list = list.filter(b => b.vendorId === selectedVendor);
+    }
+    
+    // Apply date range filters
+    if (fromDate) {
+      list = list.filter(b => (b.submittedAt || b.createdAt || '') >= fromDate);
+    }
+    if (toDate) {
+      list = list.filter(b => (b.submittedAt || b.createdAt || '') <= toDate);
+    }
+    
     // Owner and Finance Admin see all bills
     return list.sort((a, b) => (b.submittedAt || b.createdAt || '').localeCompare(a.submittedAt || a.createdAt || ''));
-  }, [bills, isVendor, u.id]);
+  }, [bills, isVendor, u.id, canManage, selectedVendor, fromDate, toDate]);
+
+  // Get unique vendors for vendor filter dropdown
+  const uniqueVendors = useMemo(() => {
+    const allBills = bills.filter(b => b.status === 'submitted' || b.status === 'paid');
+    const vendorMap = new Map<string, string>();
+    allBills.forEach(b => {
+      if (b.vendorId && b.vendorName) {
+        vendorMap.set(b.vendorId, b.vendorName);
+      }
+    });
+    return Array.from(vendorMap.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [bills]);
 
   const calculateDays = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -71,6 +101,68 @@ export default function FinanceTab() {
           </p>
         </div>
       </div>
+
+      {/* Filter Section for Owner/Admin */}
+      {canManage && (
+        <Card className="p-4 border-l-4 border-l-blue-600 bg-blue-50">
+          <h3 className="text-sm font-bold text-slate-700 mb-3">🔍 Filters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            {/* Vendor Filter */}
+            <div>
+              <Label className="text-xs font-semibold mb-1">Vendor</Label>
+              <Select 
+                value={selectedVendor}
+                onChange={(e) => setSelectedVendor(e.target.value)}
+              >
+                <option value="">All Vendors</option>
+                {uniqueVendors.map(([vendorId, vendorName]) => (
+                  <option key={vendorId} value={vendorId}>
+                    {vendorName}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            {/* From Date Filter */}
+            <div>
+              <Label className="text-xs font-semibold mb-1">From Date</Label>
+              <Input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+              />
+            </div>
+
+            {/* To Date Filter */}
+            <div>
+              <Label className="text-xs font-semibold mb-1">To Date</Label>
+              <Input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+              />
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedVendor('');
+                  setFromDate('');
+                  setToDate('');
+                }}
+                className="w-full"
+              >
+                🔄 Clear All
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-slate-600 mt-2">
+            Showing {financeBills.length} bill{financeBills.length !== 1 ? 's' : ''}
+          </p>
+        </Card>
+      )}
 
       <Card className="p-6">
         <CardTitle>Bill Payments & Approvals</CardTitle>

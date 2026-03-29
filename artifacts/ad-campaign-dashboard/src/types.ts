@@ -208,6 +208,7 @@ export interface BudgetRequestGroup {
   status: 'active' | 'closed';
   description?: string;
   targetDate?: string;
+  selectedRegions?: string[]; // Specific regions for this request cycle (AIM can select which regions this applies to)
 }
 
 export interface BudgetRequest {

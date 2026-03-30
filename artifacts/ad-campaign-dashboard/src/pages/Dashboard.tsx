@@ -1,6 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { RoleBadge, Toast, cn } from '../components/ui';
+import { 
+  LayoutDashboard, 
+  ShoppingCart, 
+  Network, 
+  TrendingUp, 
+  Store, 
+  Receipt, 
+  FileText, 
+  CheckSquare, 
+  ClipboardCheck, 
+  FolderSearch, 
+  Users, 
+  Map, 
+  Zap, 
+  ListOrdered, 
+  Settings, 
+  Banknote,
+  LogOut,
+  RefreshCw,
+  Menu,
+  X,
+  ChevronRight,
+  PieChart,
+  User
+} from 'lucide-react';
+
 import OverviewTab from './tabs/OverviewTab';
 import POTab from './tabs/POTab';
 import HierarchyTab from './tabs/HierarchyTab';
@@ -23,11 +49,26 @@ import SettingsTab from './tabs/SettingsTab';
 
 type TabId = 'overview' | 'po' | 'hierarchy' | 'activities' | 'vendor' | 'billing' | 'billing-test' | 'sheet' | 'approvals' | 'po-approvals' | 'po-master' | 'users' | 'territory' | 'quick' | 'transactions' | 'settings' | 'finance' | 'budget-request' | 'budget-request-test';
 
-const TAB_ICONS: Record<string, string> = {
-  overview: '📊', po: '💰', hierarchy: '🏛', activities: '📈', vendor: '🏪',
-  billing: '🧾', 'billing-test': '🧾🧪', sheet: '📝', approvals: '✅', 'po-approvals': '📋',
-  'po-master': '📁', users: '👥', territory: '🗺', quick: '⚡',
-  transactions: '📑', settings: '⚙', finance: '💰', 'budget-request': '📊', 'budget-request-test': '📊🧪',
+const TAB_ICONS: Record<string, React.ReactNode> = {
+  overview: <LayoutDashboard className="w-4 h-4" />,
+  po: <ShoppingCart className="w-4 h-4" />,
+  hierarchy: <Network className="w-4 h-4" />,
+  activities: <TrendingUp className="w-4 h-4" />,
+  vendor: <Store className="w-4 h-4" />,
+  billing: <Receipt className="w-4 h-4" />,
+  'billing-test': <Receipt className="w-4 h-4" />,
+  sheet: <FileText className="w-4 h-4" />,
+  approvals: <CheckSquare className="w-4 h-4" />,
+  'po-approvals': <ClipboardCheck className="w-4 h-4" />,
+  'po-master': <FolderSearch className="w-4 h-4" />,
+  users: <Users className="w-4 h-4" />,
+  territory: <Map className="w-4 h-4" />,
+  quick: <Zap className="w-4 h-4" />,
+  transactions: <ListOrdered className="w-4 h-4" />,
+  settings: <Settings className="w-4 h-4" />,
+  finance: <Banknote className="w-4 h-4" />,
+  'budget-request': <PieChart className="w-4 h-4" />,
+  'budget-request-test': <PieChart className="w-4 h-4" />,
 };
 
 export default function Dashboard() {
@@ -107,118 +148,194 @@ export default function Dashboard() {
     }
   };
 
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full text-white">
+      {/* Sidebar Header / Logo */}
+      <div className="p-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shadow-lg backdrop-blur-sm">
+            <TrendingUp className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-display font-black text-white text-lg tracking-tight leading-none">AdCampaign</span>
+            <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">Management Portal</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 scrollbar-hide">
+        <div className="space-y-1">
+          {tabs.map(tab => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setMobileMenuOpen(false);
+                }}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative',
+                  isActive 
+                    ? 'bg-white/10 text-white shadow-sm' 
+                    : 'text-white/60 hover:text-white hover:bg-white/5'
+                )}
+              >
+                <div className={cn(
+                  'p-1.5 rounded-lg transition-colors',
+                  isActive ? 'bg-[#2E86C1] text-white' : 'bg-white/5 text-white/40 group-hover:text-white'
+                )}>
+                  {TAB_ICONS[tab.id]}
+                </div>
+                <span className="flex-1 text-left">{tab.label}</span>
+                {tab.badge != null && tab.badge > 0 && (
+                  <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg shadow-amber-500/20">
+                    {tab.badge}
+                  </span>
+                )}
+                {isActive && (
+                  <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-[#2E86C1]" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Sidebar Footer / User Profile */}
+      <div className="p-4 mt-auto border-t border-white/5 bg-black/10">
+        <div className="flex items-center gap-3 mb-4 px-2">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2E86C1] to-[#1B4F72] flex items-center justify-center text-sm font-bold text-white shadow-lg">
+            {u.name[0].toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-sm font-bold truncate leading-tight">{u.name}</p>
+            <p className="text-white/40 text-[11px] truncate">{u.loginId}</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={refreshData}
+            className="flex items-center justify-center gap-2 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-bold text-white transition-all"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh
+          </button>
+          <button
+            onClick={logout}
+            className="flex items-center justify-center gap-2 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-[11px] font-bold text-red-400 transition-all"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#F0F4F8]">
+    <div className="min-h-screen flex bg-[#F8FAFC]">
+      
+      {/* ── Desktop Sidebar ───────────────────────────────── */}
+      <aside 
+        className="hidden lg:flex flex-col w-72 h-screen sticky top-0 z-40 border-r border-slate-200 overflow-hidden transition-all duration-300 shadow-2xl"
+        style={{ background: 'linear-gradient(180deg, #0D2137 0%, #1B4F72 100%)' }}
+      >
+        <SidebarContent />
+      </aside>
 
-      {/* ── Header ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 shadow-[0_1px_0_rgba(255,255,255,0.08),0_4px_24px_rgba(15,23,42,0.2)]"
-        style={{ background: 'linear-gradient(135deg, #0D2137 0%, #1B4F72 55%, #245E87 100%)' }}>
-        <div className="max-w-[1800px] mx-auto px-4 h-14 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center text-base shadow-sm">
-              📊
-            </div>
-            <div className="hidden sm:block">
-              <span className="font-display font-black text-white text-[15px] tracking-tight">AdCampaign</span>
-              <span className="text-white/40 mx-2 text-xs">|</span>
-              <span className="text-white/60 text-xs font-medium hidden md:inline">Management Portal</span>
-            </div>
-            <div className="hidden md:block">
-              <RoleBadge role={u.role} />
-            </div>
-          </div>
-
-          {/* Right side */}
-          <div className="flex items-center gap-3">
-            {(pendingCount > 0 || pendingPOs > 0) && (
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-400/30">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                <span className="text-amber-300 text-xs font-semibold">
-                  {pendingCount + pendingPOs} pending
-                </span>
-              </div>
-            )}
-            <button
-              onClick={refreshData}
-              title="Refresh data from storage"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-lg text-xs font-semibold text-white/90 transition-all"
+      {/* ── Mobile Sidebar (Drawer) ───────────────────────── */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-[60]">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+          <aside 
+            className="absolute left-0 top-0 bottom-0 w-[280px] animate-slide-in-left shadow-2xl overflow-hidden"
+            style={{ background: 'linear-gradient(180deg, #0D2137 0%, #1B4F72 100%)' }}
+          >
+            <button 
+              onClick={() => setMobileMenuOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span className="hidden sm:inline">Refresh</span>
+              <X className="w-5 h-5" />
             </button>
-            <div className="hidden md:flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-white/20 border border-white/20 flex items-center justify-center text-xs font-bold text-white">
-                {u.name[0].toUpperCase()}
+            <SidebarContent />
+          </aside>
+        </div>
+      )}
+
+      {/* ── Main Content Area ─────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        
+        {/* Mobile Header */}
+        <header className="lg:hidden sticky top-0 z-50 h-16 bg-white border-b border-slate-200 px-4 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setMobileMenuOpen(true)}
+              className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <span className="font-display font-black text-[#1B4F72] text-lg tracking-tight">AdCampaign</span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-[#1B4F72] flex items-center justify-center text-xs font-bold text-white">
+            {u.name[0].toUpperCase()}
+          </div>
+        </header>
+
+        {/* Desktop Top Bar (Actions/Breadcrumbs) */}
+        <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
+          <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="hidden lg:flex items-center gap-2">
+                <span className="text-xl opacity-80">{TAB_ICONS[activeTab]}</span>
+                <h1 className="text-xl font-display font-bold text-slate-800 tracking-tight">{activeTabObj?.label}</h1>
               </div>
-              <div className="text-right">
-                <p className="text-white text-xs font-semibold leading-tight">{u.name}</p>
-                <p className="text-white/50 text-[10px] leading-tight">{u.loginId}</p>
+              <div className="hidden sm:flex items-center gap-2 ml-2 px-3 py-1 bg-slate-100 rounded-full border border-slate-200">
+                <RoleBadge role={u.role} />
               </div>
             </div>
-            <button
-              onClick={logout}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-xs font-semibold text-white/90 transition-all"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
+
+            <div className="flex items-center gap-3">
+              {(pendingCount > 0 || pendingPOs > 0) && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 shadow-sm animate-pulse-subtle">
+                  <div className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="text-amber-700 text-[11px] font-bold uppercase tracking-wider">
+                    {pendingCount + pendingPOs} Pending
+                  </span>
+                </div>
+              )}
+              
+              <div className="h-8 w-[1px] bg-slate-200 mx-1 hidden sm:block" />
+              
+              <button 
+                onClick={refreshData}
+                className="hidden sm:flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-[#1B4F72] hover:bg-[#1B4F72]/5 rounded-xl transition-all font-medium text-sm"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span className="hidden xl:inline">Refresh Data</span>
+              </button>
+            </div>
           </div>
         </div>
-      </header>
 
-      {/* ── Tab Navigation ─────────────────────────────────── */}
-      <div className="bg-white border-b border-slate-200 shadow-sm sticky top-14 z-40">
-        <div className="max-w-[1800px] mx-auto px-4">
-          <div className="flex overflow-x-auto gap-0 scrollbar-hide">
-            {tabs.map(tab => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    'relative flex items-center gap-1.5 px-3.5 py-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-150 border-b-2',
-                    isActive
-                      ? 'text-[#1B4F72] border-[#1B4F72]'
-                      : 'text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-200'
-                  )}
-                >
-                  <span className="text-sm">{TAB_ICONS[tab.id]}</span>
-                  <span>{tab.label}</span>
-                  {tab.badge != null && tab.badge > 0 && (
-                    <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[16px] text-center leading-none">
-                      {tab.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+        {/* Content Section */}
+        <main className="flex-1 overflow-x-hidden">
+          <div className="max-w-[1600px] mx-auto px-6 py-6">
+            {/* Breadcrumbs */}
+            <nav className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-6">
+              <span className="hover:text-slate-600 cursor-pointer transition-colors">Dashboard</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-[#1B4F72]">{activeTabObj?.label}</span>
+            </nav>
+
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+              {renderTab()}
+            </div>
           </div>
-        </div>
+        </main>
       </div>
-
-      {/* ── Page title strip ───────────────────────────────── */}
-      <div className="max-w-[1800px] w-full mx-auto px-4 md:px-6 pt-5 pb-1">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xl">{TAB_ICONS[activeTab]}</span>
-          <h1 className="text-lg font-display font-black text-slate-800">{activeTabObj?.label}</h1>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-          <span>Dashboard</span>
-          <span>›</span>
-          <span className="text-slate-600">{activeTabObj?.label}</span>
-        </div>
-      </div>
-
-      {/* ── Main content ───────────────────────────────────── */}
-      <main className="flex-1 max-w-[1800px] w-full mx-auto px-4 md:px-6 py-4 animate-fade-in">
-        {renderTab()}
-      </main>
 
       {toastMsg && <Toast msg={toastMsg.msg} type={toastMsg.type} />}
     </div>

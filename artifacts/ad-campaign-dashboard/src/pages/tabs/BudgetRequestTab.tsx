@@ -4,7 +4,7 @@ import { Card, CardTitle, Button, Table, Th, Td, Badge, Modal, Label, Input, Tex
 import { BudgetRequest } from '../../types';
 
 export default function BudgetRequestTab() {
-  const { currentUser, budgetRequests, budgetRequestGroups, createBudgetRequestGroup, addBudgetRequest, addBudgetRequestToGroup, approveBudgetRequest, users, products, activities, regions } = useAppContext();
+  const { currentUser, budgetRequests, budgetRequestGroups, createBudgetRequestGroup, addBudgetRequest, addBudgetRequestToGroup, approveBudgetRequest, users, products, activities, regions, entries } = useAppContext();
   const u = currentUser!;
 
   const [showNewRequestForm, setShowNewRequestForm] = useState(false);
@@ -1137,6 +1137,7 @@ export default function BudgetRequestTab() {
                   <Th>Target Date</Th>
                   <Th>Status</Th>
                   <Th>Submissions</Th>
+                  <Th>Estimated Sales</Th>
                   <Th>Total Budget</Th>
                 </tr>
               </thead>
@@ -1144,6 +1145,7 @@ export default function BudgetRequestTab() {
                 {budgetRequestGroups.map((group) => {
                   const groupRequests = budgetRequests.filter(br => br.requestGroupId === group.id);
                   const totalBudget = groupRequests.reduce((sum, req) => sum + req.budgetRequired, 0);
+                  const totalEstimatedSales = groupRequests.reduce((sum, req) => sum + req.estimatedSales, 0);
                   return (
                     <tr key={group.id}>
                       <Td className="font-bold text-[#1B4F72]">{group.requestNumber}</Td>
@@ -1152,6 +1154,7 @@ export default function BudgetRequestTab() {
                       <Td>{group.targetDate || '—'}</Td>
                       <Td><Badge variant={group.status === 'active' ? 'success' : 'warning'}>{group.status}</Badge></Td>
                       <Td className="text-center font-semibold">{groupRequests.length}</Td>
+                      <Td className="font-semibold text-blue-600">₹{totalEstimatedSales.toLocaleString()}</Td>
                       <Td className="font-semibold text-green-600">₹{totalBudget.toLocaleString()}</Td>
                     </tr>
                   );
@@ -1495,52 +1498,151 @@ export default function BudgetRequestTab() {
       {/* Request Details */}
       {visibleRequests.length > 0 && (
         <Card className="p-6">
-          <CardTitle>Approval Hierarchy</CardTitle>
+          <CardTitle>Approval Hierarchy & Activity Evidence</CardTitle>
           <div className="space-y-4">
-            {visibleRequests.map(request => (
-              <div key={request.id} className="border rounded p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <p className="font-bold text-lg">{request.mdoName}</p>
-                    <p className="text-sm text-slate-600">{request.areaManagerName} • {request.area}</p>
+            {visibleRequests.map(request => {
+              // Find related entries for this budget request to display photos
+              const relatedEntries = entries?.filter(e => 
+                e.po === request.id || 
+                (e.date && request.createdAt && e.date.includes(request.createdAt?.split('T')[0]))
+              ) || [];
+              
+              return (
+                <div key={request.id} className="border rounded p-4 bg-gradient-to-br from-slate-50 to-slate-100">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="font-bold text-lg">{request.mdoName}</p>
+                      <p className="text-sm text-slate-600">{request.areaManagerName} • {request.area}</p>
+                    </div>
+                    {getStatusBadge(request.status)}
                   </div>
-                  {getStatusBadge(request.status)}
+                  <div className="grid grid-cols-4 gap-4 text-sm mb-4">
+                    <div>
+                      <span className="text-slate-600">Product:</span> {request.product}
+                    </div>
+                    <div>
+                      <span className="text-slate-600">Estimated Sales:</span> ₹{request.estimatedSales.toLocaleString()}
+                    </div>
+                    <div>
+                      <span className="text-slate-600">Budget Req:</span> ₹{request.budgetRequired.toLocaleString()}
+                    </div>
+                    <div>
+                      <span className="text-slate-600">Submitted:</span> {request.createdAt}
+                    </div>
+                  </div>
+
+                  {/* Approval Workflow Status */}
+                  <div className="flex gap-4 text-xs mb-4 p-3 bg-white rounded border-2 border-slate-200">
+                    <div className={cn("flex items-center gap-1 px-2 py-1 rounded", request.zmApprovedAt ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
+                      <span>1️⃣ ZM: {request.zmName || 'Pending'}</span>
+                      {request.zmApprovedAt && <span className="text-green-600 font-bold">✓ {request.zmApprovedAt}</span>}
+                    </div>
+                    <div className={cn("flex items-center gap-1 px-2 py-1 rounded", request.rmApprovedAt ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
+                      <span>2️⃣ RM: {request.rmName || 'Pending'}</span>
+                      {request.rmApprovedAt && <span className="text-green-600 font-bold">✓ {request.rmApprovedAt}</span>}
+                    </div>
+                    <div className={cn("flex items-center gap-1 px-2 py-1 rounded", request.status === 'aim-approved' ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
+                      <span>3️⃣ AIM: {request.aimName || 'Pending'}</span>
+                      {request.aimApprovedAt && <span className="text-green-600 font-bold">✓ {request.aimApprovedAt}</span>}
+                    </div>
+                  </div>
+
+                  {/* Activity Evidence Photos */}
+                  {relatedEntries.length > 0 && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded border-2 border-blue-200">
+                      <h5 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        📸 Activity Evidence & Supporting Photos
+                      </h5>
+                      <div className="space-y-3">
+                        {relatedEntries.map((entry, idx) => (
+                          <div key={idx} className="bg-white p-3 rounded border border-blue-100">
+                            <p className="text-xs font-semibold text-slate-600 mb-2">
+                              Activity: {entry.activity} | Date: {entry.date}
+                            </p>
+                            <div className="grid grid-cols-3 gap-3">
+                              {/* Campaign Photo */}
+                              {entry.campaignPhoto && (
+                                <div className="p-2 bg-blue-50 rounded border border-blue-200">
+                                  <p className="text-xs font-bold text-blue-900 mb-2">📷 Campaign Photo</p>
+                                  <img 
+                                    src={entry.campaignPhoto} 
+                                    alt="Campaign" 
+                                    className="w-full h-24 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                                    onClick={() => {
+                                      const modal = document.createElement('div');
+                                      modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+                                      modal.innerHTML = `<img src="${entry.campaignPhoto}" class="max-w-4xl max-h-screen"/>`;
+                                      modal.onclick = () => modal.remove();
+                                      document.body.appendChild(modal);
+                                    }}
+                                  />
+                                  <p className="text-xs text-green-600 mt-1">✓ Uploaded</p>
+                                </div>
+                              )}
+
+                              {/* Expense Photo */}
+                              {entry.expensePhoto && (
+                                <div className="p-2 bg-amber-50 rounded border border-amber-200">
+                                  <p className="text-xs font-bold text-amber-900 mb-2">💰 Expense Photo</p>
+                                  <img 
+                                    src={entry.expensePhoto} 
+                                    alt="Expense" 
+                                    className="w-full h-24 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                                    onClick={() => {
+                                      const modal = document.createElement('div');
+                                      modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+                                      modal.innerHTML = `<img src="${entry.expensePhoto}" class="max-w-4xl max-h-screen"/>`;
+                                      modal.onclick = () => modal.remove();
+                                      document.body.appendChild(modal);
+                                    }}
+                                  />
+                                  <p className="text-xs text-green-600 mt-1">✓ Uploaded</p>
+                                </div>
+                              )}
+
+                              {/* Other Photo */}
+                              {entry.otherPhoto && (
+                                <div className="p-2 bg-purple-50 rounded border border-purple-200">
+                                  <p className="text-xs font-bold text-purple-900 mb-2">📹 Other Photo</p>
+                                  <img 
+                                    src={entry.otherPhoto} 
+                                    alt="Other" 
+                                    className="w-full h-24 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                                    onClick={() => {
+                                      const modal = document.createElement('div');
+                                      modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+                                      modal.innerHTML = `<img src="${entry.otherPhoto}" class="max-w-4xl max-h-screen"/>`;
+                                      modal.onclick = () => modal.remove();
+                                      document.body.appendChild(modal);
+                                    }}
+                                  />
+                                  <p className="text-xs text-green-600 mt-1">✓ Uploaded</p>
+                                </div>
+                              )}
+
+                              {!entry.campaignPhoto && !entry.expensePhoto && !entry.otherPhoto && (
+                                <p className="text-xs text-slate-400 col-span-3">No photos uploaded for this entry</p>
+                              )}
+                            </div>
+                            {entry.description && (
+                              <p className="text-xs text-slate-600 mt-2 p-2 bg-slate-50 rounded">
+                                <span className="font-semibold">Description:</span> {entry.description}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {request.remarks && (
+                    <div className="mt-3 p-2 bg-amber-50 rounded text-sm border border-amber-200">
+                      <span className="font-semibold">Remarks:</span> {request.remarks}
+                    </div>
+                  )}
                 </div>
-                <div className="grid grid-cols-4 gap-4 text-sm mb-3">
-                  <div>
-                    <span className="text-slate-600">Product:</span> {request.product}
-                  </div>
-                  <div>
-                    <span className="text-slate-600">Estimated Sales:</span> ₹{request.estimatedSales.toLocaleString()}
-                  </div>
-                  <div>
-                    <span className="text-slate-600">Budget Req:</span> ₹{request.budgetRequired.toLocaleString()}
-                  </div>
-                  <div>
-                    <span className="text-slate-600">Submitted:</span> {request.createdAt}
-                  </div>
-                </div>
-                <div className="flex gap-4 text-xs">
-                  <div className={cn("flex items-center gap-1", request.status !== 'submitted' && request.zmApprovedAt ? "text-green-600" : "text-slate-400")}>
-                    <span>1️⃣ ZM: {request.zmName || 'Pending'}</span>
-                    {request.zmApprovedAt && <span className="text-green-600">✓ {request.zmApprovedAt}</span>}
-                  </div>
-                  <div className={cn("flex items-center gap-1", request.status !== 'zm-approved' && request.rmApprovedAt ? "text-green-600" : "text-slate-400")}>
-                    <span>2️⃣ RM: {request.rmName || 'Pending'}</span>
-                    {request.rmApprovedAt && <span className="text-green-600">✓ {request.rmApprovedAt}</span>}
-                  </div>
-                  <div className={cn("flex items-center gap-1", request.status === 'aim-approved' ? "text-green-600" : "text-slate-400")}>
-                    <span>3️⃣ AIM: {request.aimName || 'Pending'}</span>
-                    {request.aimApprovedAt && <span className="text-green-600">✓ {request.aimApprovedAt}</span>}
-                  </div>
-                </div>
-                {request.remarks && (
-                  <div className="mt-3 p-2 bg-blue-50 rounded text-sm">
-                    <span className="font-semibold">Remarks:</span> {request.remarks}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
       )}

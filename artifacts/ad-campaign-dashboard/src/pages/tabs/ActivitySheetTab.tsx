@@ -21,7 +21,10 @@ export default function ActivitySheetTab() {
     product: '',
     activity: '',
     amount: '',
-    description: ''
+    description: '',
+    campaignPhoto: '',  // Campaign photo
+    expensePhoto: '',   // Expense photo
+    otherPhoto: ''      // Other photo
   });
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -199,8 +202,76 @@ export default function ActivitySheetTab() {
             <Textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} placeholder="Detailed description of the activity conducted..." />
           </div>
 
+          {/* Photo Upload Fields */}
+          <div className="border-t-2 border-slate-200 pt-4">
+            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">📸 Photo Uploads for Verification</h4>
+            <p className="text-sm text-slate-600 mb-4">Upload photos for ZM/RM/AIM verification (will be sent with activity entry)</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Campaign Photo */}
+              <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                <Label className="font-bold text-sm text-blue-900 mb-2 block">📷 Campaign Photo</Label>
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => setForm(f => ({ ...f, campaignPhoto: reader.result as string }));
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="text-sm"
+                />
+                {form.campaignPhoto && <p className="text-xs text-green-600 mt-2">✓ Photo uploaded</p>}
+                <p className="text-xs text-slate-500 mt-1">Campaign activity photo</p>
+              </div>
+
+              {/* Expense Photo */}
+              <div className="p-3 bg-amber-50 rounded border border-amber-200">
+                <Label className="font-bold text-sm text-amber-900 mb-2 block">💰 Expense Photo</Label>
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => setForm(f => ({ ...f, expensePhoto: reader.result as string }));
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="text-sm"
+                />
+                {form.expensePhoto && <p className="text-xs text-green-600 mt-2">✓ Photo uploaded</p>}
+                <p className="text-xs text-slate-500 mt-1">Expense receipt/bill photo</p>
+              </div>
+
+              {/* Other Photo */}
+              <div className="p-3 bg-purple-50 rounded border border-purple-200">
+                <Label className="font-bold text-sm text-purple-900 mb-2 block">📹 Other Photo</Label>
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => setForm(f => ({ ...f, otherPhoto: reader.result as string }));
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="text-sm"
+                />
+                {form.otherPhoto && <p className="text-xs text-green-600 mt-2">✓ Photo uploaded</p>}
+                <p className="text-xs text-slate-500 mt-1">Any other supporting photo</p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={() => { setForm(f => ({ ...f, po: '', product: '', activity: '', amount: '', pin: '', description: '', vendorId: '' })); setError(''); }}>Clear</Button>
+            <Button type="button" variant="secondary" onClick={() => { setForm(f => ({ ...f, po: '', product: '', activity: '', amount: '', pin: '', description: '', vendorId: '', campaignPhoto: '', expensePhoto: '', otherPhoto: '' })); setError(''); }}>Clear</Button>
             <Button type="submit">Submit Entry</Button>
           </div>
         </form>

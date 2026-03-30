@@ -69,6 +69,12 @@ export interface Entry {
   editedBy?: string;
   region?: string;
   zone?: string;
+  // Photo uploads for verification - can be sent to ZM, RM, AIM
+  campaignPhoto?: string;  // Campaign pic (base64 or URL)
+  expensePhoto?: string;   // Expense photo (base64 or URL)
+  otherPhoto?: string;     // Any other photo (base64 or URL)
+  photoUploadedBy?: string;
+  photoUploadedAt?: string;
 }
 
 export interface PO {
@@ -224,10 +230,11 @@ export interface BudgetRequest {
   product: string;
   activity: string;
   estimatedSales: number;
-  activityBudgets: Record<string, number>;  // NEW: Budget by activity (e.g., {"Field Campaign": 5000, "Harvest": 3000})
+  activityBudgets: Record<string, number>;  // Budget by activity (e.g., {"Field Campaign": 5000, "Harvest": 3000})
   budgetRequired: number;                    // CALCULATED: Sum of all activity budgets
   status: 'submitted' | 'zm-approved' | 'rm-approved' | 'aim-approved';
   createdAt: string;
+  submissionCount?: number;                 // Number of MDO submissions
   zmId?: string;
   zmName?: string;
   zmApprovedAt?: string;

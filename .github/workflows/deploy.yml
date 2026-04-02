@@ -1,0 +1,65 @@
+name: Deploy Ad Campaign Dashboard to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Dashboard
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          NODE_ENV: production
+          VITE_API_URL: https://api.example.com # You should update this to your actual API URL
+        run: pnpm --filter @workspace/ad-campaign-dashboard build
+
+      - name: Create 404.html for SPA support
+        run: cp artifacts/ad-campaign-dashboard/dist/public/index.html artifacts/ad-campaign-dashboard/dist/public/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './artifacts/ad-campaign-dashboard/dist/public'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

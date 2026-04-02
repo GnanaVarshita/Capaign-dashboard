@@ -15,8 +15,8 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 // Default to "/" for local development
-// Can be overridden with BASE_PATH environment variable
-const basePath = process.env.BASE_PATH || "/";
+// Can be overridden with VITE_BASE_PATH environment variable
+const basePath = process.env.VITE_BASE_PATH || "/";
 
 export default defineConfig({
   base: basePath,

@@ -324,11 +324,11 @@ export default function Dashboard() {
         <main className="flex-1 overflow-x-hidden">
           <div className="max-w-[1600px] mx-auto px-6 py-6">
             {/* Breadcrumbs */}
-            <nav className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-6">
+            {/* <nav className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-6">
               <span className="hover:text-slate-600 cursor-pointer transition-colors">Dashboard</span>
               <ChevronRight className="w-3 h-3" />
               <span className="text-[#1B4F72]">{activeTabObj?.label}</span>
-            </nav>
+            </nav> */}
 
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
               {renderTab()}

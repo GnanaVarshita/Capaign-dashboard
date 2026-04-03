@@ -321,7 +321,7 @@ export default function BudgetRequestTab() {
       )}
 
       {/* Active Request Groups for All Managers */}
-      {(isAreaManager || isZonalManager || isRegionalManager) && budgetRequestGroups.length > 0 && (
+      {(isAreaManager || isZonalManager || isRegionalManager)  && (
         <Card className="p-4 mb-6 border-l-4 border-l-green-600 bg-green-50">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-green-700 uppercase">Available Budget Request Cycles</h3>

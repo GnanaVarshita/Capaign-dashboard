@@ -4,7 +4,7 @@ import { Card, CardTitle, Button, Input, Select, Textarea, Label, Table, Th, Td,
 import { formatCurrency } from '../../lib/mock-data';
 
 export default function ActivitySheetTab() {
-  const { currentUser, getVisiblePOs, products, activities, users, addEntry, getMyEntries, deleteEntry, calcLiveSpent, calcPendingSpent, toast } = useAppContext();
+  const { currentUser, getVisiblePOs, crops, products, activities, users, addEntry, getMyEntries, deleteEntry, calcLiveSpent, calcPendingSpent, toast } = useAppContext();
   const u = currentUser!;
 
   const approvedPOs = getVisiblePOs().filter(p => p.approvalStatus === 'approved' && p.status !== 'Lapsed');
@@ -340,3 +340,4 @@ export default function ActivitySheetTab() {
     </div>
   );
 }
+

@@ -53,9 +53,13 @@ export default function BudgetRequestTab() {
   const visibleRequests = useMemo(() => {
     let filtered = budgetRequests;
 
-    if (isAreaManager) {
-      // Area Manager sees only their own requests
-      filtered = filtered.filter(br => br.areaManagerId === u.id);
+        if (isAreaManager) {
+      // Area Manager sees requests in their territory with 'submitted' status (created by AIM)
+      // They also see their own requests that they've submitted
+      filtered = filtered.filter(br => 
+        (br.area === u.territory.area && br.status === 'submitted') ||
+        br.areaManagerId === u.id
+      );
     } else if (isZonalManager) {
       // Zonal Manager sees ONLY their zone - must have same zone AND region
       filtered = filtered.filter(br => 
@@ -339,8 +343,7 @@ export default function BudgetRequestTab() {
               </Button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {budgetRequestGroups
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{budgetRequestGroups
               .filter(g => g.status === 'active')
               .filter(g => {
                 // For Area Managers: Filter groups by region
@@ -361,7 +364,7 @@ export default function BudgetRequestTab() {
                   if (isAreaManager) setShowNewRequestForm(true);
                 }}
                 className={cn(
-                  "px-4 py-2 rounded-lg font-semibold text-sm transition-all border-2",
+                  "p-4 rounded-lg font-semibold text-sm transition-all border-2 min-h-max",
                   selectedRequestGroup === group.id && isAreaManager
                     ? "bg-green-600 text-white border-green-600"
                     : "bg-white text-green-700 border-green-300 hover:border-green-600"
@@ -485,8 +488,7 @@ export default function BudgetRequestTab() {
               <Select value={viewFilters.crop} onChange={e => setViewFilters({...viewFilters, crop: e.target.value})}>
                 <option value="">All Crops</option>
                 {crops && crops.length > 0 ? (
-                  crops.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
-                    <option key={c.name} value={c.name}>{c.name}</option>
+                  crops.sort().map(c => (<option key={c} value={c}>{c}</option>
                   ))
                 ) : (
                   null
@@ -1380,8 +1382,7 @@ export default function BudgetRequestTab() {
                 <Label>Select Crop</Label>
                 <Select value={aimFilters.selectedValue} onChange={e => setAimFilters({...aimFilters, selectedValue: e.target.value})}>
                   <option value="">All Crops</option>
-                  {crops && crops.length > 0 && crops.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
-                    <option key={c.name} value={c.name}>{c.name}</option>
+                  {crops && crops.length > 0 && crops.sort().map(c => (<option key={c} value={c}>{c}</option>
                   ))}
                 </Select>
               </div>
@@ -1690,3 +1691,4 @@ export default function BudgetRequestTab() {
     </div>
   );
 }
+

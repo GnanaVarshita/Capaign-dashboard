@@ -45,8 +45,7 @@ function numberToWords(num: number): string {
 }
 
 export default function BillingTab() {
-  const { 
-    currentUser, bills, entries, users, 
+  const { currentUser, crops, bills, entries, users, 
     serviceReceivers, addServiceReceiver, updateServiceReceiver, deleteServiceReceiver,
     vendorProfiles, updateVendorProfile,
     updateBill, pendingBillData, setPendingBillData, addBill
@@ -59,7 +58,8 @@ export default function BillingTab() {
   const [editingBill, setEditingBill] = useState<any>(null);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const [previewBill, setPreviewBill] = useState<any>(null);
-  const [editInvoiceMode, setEditInvoiceMode] = useState(false);
+    const [editInvoiceMode, setEditInvoiceMode] = useState(false);
+  const [filterCrop, setFilterCrop] = useState('');
 
   useEffect(() => {
     if (pendingBillData) {
@@ -1247,3 +1247,5 @@ function MyProfileTab() {
     </div>
   );
 }
+
+

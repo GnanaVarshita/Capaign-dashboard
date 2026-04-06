@@ -49,6 +49,7 @@ export interface Entry {
   po: string;
   product: string;
   activity: string;
+  crop?: string;
   amount: number;
   area: string;
   pin: string;
@@ -92,8 +93,8 @@ export interface PO {
   approvedAt?: string;
   rejectionReason?: string;
   regionBudgets: Record<string, number>;
-  allocations: Record<string, Record<string, Record<string, number>>>;
-  zoneAllocations: Record<string, Record<string, Record<string, Record<string, number>>>>;
+  allocations: Record<string, Record<string, Record<string, Record<string, number>>>>;
+  zoneAllocations: Record<string, Record<string, Record<string, Record<string, Record<string, number>>>>>;
 }
 
 export interface Region {
@@ -227,6 +228,7 @@ export interface BudgetRequest {
   zone: string;
   region: string;
   mdoName: string;
+  crop: string;
   product: string;
   activity: string;
   estimatedSales: number;
@@ -246,3 +248,4 @@ export interface BudgetRequest {
   aimApprovedAt?: string;
   remarks?: string;
 }
+

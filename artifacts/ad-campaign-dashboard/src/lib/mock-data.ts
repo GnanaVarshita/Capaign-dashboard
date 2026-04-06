@@ -1,6 +1,7 @@
-import { User, Entry, PO, Region } from '../types';
+﻿import { User, Entry, PO, Region } from '../types';
 
 export const INITIAL_PRODUCTS = ['Product A', 'Product B', 'Product C'];
+export const INITIAL_CROPS = ['Wheat', 'Rice', 'Cotton', 'Corn'];
 export const INITIAL_ACTIVITIES = ['Field Campaign', 'Harvest', 'Crop Meetings', 'Jeep Campaign'];
 
 export const INITIAL_USERS: User[] = [

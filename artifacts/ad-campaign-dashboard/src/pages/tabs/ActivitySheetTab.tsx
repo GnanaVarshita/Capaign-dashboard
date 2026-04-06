@@ -20,6 +20,7 @@ export default function ActivitySheetTab() {
     rmId: u.role === 'Regional Manager' ? u.id : (u.territory?.reportingRMId || ''),
     product: '',
     activity: '',
+    crop: '',
     amount: '',
     description: '',
     campaignPhoto: '',  // Campaign photo
@@ -84,7 +85,7 @@ export default function ActivitySheetTab() {
 
     addEntry({
       userId: u.id, userName: u.name, userRole: u.role,
-      po: form.po, product: form.product, activity: form.activity,
+      po: form.po, product: form.product, crop: form.crop, activity: form.activity,
       amount: parseFloat(form.amount), area: form.area.trim(), pin: form.pin,
       zmId: zm?.id || '', zmName: zm?.name || '',
       rmId: rm?.id || '', rmName: rm?.name || '',
@@ -94,7 +95,8 @@ export default function ActivitySheetTab() {
       region: u.territory?.region, zone: u.territory?.zone
     });
 
-    setForm(f => ({ ...f, po: '', product: '', activity: '', amount: '', pin: '', description: '', vendorId: '' }));
+    setForm(f => ({ ...f, po: '', product: '', activity: '',
+    crop: '', amount: '', pin: '', description: '', vendorId: '' }));
   };
 
   const filteredEntries = myEntries.filter(e => {
@@ -181,6 +183,13 @@ export default function ActivitySheetTab() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label required>Crop</Label>
+              <Select value={form.crop} onChange={e => set('crop', e.target.value)}>
+                <option value="">Select Crop...</option>
+                {crops && crops.map(c => <option key={c} value={c}>{c}</option>)}
+              </Select>
+            </div>
             <div>
               <Label required>Product</Label>
               <Select value={form.product} onChange={e => set('product', e.target.value)}>
@@ -271,7 +280,8 @@ export default function ActivitySheetTab() {
           </div>
 
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={() => { setForm(f => ({ ...f, po: '', product: '', activity: '', amount: '', pin: '', description: '', vendorId: '', campaignPhoto: '', expensePhoto: '', otherPhoto: '' })); setError(''); }}>Clear</Button>
+            <Button type="button" variant="secondary" onClick={() => { setForm(f => ({ ...f, po: '', product: '', activity: '',
+    crop: '', amount: '', pin: '', description: '', vendorId: '', campaignPhoto: '', expensePhoto: '', otherPhoto: '' })); setError(''); }}>Clear</Button>
             <Button type="submit">Submit Entry</Button>
           </div>
         </form>

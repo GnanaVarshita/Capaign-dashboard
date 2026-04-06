@@ -5,9 +5,10 @@ import { formatCurrency } from '../../lib/mock-data';
 import { exportToExcel, exportToPDF } from '../../lib/utils';
 
 export default function TransactionMasterTab() {
-  const { entries, getVisiblePOs, users, currentUser } = useAppContext();
+  const { entries, getVisiblePOs, users, crops, currentUser } = useAppContext();
   const u = currentUser!;
 
+  const [filterCrop, setFilterCrop] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [poFilter, setPOFilter] = useState('');
@@ -15,6 +16,7 @@ export default function TransactionMasterTab() {
   const [regionFilter, setRegionFilter] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
   const [areaManagerFilter, setAreaManagerFilter] = useState('');
+  const [cropFilter, setCropFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -45,6 +47,7 @@ export default function TransactionMasterTab() {
       if (productFilter && e.product !== productFilter) return false;
       if (areaFilter && e.area !== areaFilter) return false;
       if (areaManagerFilter && e.userId !== areaManagerFilter) return false;
+      if (cropFilter && e.crop !== cropFilter) return false;
       if (regionFilter) {
         const eu = users.find(x => x.id === e.userId);
         if (eu?.territory?.region !== regionFilter) return false;
@@ -57,7 +60,7 @@ export default function TransactionMasterTab() {
       }
       return true;
     });
-  }, [scopedEntries, statusFilter, poFilter, productFilter, areaFilter, regionFilter, dateFrom, dateTo, search, users]);
+  }, [scopedEntries, statusFilter, poFilter, productFilter, areaFilter, regionFilter, cropFilter, dateFrom, dateTo, search, users]);
 
   const totals = useMemo(() => ({
     all: filtered.reduce((s, e) => s + e.amount, 0),
@@ -132,7 +135,11 @@ export default function TransactionMasterTab() {
             <option value="">All POs</option>
             {allPOs.map(p => <option key={p} value={p}>{p}</option>)}
           </Select>
-          <Select value={productFilter} onChange={e => setProductFilter(e.target.value)} className="w-40">
+          <Select value={filterCrop} onChange={e => setFilterCrop(e.target.value)}>
+                <option value="">All Crops</option>
+                {crops && crops.map((c, i) => <option key={i} value={c}>{c}</option>)}
+              </Select>
+              <Select value={productFilter} onChange={e => setProductFilter(e.target.value)} className="w-40">
             <option value="">All Products</option>
             {allProducts.map(p => <option key={p} value={p}>{p}</option>)}
           </Select>
@@ -155,8 +162,8 @@ export default function TransactionMasterTab() {
             <span className="text-[#9CA3AF] text-xs">→</span>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 rounded-lg border border-[#DDE3ED] px-2 text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#1B4F72]/30" />
           </div>
-          {(statusFilter || poFilter || productFilter || areaFilter || regionFilter || areaManagerFilter || dateFrom || dateTo || search) && (
-            <button onClick={() => { setStatusFilter(''); setPOFilter(''); setProductFilter(''); setAreaFilter(''); setAreaManagerFilter(''); setRegionFilter(''); setDateFrom(''); setDateTo(''); setSearch(''); }} className="text-xs text-red-500 hover:text-red-700 font-semibold underline">
+          {(statusFilter || poFilter || productFilter || areaFilter || regionFilter || areaManagerFilter || cropFilter || dateFrom || dateTo || search) && (
+            <button onClick={() => { setStatusFilter(''); setPOFilter(''); setProductFilter(''); setAreaFilter(''); setAreaManagerFilter(''); setCropFilter(''); setRegionFilter(''); setDateFrom(''); setDateTo(''); setSearch(''); }} className=" text-xs text-red-500 hover:text-red-700 font-semibold underline">
               Clear Filters
             </button>
           )}
@@ -264,3 +271,9 @@ export default function TransactionMasterTab() {
     </div>
   );
 }
+
+
+
+
+
+

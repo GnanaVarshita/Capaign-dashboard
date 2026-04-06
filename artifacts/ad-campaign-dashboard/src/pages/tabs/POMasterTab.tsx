@@ -10,12 +10,12 @@ const statusBadge = (s: string) =>
   <Badge variant="default">{s}</Badge>;
 
 const approvalBadge = (s: string) =>
-  s === 'approved' ? <Badge variant="success">✓ Approved</Badge> :
-  s === 'rejected' ? <Badge variant="error">✗ Rejected</Badge> :
-  <Badge variant="warning">⏳ Pending</Badge>;
+  s === 'approved' ? <Badge variant="success">Ã¢Å“â€œ Approved</Badge> :
+  s === 'rejected' ? <Badge variant="error">Ã¢Å“â€” Rejected</Badge> :
+  <Badge variant="warning">Ã¢ÂÂ³ Pending</Badge>;
 
 export default function POMasterTab() {
-  const { pos, setPOs, addPO, updatePO, lapsePO, approvePO, rejectPO, calcLiveSpent, calcPendingSpent, regions, products, setProducts, activities, setActivities, currentUser } = useAppContext();
+  const { pos, setPOs, addPO, updatePO, lapsePO, approvePO, rejectPO, calcLiveSpent, calcPendingSpent, regions, products, setProducts, crops, setCrops, activities, setActivities, currentUser } = useAppContext();
   const u = currentUser!;
   const canManage = u.role === 'Owner' || u.perms.manage;
   const canApprove = u.role === 'Owner' || u.role === 'All India Manager';
@@ -27,7 +27,7 @@ export default function POMasterTab() {
   const [editMode, setEditMode] = useState(false);
   const [showDistModal, setShowDistModal] = useState(false);
   const [distRegion, setDistRegion] = useState('');
-  const [distData, setDistData] = useState<Record<string, Record<string, number>>>({});
+  const [distData, setDistData] = useState<Record<string, Record<string, Record<string, number>>>>({});
 
   // Product Master Modal state
   const [showProductModal, setShowProductModal] = useState(false);
@@ -38,6 +38,11 @@ export default function POMasterTab() {
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [activityForm, setActivityForm] = useState({ name: '', description: '' });
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
+
+  // Crop Master Modal state
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropForm, setCropForm] = useState({ name: '', description: '' });
+  const [editingCrop, setEditingCrop] = useState<string | null>(null);
 
   const initForm = {
     poNumber: '', budget: '', from: '', to: '', status: 'Draft' as any,
@@ -102,10 +107,15 @@ export default function POMasterTab() {
     if (!selected) return;
     setDistRegion(region);
     const existing = selected.allocations[region] || {};
-    const d: Record<string, Record<string, number>> = {};
+    const d: Record<string, Record<string, Record<string, number>>> = {};
     products.forEach(p => {
       d[p] = {};
-      activities.forEach(a => { d[p][a] = (existing[p] || {})[a] || 0; });
+      crops.forEach(c => {
+        d[p][c] = {};
+        activities.forEach(a => { 
+          d[p][c][a] = ((existing[p] || {})[c] || {})[a] || 0; 
+        });
+      });
     });
     setDistData(d);
     setShowDistModal(true);
@@ -115,9 +125,14 @@ export default function POMasterTab() {
     if (!selected) return;
     const newAlloc = { ...selected.allocations };
     newAlloc[distRegion] = {};
-    Object.entries(distData).forEach(([p, acts]) => {
+    Object.entries(distData).forEach(([p, crops_obj]) => {
       newAlloc[distRegion][p] = {};
-      Object.entries(acts).forEach(([a, v]) => { if (v > 0) newAlloc[distRegion][p][a] = v; });
+      Object.entries(crops_obj).forEach(([c, acts]) => {
+        newAlloc[distRegion][p][c] = {};
+        Object.entries(acts).forEach(([a, v]) => { 
+          if (v > 0) newAlloc[distRegion][p][c][a] = v; 
+        });
+      });
     });
     updatePO(selected.id, { allocations: newAlloc });
     setShowDistModal(false);
@@ -187,20 +202,51 @@ export default function POMasterTab() {
     }
   };
 
+  // Crop Master Handlers
+  const openAddCrop = () => {
+    setCropForm({ name: '', description: '' });
+    setEditingCrop(null);
+    setShowCropModal(true);
+  };
+
+  const openEditCrop = (crop: string) => {
+    setCropForm({ name: crop, description: '' });
+    setEditingCrop(crop);
+    setShowCropModal(true);
+  };
+
+  const saveCrop = () => {
+    if (!cropForm.name.trim()) return;
+    if (editingCrop) {
+      setCrops(crops.map(c => (c === editingCrop ? cropForm.name : c)));
+    } else {
+      setCrops([...crops, cropForm.name]);
+    }
+    setShowCropModal(false);
+    setCropForm({ name: '', description: '' });
+    setEditingCrop(null);
+  };
+
+  const deleteCrop = (crop: string) => {
+    if (confirm(`Delete crop "${crop}"?`)) {
+      setCrops(crops.filter(c => c !== crop));
+    }
+  };
+
   return (
     <div className="space-y-0">
       {/* PO Master Header */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-[#1A1D23]">📋 PO Master Management</h2>
-        <p className="text-sm text-[#6B7280] mt-1">Create and manage Purchase Orders, Products, and Activities</p>
+        <h2 className="text-xl font-bold text-[#1A1D23]">Ã°Å¸â€œâ€¹ PO Master Management</h2>
+        <p className="text-sm text-[#6B7280] mt-1">Create and manage Purchase Orders, Products, Crops, and Activities</p>
       </div>
 
       {/* Product Master & Activity Master Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
         {/* Product Master Card */}
         <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
           <div className="p-4 bg-gradient-to-r from-[#EBF3FA] to-[#F0F9FF] border-b border-[#DDE3ED] flex items-center justify-between">
-            <h3 className="font-bold text-[#1B4F72] flex items-center gap-2">🧩 Product Master</h3>
+            <h3 className="font-bold text-[#1B4F72] flex items-center gap-2">Ã°Å¸Â§Â© Product Master</h3>
             {canManage && <Button size="sm" onClick={openAddProduct}>+ Add Product</Button>}
           </div>
           <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
@@ -218,7 +264,7 @@ export default function POMasterTab() {
                   {canManage && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="sm" variant="outline" onClick={() => openEditProduct(product)} className="text-xs">Edit</Button>
-                      <Button size="sm" variant="danger" onClick={() => deleteProduct(product)} className="text-xs">×</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteProduct(product)} className="text-xs">Ãƒâ€”</Button>
                     </div>
                   )}
                 </div>
@@ -227,10 +273,39 @@ export default function POMasterTab() {
           </div>
         </div>
 
+        {/* Crop Master Card */}
+        <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
+          <div className="p-4 bg-gradient-to-r from-[#DCFCE7] to-[#ECFDF5] border-b border-[#DDE3ED] flex items-center justify-between">
+            <h3 className="font-bold text-[#166534] flex items-center gap-2">ðŸŒ¾ Crop Master</h3>
+            {canManage && <Button size="sm" onClick={openAddCrop}>+ Add Crop</Button>}
+          </div>
+          <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
+            {crops.length === 0 ? (
+              <div className="p-6 text-center text-[#9CA3AF] text-sm">
+                <p>No crops added yet.</p>
+              </div>
+            ) : (
+              crops.map((crop, idx) => (
+                <div key={idx} className="p-3.5 hover:bg-[#F9FAFB] transition-colors flex items-center justify-between group">
+                  <div className="flex-1">
+                    <p className="font-semibold text-[#1A1D23] text-sm">{crop}</p>
+                    <p className="text-xs text-[#9CA3AF] mt-0.5">Crop Code: CRP-{String(idx + 1).padStart(3, '0')}</p>
+                  </div>
+                  {canManage && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="sm" variant="outline" onClick={() => openEditCrop(crop)} className="text-xs">Edit</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteCrop(crop)} className="text-xs">Ã—</Button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
         {/* Activity Master Card */}
         <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
           <div className="p-4 bg-gradient-to-r from-[#FEF3C7] to-[#FEF9E7] border-b border-[#DDE3ED] flex items-center justify-between">
-            <h3 className="font-bold text-[#B45309] flex items-center gap-2">⚡ Activity Master</h3>
+            <h3 className="font-bold text-[#B45309] flex items-center gap-2">Ã¢Å¡Â¡ Activity Master</h3>
             {canManage && <Button size="sm" onClick={openAddActivity}>+ Add Activity</Button>}
           </div>
           <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
@@ -248,7 +323,7 @@ export default function POMasterTab() {
                   {canManage && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="sm" variant="outline" onClick={() => openEditActivity(activity)} className="text-xs">Edit</Button>
-                      <Button size="sm" variant="danger" onClick={() => deleteActivity(activity)} className="text-xs">×</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteActivity(activity)} className="text-xs">Ãƒâ€”</Button>
                     </div>
                   )}
                 </div>
@@ -288,7 +363,7 @@ export default function POMasterTab() {
                     <span className="font-bold text-[#1B4F72] text-sm">{po.poNumber}</span>
                     {statusBadge(po.status)}
                   </div>
-                  <p className="text-xs text-[#9CA3AF] mb-2">{po.from} → {po.to}</p>
+                  <p className="text-xs text-[#9CA3AF] mb-2">{po.from} Ã¢â€ â€™ {po.to}</p>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-[#1A1D23]">{formatLakhs(po.budget)}</span>
                     <span className="text-xs text-[#9CA3AF]">{utilPct}% used</span>
@@ -304,7 +379,7 @@ export default function POMasterTab() {
         <div className="lg:col-span-2 border border-[#DDE3ED] rounded-xl lg:rounded-l-none bg-white overflow-hidden">
           {!selected ? (
             <div className="flex items-center justify-center h-full min-h-[400px] text-[#9CA3AF] flex-col gap-3">
-              <span className="text-4xl">📋</span>
+              <span className="text-4xl">Ã°Å¸â€œâ€¹</span>
               <p>Select a PO to view details</p>
             </div>
           ) : (
@@ -316,23 +391,23 @@ export default function POMasterTab() {
                     {statusBadge(selected.status)}
                     {approvalBadge(selected.approvalStatus)}
                   </div>
-                  <p className="text-xs text-[#6B7280] mt-1">📅 {selected.from} → {selected.to} · Created by {selected.createdBy} on {selected.createdAt}</p>
-                  {selected.remarks && <p className="text-xs text-[#6B7280]">📝 {selected.remarks}</p>}
+                  <p className="text-xs text-[#6B7280] mt-1">Ã°Å¸â€œâ€¦ {selected.from} Ã¢â€ â€™ {selected.to} Ã‚Â· Created by {selected.createdBy} on {selected.createdAt}</p>
+                  {selected.remarks && <p className="text-xs text-[#6B7280]">Ã°Å¸â€œÂ {selected.remarks}</p>}
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {canManage && <Button size="sm" variant="outline" onClick={openEdit}>✏️ Edit</Button>}
+                  {canManage && <Button size="sm" variant="outline" onClick={openEdit}>Ã¢Å“ÂÃ¯Â¸Â Edit</Button>}
                   {canManage && selected.status !== 'Lapsed' && <Button size="sm" variant="danger" onClick={() => { if(confirm('Mark this PO as Lapsed?')) lapsePO(selected.id); }}>Mark Lapsed</Button>}
-                  {canApprove && selected.approvalStatus === 'pending' && <Button size="sm" variant="success" onClick={() => approvePO(selected.id, u.name)}>✓ Approve</Button>}
+                  {canApprove && selected.approvalStatus === 'pending' && <Button size="sm" variant="success" onClick={() => approvePO(selected.id, u.name)}>Ã¢Å“â€œ Approve</Button>}
                 </div>
               </div>
 
               {selected.approvalStatus === 'pending' && (
-                <div className="m-4"><InfoBanner color="amber">⚠ This PO is pending approval. Budget allocation is read-only until approved.</InfoBanner></div>
+                <div className="m-4"><InfoBanner color="amber">Ã¢Å¡Â  This PO is pending approval. Budget allocation is read-only until approved.</InfoBanner></div>
               )}
 
               <div className="p-5 space-y-6 overflow-y-auto max-h-[560px]">
                 <div>
-                  <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-3">Budget Summary {userRegion && `— ${userRegion}`}</p>
+                  <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-3">Budget Summary {userRegion && `Ã¢â‚¬â€ ${userRegion}`}</p>
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { label: userRegion ? 'My Region Budget' : 'Total PO Budget', value: formatCurrency(userRegion ? (selected.regionBudgets[userRegion] || 0) : selected.budget), color: 'text-[#1B4F72]' },
@@ -362,9 +437,9 @@ export default function POMasterTab() {
                         const utilPct = pct(spent, budget as number);
                         return (
                           <tr key={region} className="hover:bg-[#F8FAFC]">
-                            <Td className="font-bold text-[#1B4F72]">🗺️ {region}</Td>
+                            <Td className="font-bold text-[#1B4F72]">Ã°Å¸â€”ÂºÃ¯Â¸Â {region}</Td>
                             <Td>{formatCurrency(budget as number)}</Td>
-                            <Td>{distributed > 0 ? formatCurrency(distributed) : <span className="text-[#9CA3AF] text-xs">—</span>}</Td>
+                            <Td>{distributed > 0 ? formatCurrency(distributed) : <span className="text-[#9CA3AF] text-xs">Ã¢â‚¬â€</span>}</Td>
                             <Td className="font-bold text-green-600">{formatCurrency(spent)}</Td>
                             <Td>
                               <div className="flex items-center gap-2 min-w-[80px]">
@@ -374,7 +449,7 @@ export default function POMasterTab() {
                             </Td>
                             <Td>
                               {canManage && selected.approvalStatus === 'approved' && (
-                                <Button size="sm" variant="outline" onClick={() => openDistribute(region)}>⚡ Distribute</Button>
+                                <Button size="sm" variant="outline" onClick={() => openDistribute(region)}>Ã¢Å¡Â¡ Distribute</Button>
                               )}
                             </Td>
                           </tr>
@@ -391,7 +466,7 @@ export default function POMasterTab() {
                   if (Object.keys(prods).length === 0) return null;
                   return (
                     <div key={region}>
-                      <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-2">📦 {region} — Product/Activity Allocation</p>
+                      <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-2">Ã°Å¸â€œÂ¦ {region} Ã¢â‚¬â€ Product/Activity Allocation</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {Object.entries(prods).map(([prod, acts]) => {
                           const pTotal = Object.values(acts).reduce((s, v) => s + (v as number), 0);
@@ -433,12 +508,12 @@ export default function POMasterTab() {
 
         {wizardStep === 1 && (
           <div className="space-y-4">
-            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 1 — PO Details</p>
+            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 1 Ã¢â‚¬â€ PO Details</p>
             <div className="flex gap-3">
               <div className="flex-1"><Label required>PO Number</Label><Input value={form.poNumber} onChange={e => setForm(f => ({ ...f, poNumber: e.target.value }))} placeholder="PO-2026-001" /></div>
               <Button variant="secondary" onClick={autoGenPO} className="self-end h-9">Auto-generate</Button>
             </div>
-            <div><Label required>Total Budget (₹)</Label><Input type="number" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} placeholder="1000000" /></div>
+            <div><Label required>Total Budget (Ã¢â€šÂ¹)</Label><Input type="number" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} placeholder="1000000" /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label required>From Date</Label><Input type="date" value={form.from} onChange={e => setForm(f => ({ ...f, from: e.target.value }))} /></div>
               <div><Label required>To Date</Label><Input type="date" value={form.to} onChange={e => setForm(f => ({ ...f, to: e.target.value }))} /></div>
@@ -446,15 +521,15 @@ export default function POMasterTab() {
             <div><Label>Remarks</Label><Textarea value={form.remarks} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))} rows={2} placeholder="e.g. Q1 2026 National Campaign" /></div>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="secondary" onClick={() => setShowWizard(false)}>Cancel</Button>
-              <Button onClick={() => setWizardStep(2)} disabled={!form.poNumber || !form.budget || !form.from || !form.to}>Next →</Button>
+              <Button onClick={() => setWizardStep(2)} disabled={!form.poNumber || !form.budget || !form.from || !form.to}>Next Ã¢â€ â€™</Button>
             </div>
           </div>
         )}
 
         {wizardStep === 2 && (
           <div className="space-y-4">
-            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 2 — Region Budget Allocation</p>
-            <p className="text-xs text-[#9CA3AF]">Total Budget: <strong className="text-[#1B4F72]">{formatCurrency(parseFloat(form.budget) || 0)}</strong> · Remaining: <strong>{formatCurrency(Math.max(0, (parseFloat(form.budget) || 0) - Object.values(form.regionBudgets).reduce((s, v) => s + (parseFloat(v) || 0), 0)))}</strong></p>
+            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 2 Ã¢â‚¬â€ Region Budget Allocation</p>
+            <p className="text-xs text-[#9CA3AF]">Total Budget: <strong className="text-[#1B4F72]">{formatCurrency(parseFloat(form.budget) || 0)}</strong> Ã‚Â· Remaining: <strong>{formatCurrency(Math.max(0, (parseFloat(form.budget) || 0) - Object.values(form.regionBudgets).reduce((s, v) => s + (parseFloat(v) || 0), 0)))}</strong></p>
             <div className="space-y-2">
               {regions.map(r => (
                 <div key={r.name} className="flex items-center gap-3">
@@ -467,29 +542,29 @@ export default function POMasterTab() {
               ))}
             </div>
             <div className="flex justify-between gap-3 pt-2">
-              <Button variant="secondary" onClick={() => setWizardStep(1)}>← Back</Button>
-              <Button onClick={() => setWizardStep(3)}>Next →</Button>
+              <Button variant="secondary" onClick={() => setWizardStep(1)}>Ã¢â€ Â Back</Button>
+              <Button onClick={() => setWizardStep(3)}>Next Ã¢â€ â€™</Button>
             </div>
           </div>
         )}
 
         {wizardStep === 3 && (
           <div className="space-y-4">
-            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 3 — Review & Save</p>
+            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 3 Ã¢â‚¬â€ Review & Save</p>
             <div className="bg-[#F8FAFC] rounded-xl p-4 space-y-2 text-sm">
               <p><span className="text-[#6B7280]">PO Number:</span> <strong>{form.poNumber}</strong></p>
               <p><span className="text-[#6B7280]">Budget:</span> <strong className="text-[#1B4F72]">{formatCurrency(parseFloat(form.budget) || 0)}</strong></p>
-              <p><span className="text-[#6B7280]">Period:</span> <strong>{form.from} → {form.to}</strong></p>
+              <p><span className="text-[#6B7280]">Period:</span> <strong>{form.from} Ã¢â€ â€™ {form.to}</strong></p>
               {form.remarks && <p><span className="text-[#6B7280]">Remarks:</span> {form.remarks}</p>}
               <div>
                 <p className="text-[#6B7280] mb-1">Region Budgets:</p>
                 {Object.entries(form.regionBudgets).filter(([, v]) => parseFloat(v) > 0).map(([r, v]) => (
-                  <p key={r} className="text-xs">• {r}: <strong>{formatCurrency(parseFloat(v))}</strong></p>
+                  <p key={r} className="text-xs">Ã¢â‚¬Â¢ {r}: <strong>{formatCurrency(parseFloat(v))}</strong></p>
                 ))}
               </div>
             </div>
             <div className="flex justify-between gap-3 pt-2">
-              <Button variant="secondary" onClick={() => setWizardStep(2)}>← Back</Button>
+              <Button variant="secondary" onClick={() => setWizardStep(2)}>Ã¢â€ Â Back</Button>
               <Button onClick={handleSavePO}>{editMode ? 'Save Changes' : 'Create PO'}</Button>
             </div>
           </div>
@@ -497,20 +572,25 @@ export default function POMasterTab() {
       </Modal>
 
       {/* Distribution Modal */}
-      <Modal open={showDistModal} onClose={() => setShowDistModal(false)} title={`Distribute Budget — ${distRegion}`} width="max-w-2xl">
+      <Modal open={showDistModal} onClose={() => setShowDistModal(false)} title={`Distribute Budget Ã¢â‚¬â€ ${distRegion}`} width="max-w-2xl">
         <div className="space-y-4">
           <p className="text-xs text-[#9CA3AF]">Region Budget: <strong className="text-[#1B4F72]">{selected && formatCurrency(selected.regionBudgets[distRegion] || 0)}</strong></p>
           {products.map(prod => (
             <div key={prod} className="border border-[#DDE3ED] rounded-xl p-4">
               <p className="font-bold text-[#374151] text-sm mb-3">{prod}</p>
-              <div className="grid grid-cols-2 gap-3">
-                {activities.map(act => (
-                  <div key={act}>
-                    <Label className="text-[9px]">{act}</Label>
-                    <Input type="number" min="0" value={distData[prod]?.[act] || ''} onChange={e => setDistData(d => ({ ...d, [prod]: { ...(d[prod] || {}), [act]: parseFloat(e.target.value) || 0 } }))} placeholder="0" className="h-8 text-xs" />
+              {crops.map(crop => (
+                <div key={crop} className="border border-[#E5E7EB] rounded-lg p-3 mb-3 bg-[#F9FAFB]">
+                  <p className="font-semibold text-[#374151] text-sm mb-2">{crop}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {activities.map(act => (
+                      <div key={act}>
+                        <Label className="text-[9px]">{act}</Label>
+                        <Input type="number" min="0" value={distData[prod]?.[crop]?.[act] || ''} onChange={e => setDistData(d => ({ ...d, [prod]: { ...(d[prod] || {}), [crop]: { ...(d[prod]?.[crop] || {}), [act]: parseFloat(e.target.value) || 0 } } }))} placeholder="0" className="h-8 text-xs" />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           ))}
           <div className="flex justify-end gap-3 pt-2">
@@ -575,6 +655,37 @@ export default function POMasterTab() {
             <Button variant="secondary" onClick={() => setShowActivityModal(false)}>Cancel</Button>
             <Button onClick={saveActivity} disabled={!activityForm.name.trim()}>
               {editingActivity ? 'Update Activity' : 'Add Activity'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+
+      {/* Crop Master Modal */}
+      <Modal open={showCropModal} onClose={() => setShowCropModal(false)} title={editingCrop ? 'Edit Crop' : 'Add Crop'} width="max-w-lg">
+        <div className="space-y-4">
+          <div>
+            <Label required>Crop Name</Label>
+            <Input 
+              value={cropForm.name} 
+              onChange={(e) => setCropForm(f => ({ ...f, name: e.target.value }))} 
+              placeholder="e.g. Wheat, Rice, Cotton, Corn"
+              autoFocus
+            />
+          </div>
+          <div>
+            <Label>Description (Optional)</Label>
+            <Textarea 
+              value={cropForm.description} 
+              onChange={(e) => setCropForm(f => ({ ...f, description: e.target.value }))} 
+              placeholder="Add optional description..."
+              rows={2}
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setShowCropModal(false)}>Cancel</Button>
+            <Button onClick={saveCrop} disabled={!cropForm.name.trim()}>
+              {editingCrop ? 'Update Crop' : 'Add Crop'}
             </Button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Button, Input, Select, Textarea, Label, Table, Th, Td, Badge, Modal, ProgressBar, SearchInput, InfoBanner, cn } from '../../components/ui';
 import { formatCurrency, formatLakhs, pct } from '../../lib/mock-data';
@@ -10,9 +10,9 @@ const statusBadge = (s: string) =>
   <Badge variant="default">{s}</Badge>;
 
 const approvalBadge = (s: string) =>
-  s === 'approved' ? <Badge variant="success">Ã¢Å“â€œ Approved</Badge> :
-  s === 'rejected' ? <Badge variant="error">Ã¢Å“â€” Rejected</Badge> :
-  <Badge variant="warning">Ã¢ÂÂ³ Pending</Badge>;
+  s === 'approved' ? <Badge variant="success">✅ Approved</Badge> :
+  s === 'rejected' ? <Badge variant="error">❌ Rejected</Badge> :
+  <Badge variant="warning">⏳ Pending</Badge>;
 
 export default function POMasterTab() {
   const { pos, setPOs, addPO, updatePO, lapsePO, approvePO, rejectPO, calcLiveSpent, calcPendingSpent, regions, products, setProducts, crops, setCrops, activities, setActivities, currentUser } = useAppContext();
@@ -237,7 +237,7 @@ export default function POMasterTab() {
     <div className="space-y-0">
       {/* PO Master Header */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-[#1A1D23]">Ã°Å¸â€œâ€¹ PO Master Management</h2>
+        <h2 className="text-xl font-bold text-[#1A1D23]">📋 PO Master Management</h2>
         <p className="text-sm text-[#6B7280] mt-1">Create and manage Purchase Orders, Products, Crops, and Activities</p>
       </div>
 
@@ -246,7 +246,7 @@ export default function POMasterTab() {
         {/* Product Master Card */}
         <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
           <div className="p-4 bg-gradient-to-r from-[#EBF3FA] to-[#F0F9FF] border-b border-[#DDE3ED] flex items-center justify-between">
-            <h3 className="font-bold text-[#1B4F72] flex items-center gap-2">Ã°Å¸Â§Â© Product Master</h3>
+            <h3 className="font-bold text-[#1B4F72] flex items-center gap-2">📦 Product Master</h3>
             {canManage && <Button size="sm" onClick={openAddProduct}>+ Add Product</Button>}
           </div>
           <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
@@ -264,7 +264,7 @@ export default function POMasterTab() {
                   {canManage && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="sm" variant="outline" onClick={() => openEditProduct(product)} className="text-xs">Edit</Button>
-                      <Button size="sm" variant="danger" onClick={() => deleteProduct(product)} className="text-xs">Ãƒâ€”</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteProduct(product)} className="text-xs">❌</Button>
                     </div>
                   )}
                 </div>
@@ -276,7 +276,7 @@ export default function POMasterTab() {
         {/* Crop Master Card */}
         <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
           <div className="p-4 bg-gradient-to-r from-[#DCFCE7] to-[#ECFDF5] border-b border-[#DDE3ED] flex items-center justify-between">
-            <h3 className="font-bold text-[#166534] flex items-center gap-2">ðŸŒ¾ Crop Master</h3>
+            <h3 className="font-bold text-[#166534] flex items-center gap-2">🌾 Crop Master</h3>
             {canManage && <Button size="sm" onClick={openAddCrop}>+ Add Crop</Button>}
           </div>
           <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
@@ -294,7 +294,7 @@ export default function POMasterTab() {
                   {canManage && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="sm" variant="outline" onClick={() => openEditCrop(crop)} className="text-xs">Edit</Button>
-                      <Button size="sm" variant="danger" onClick={() => deleteCrop(crop)} className="text-xs">Ã—</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteCrop(crop)} className="text-xs">❌</Button>
                     </div>
                   )}
                 </div>
@@ -305,7 +305,7 @@ export default function POMasterTab() {
         {/* Activity Master Card */}
         <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
           <div className="p-4 bg-gradient-to-r from-[#FEF3C7] to-[#FEF9E7] border-b border-[#DDE3ED] flex items-center justify-between">
-            <h3 className="font-bold text-[#B45309] flex items-center gap-2">Ã¢Å¡Â¡ Activity Master</h3>
+            <h3 className="font-bold text-[#B45309] flex items-center gap-2">⚡ Activity Master</h3>
             {canManage && <Button size="sm" onClick={openAddActivity}>+ Add Activity</Button>}
           </div>
           <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
@@ -323,7 +323,7 @@ export default function POMasterTab() {
                   {canManage && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="sm" variant="outline" onClick={() => openEditActivity(activity)} className="text-xs">Edit</Button>
-                      <Button size="sm" variant="danger" onClick={() => deleteActivity(activity)} className="text-xs">Ãƒâ€”</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteActivity(activity)} className="text-xs">❌</Button>
                     </div>
                   )}
                 </div>
@@ -379,7 +379,7 @@ export default function POMasterTab() {
         <div className="lg:col-span-2 border border-[#DDE3ED] rounded-xl lg:rounded-l-none bg-white overflow-hidden">
           {!selected ? (
             <div className="flex items-center justify-center h-full min-h-[400px] text-[#9CA3AF] flex-col gap-3">
-              <span className="text-4xl">Ã°Å¸â€œâ€¹</span>
+              <span className="text-4xl">📋</span>
               <p>Select a PO to view details</p>
             </div>
           ) : (
@@ -391,11 +391,11 @@ export default function POMasterTab() {
                     {statusBadge(selected.status)}
                     {approvalBadge(selected.approvalStatus)}
                   </div>
-                  <p className="text-xs text-[#6B7280] mt-1">Ã°Å¸â€œâ€¦ {selected.from} Ã¢â€ â€™ {selected.to} Ã‚Â· Created by {selected.createdBy} on {selected.createdAt}</p>
-                  {selected.remarks && <p className="text-xs text-[#6B7280]">Ã°Å¸â€œÂ {selected.remarks}</p>}
+                  <p className="text-xs text-[#6B7280] mt-1">📋 {selected.from} to {selected.to}  Created by {selected.createdBy} on {selected.createdAt}</p>
+                  {selected.remarks && <p className="text-xs text-[#6B7280]">💡 {selected.remarks}</p>}
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {canManage && <Button size="sm" variant="outline" onClick={openEdit}>Ã¢Å“ÂÃ¯Â¸Â Edit</Button>}
+                  {canManage && <Button size="sm" variant="outline" onClick={openEdit}> Edit</Button>}
                   {canManage && selected.status !== 'Lapsed' && <Button size="sm" variant="danger" onClick={() => { if(confirm('Mark this PO as Lapsed?')) lapsePO(selected.id); }}>Mark Lapsed</Button>}
                   {canApprove && selected.approvalStatus === 'pending' && <Button size="sm" variant="success" onClick={() => approvePO(selected.id, u.name)}>Ã¢Å“â€œ Approve</Button>}
                 </div>
@@ -407,7 +407,7 @@ export default function POMasterTab() {
 
               <div className="p-5 space-y-6 overflow-y-auto max-h-[560px]">
                 <div>
-                  <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-3">Budget Summary {userRegion && `Ã¢â‚¬â€ ${userRegion}`}</p>
+                  <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-3">Budget Summary {userRegion && ` - ${userRegion}`}</p>
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { label: userRegion ? 'My Region Budget' : 'Total PO Budget', value: formatCurrency(userRegion ? (selected.regionBudgets[userRegion] || 0) : selected.budget), color: 'text-[#1B4F72]' },
@@ -437,9 +437,9 @@ export default function POMasterTab() {
                         const utilPct = pct(spent, budget as number);
                         return (
                           <tr key={region} className="hover:bg-[#F8FAFC]">
-                            <Td className="font-bold text-[#1B4F72]">Ã°Å¸â€”ÂºÃ¯Â¸Â {region}</Td>
+                            <Td className="font-bold text-[#1B4F72]"> {region}</Td>
                             <Td>{formatCurrency(budget as number)}</Td>
-                            <Td>{distributed > 0 ? formatCurrency(distributed) : <span className="text-[#9CA3AF] text-xs">Ã¢â‚¬â€</span>}</Td>
+                            <Td>{distributed > 0 ? formatCurrency(distributed) : <span className="text-[#9CA3AF] text-xs">-</span>}</Td>
                             <Td className="font-bold text-green-600">{formatCurrency(spent)}</Td>
                             <Td>
                               <div className="flex items-center gap-2 min-w-[80px]">
@@ -449,7 +449,7 @@ export default function POMasterTab() {
                             </Td>
                             <Td>
                               {canManage && selected.approvalStatus === 'approved' && (
-                                <Button size="sm" variant="outline" onClick={() => openDistribute(region)}>Ã¢Å¡Â¡ Distribute</Button>
+                                <Button size="sm" variant="outline" onClick={() => openDistribute(region)}>⚡ Distribute</Button>
                               )}
                             </Td>
                           </tr>
@@ -466,7 +466,7 @@ export default function POMasterTab() {
                   if (Object.keys(prods).length === 0) return null;
                   return (
                     <div key={region}>
-                      <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-2">Ã°Å¸â€œÂ¦ {region} Ã¢â‚¬â€ Product/Activity Allocation</p>
+                      <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-2"> {region}  Product/Activity Allocation</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {Object.entries(prods).map(([prod, acts]) => {
                           const pTotal = Object.values(acts).reduce((s, v) => s + (v as number), 0);
@@ -508,12 +508,12 @@ export default function POMasterTab() {
 
         {wizardStep === 1 && (
           <div className="space-y-4">
-            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 1 Ã¢â‚¬â€ PO Details</p>
+            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 1 PO Details</p>
             <div className="flex gap-3">
               <div className="flex-1"><Label required>PO Number</Label><Input value={form.poNumber} onChange={e => setForm(f => ({ ...f, poNumber: e.target.value }))} placeholder="PO-2026-001" /></div>
               <Button variant="secondary" onClick={autoGenPO} className="self-end h-9">Auto-generate</Button>
             </div>
-            <div><Label required>Total Budget (Ã¢â€šÂ¹)</Label><Input type="number" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} placeholder="1000000" /></div>
+            <div><Label required>Total Budget (₹)</Label><Input type="number" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} placeholder="1000000" /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label required>From Date</Label><Input type="date" value={form.from} onChange={e => setForm(f => ({ ...f, from: e.target.value }))} /></div>
               <div><Label required>To Date</Label><Input type="date" value={form.to} onChange={e => setForm(f => ({ ...f, to: e.target.value }))} /></div>
@@ -521,14 +521,14 @@ export default function POMasterTab() {
             <div><Label>Remarks</Label><Textarea value={form.remarks} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))} rows={2} placeholder="e.g. Q1 2026 National Campaign" /></div>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="secondary" onClick={() => setShowWizard(false)}>Cancel</Button>
-              <Button onClick={() => setWizardStep(2)} disabled={!form.poNumber || !form.budget || !form.from || !form.to}>Next Ã¢â€ â€™</Button>
+              <Button onClick={() => setWizardStep(2)} disabled={!form.poNumber || !form.budget || !form.from || !form.to}>Next </Button>
             </div>
           </div>
         )}
 
         {wizardStep === 2 && (
           <div className="space-y-4">
-            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 2 Ã¢â‚¬â€ Region Budget Allocation</p>
+            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 2 Region Budget Allocation</p>
             <p className="text-xs text-[#9CA3AF]">Total Budget: <strong className="text-[#1B4F72]">{formatCurrency(parseFloat(form.budget) || 0)}</strong> Ã‚Â· Remaining: <strong>{formatCurrency(Math.max(0, (parseFloat(form.budget) || 0) - Object.values(form.regionBudgets).reduce((s, v) => s + (parseFloat(v) || 0), 0)))}</strong></p>
             <div className="space-y-2">
               {regions.map(r => (
@@ -550,11 +550,11 @@ export default function POMasterTab() {
 
         {wizardStep === 3 && (
           <div className="space-y-4">
-            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 3 Ã¢â‚¬â€ Review & Save</p>
+            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 3 Review & Save</p>
             <div className="bg-[#F8FAFC] rounded-xl p-4 space-y-2 text-sm">
               <p><span className="text-[#6B7280]">PO Number:</span> <strong>{form.poNumber}</strong></p>
               <p><span className="text-[#6B7280]">Budget:</span> <strong className="text-[#1B4F72]">{formatCurrency(parseFloat(form.budget) || 0)}</strong></p>
-              <p><span className="text-[#6B7280]">Period:</span> <strong>{form.from} Ã¢â€ â€™ {form.to}</strong></p>
+              <p><span className="text-[#6B7280]">Period:</span> <strong>{form.from} to {form.to}</strong></p>
               {form.remarks && <p><span className="text-[#6B7280]">Remarks:</span> {form.remarks}</p>}
               <div>
                 <p className="text-[#6B7280] mb-1">Region Budgets:</p>
@@ -572,7 +572,7 @@ export default function POMasterTab() {
       </Modal>
 
       {/* Distribution Modal */}
-      <Modal open={showDistModal} onClose={() => setShowDistModal(false)} title={`Distribute Budget Ã¢â‚¬â€ ${distRegion}`} width="max-w-2xl">
+      <Modal open={showDistModal} onClose={() => setShowDistModal(false)} title={`Distribute Budget  ${distRegion}`} width="max-w-2xl">
         <div className="space-y-4">
           <p className="text-xs text-[#9CA3AF]">Region Budget: <strong className="text-[#1B4F72]">{selected && formatCurrency(selected.regionBudgets[distRegion] || 0)}</strong></p>
           {products.map(prod => (
@@ -693,3 +693,4 @@ export default function POMasterTab() {
     </div>
   );
 }
+

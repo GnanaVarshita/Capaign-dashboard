@@ -226,7 +226,7 @@ export default function BudgetRequestTab() {
       {/* Page Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">Ã°Å¸â€œÅ  Budget Request Management</h1>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">📊  Budget Request Management</h1>
           <p className="text-sm text-slate-500 mt-1">
             {isAreaManager && 'Submit budget requests for your MDOs through the hierarchy. Select a request number or wait for AIM to create one.'}
             {isZonalManager && 'Approve budget requests from your zone.'}
@@ -249,7 +249,7 @@ export default function BudgetRequestTab() {
       {/* Create Request Group Modal (AIM Only) */}
       {(isAIM || canManageAll) && showCreateRequestGroup && (
         <Card className="p-6 mb-6 border-l-4 border-l-blue-600 bg-blue-50">
-          <h3 className="text-lg font-bold mb-4">Ã°Å¸â€œâ€¹ Create New Budget Request Cycle</h3>
+          <h3 className="text-lg font-bold mb-4">📅 Create New Budget Request Cycle</h3>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2">
@@ -272,7 +272,7 @@ export default function BudgetRequestTab() {
 
             {/* Region Selection */}
             <div className="border-t pt-4">
-              <Label className="text-sm font-bold mb-3 block">Ã°Å¸â€œÂ Select Regions for this Request Cycle</Label>
+              <Label className="text-sm font-bold mb-3 block">Select Regions for this Request Cycle</Label>
               <p className="text-xs text-slate-600 mb-3">Choose which regions this budget request cycle applies to. Leave empty for all regions.</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {regions && regions.map(region => (
@@ -301,11 +301,11 @@ export default function BudgetRequestTab() {
               </div>
               {requestGroupForm.selectedRegions && requestGroupForm.selectedRegions.length > 0 && (
                 <p className="text-xs text-blue-600 mt-3">
-                  Ã¢Å“â€œ Selected {requestGroupForm.selectedRegions.length} region(s): {requestGroupForm.selectedRegions.join(', ')}
+                  ✅ Selected {requestGroupForm.selectedRegions.length} region(s): {requestGroupForm.selectedRegions.join(', ')}
                 </p>
               )}
               {(!requestGroupForm.selectedRegions || requestGroupForm.selectedRegions.length === 0) && (
-                <p className="text-xs text-slate-500 mt-3">Ã¢â€žÂ¹Ã¯Â¸Â No specific regions selected - this cycle will apply to all regions</p>
+                <p className="text-xs text-slate-500 mt-3"> No specific regions selected - this cycle will apply to all regions</p>
               )}
             </div>
 
@@ -319,7 +319,7 @@ export default function BudgetRequestTab() {
                 setRequestGroupForm({ description: '', targetDate: '', selectedRegions: [] });
                 setShowCreateRequestGroup(false);
               }} className="bg-blue-600 hover:bg-blue-700">
-                Ã¢Å“â€œ Create Cycle
+                ✅ Create Cycle
               </Button>
               <Button variant="outline" onClick={() => {
                 setRequestGroupForm({ description: '', targetDate: '', selectedRegions: [] });
@@ -401,7 +401,7 @@ export default function BudgetRequestTab() {
       {/* Request Cycle Selector - Show for all managers to select cycles for viewing/submitting */}
       {(isZonalManager || isRegionalManager || isAreaManager) && budgetRequestGroups.length > 0 && (
         <Card className="p-6 mb-6 border-l-4 border-l-cyan-600 bg-cyan-50">
-          <h3 className="text-lg font-bold text-cyan-900 mb-4">Ã°Å¸â€œâ€¹ Available Budget Request Cycles</h3>
+          <h3 className="text-lg font-bold text-cyan-900 mb-4">📅 Available Budget Request Cycles</h3>
           <div className="space-y-3">
             <div>
               <Label className="text-sm font-bold">Select a Request Cycle to View or Submit Budget Requests</Label>
@@ -424,7 +424,7 @@ export default function BudgetRequestTab() {
       {/* Session Filter for AIM & RM */}
       {(isAIM || isRegionalManager || canManageAll) && budgetRequestGroups.length > 0 && !isAreaManager && (
         <Card className="p-6 mb-6 border-l-4 border-l-purple-600 bg-purple-50">
-          <h3 className="text-lg font-bold text-purple-900 mb-4">Ã°Å¸â€œâ€¹ Filter by Budget Request Session</h3>
+          <h3 className="text-lg font-bold text-purple-900 mb-4">📅 Filter by Budget Request Session</h3>
           <div className="space-y-3">
             <div>
               <Label className="text-sm font-bold">Select a Budget Request Session to View Requests</Label>
@@ -570,7 +570,7 @@ export default function BudgetRequestTab() {
       {isAreaManager && budgetRequestGroups.length > 0 && (
         <Card className="p-6 mb-6 border-l-4 border-l-red-600 bg-red-50">
           <div className="flex items-start gap-3 mb-4">
-            <span className="text-2xl">Ã°Å¸â€œâ€¹</span>
+            <span className="text-2xl">📅</span>
             <div>
               <h3 className="text-lg font-bold text-red-900">Step 1: Select Request Cycle to Submit Budget</h3>
               <p className="text-sm text-red-700 mt-1">Choose which AIM-created request cycle you want to submit budget requests under. This organizes your submissions and helps in PO creation.</p>
@@ -590,7 +590,7 @@ export default function BudgetRequestTab() {
                 <option value="">-- SELECT A REQUEST CYCLE --</option>
                 {budgetRequestGroups.filter(g => g.status === 'active').map(g => (
                   <option key={g.id} value={g.id}>
-                    Ã°Å¸â€œÅ’ {g.requestNumber} - {g.description || '(No description)'} {g.targetDate ? `| Target: ${g.targetDate}` : ''}
+                    📊’ {g.requestNumber} - {g.description || '(No description)'} {g.targetDate ? `| Target: ${g.targetDate}` : ''}
                   </option>
                 ))}
               </Select>
@@ -654,7 +654,7 @@ export default function BudgetRequestTab() {
                 </Select>
                 {selectedProduct && (
                   <div className="mt-2 p-2 bg-amber-100 rounded text-sm text-amber-900">
-                    Ã°Å¸â€œÂ¦ <span className="font-semibold">{selectedProduct}</span> - Now adding MDOs for this product
+                    📦 <span className="font-semibold">{selectedProduct}</span> - Now adding MDOs for this product
                   </div>
                 )}
               </div>
@@ -691,7 +691,7 @@ export default function BudgetRequestTab() {
                           <Label className="text-xs font-semibold text-slate-700">{activity}</Label>
                           <Input
                             type="number"
-                            placeholder="Ã¢â€šÂ¹0"
+                            placeholder="₹0"
                             value={formData.activityBudgets[activity] || 0}
                             onChange={e => setFormData({
                               ...formData,
@@ -705,7 +705,7 @@ export default function BudgetRequestTab() {
                       ))}
                     </div>
                     <div className="mt-3 p-2 bg-blue-50 rounded text-sm text-blue-900 font-semibold">
-                      Total Budget: Ã¢â€šÂ¹{Object.values(formData.activityBudgets).reduce((sum, v) => sum + (v || 0), 0).toLocaleString()}
+                      Total Budget: ₹{Object.values(formData.activityBudgets).reduce((sum, v) => sum + (v || 0), 0).toLocaleString()}
                     </div>
                   </div>
 
@@ -754,7 +754,7 @@ export default function BudgetRequestTab() {
             {mdoList.length > 0 && (
               <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-bold text-slate-900">Ã°Å¸â€œâ€¹ Budget Details: {mdoList.length} MDO{mdoList.length !== 1 ? 's' : ''}</h4>
+                  <h4 className="font-bold text-slate-900">📅 Budget Details: {mdoList.length} MDO{mdoList.length !== 1 ? 's' : ''}</h4>
                   <Button 
                     variant="outline"
                     onClick={() => setMdoList([])}
@@ -779,7 +779,7 @@ export default function BudgetRequestTab() {
                     return (
                       <div key={product} className="bg-white rounded border border-slate-200 overflow-hidden">
                         <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 text-white">
-                          <h5 className="font-bold text-sm">Ã°Å¸â€œÂ¦ {product}</h5>
+                          <h5 className="font-bold text-sm">📦 {product}</h5>
                         </div>
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
@@ -800,20 +800,20 @@ export default function BudgetRequestTab() {
                                 return (
                                   <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
                                     <td className="px-3 py-2 font-semibold text-slate-900">{mdo.mdoName}</td>
-                                    <td className="px-3 py-2 text-right text-slate-700">Ã¢â€šÂ¹{mdo.estimatedSales.toLocaleString()}</td>
+                                    <td className="px-3 py-2 text-right text-slate-700">₹{mdo.estimatedSales.toLocaleString()}</td>
                                     {activities && activities.map((activity, actIdx) => (
                                       <td key={`${activity}-${actIdx}`} className="px-3 py-2 text-right text-slate-700">
-                                        Ã¢â€šÂ¹{(mdo.activityBudgets?.[activity] || 0).toLocaleString()}
+                                        ₹{(mdo.activityBudgets?.[activity] || 0).toLocaleString()}
                                       </td>
                                     ))}
-                                    <td className="px-3 py-2 text-right font-semibold text-blue-600">Ã¢â€šÂ¹{totalBudget.toLocaleString()}</td>
+                                    <td className="px-3 py-2 text-right font-semibold text-blue-600">₹{totalBudget.toLocaleString()}</td>
                                     <td className="px-3 py-2 text-center">
                                       <Button 
                                         variant="ghost" 
                                         onClick={() => setMdoList(mdoList.filter((_, i) => i !== mdoList.indexOf(mdo)))}
                                         className="text-red-500 hover:text-red-700 text-lg"
                                       >
-                                        Ã°Å¸â€”â€˜Ã¯Â¸Â
+                                        🗑️
                                       </Button>
                                     </td>
                                   </tr>
@@ -822,16 +822,16 @@ export default function BudgetRequestTab() {
                               {/* Product Totals Row */}
                               <tr className="bg-blue-100 font-bold border-t-2 border-blue-300">
                                 <td className="px-3 py-3 text-slate-900">{product} Total</td>
-                                <td className="px-3 py-3 text-right text-slate-900">Ã¢â€šÂ¹{productTotalEstimatedSales.toLocaleString()}</td>
+                                <td className="px-3 py-3 text-right text-slate-900">₹{productTotalEstimatedSales.toLocaleString()}</td>
                                 {activities && activities.map((activity, actIdx) => {
                                   const activityTotal = mdos.reduce((sum, m) => sum + (m.activityBudgets?.[activity] || 0), 0);
                                   return (
                                     <td key={`total-${activity}-${actIdx}`} className="px-3 py-3 text-right text-slate-900">
-                                      Ã¢â€šÂ¹{activityTotal.toLocaleString()}
+                                      ₹{activityTotal.toLocaleString()}
                                     </td>
                                   );
                                 })}
-                                <td className="px-3 py-3 text-right text-blue-700">Ã¢â€šÂ¹{productTotalBudget.toLocaleString()}</td>
+                                <td className="px-3 py-3 text-right text-blue-700">₹{productTotalBudget.toLocaleString()}</td>
                                 <td></td>
                               </tr>
                             </tbody>
@@ -844,24 +844,24 @@ export default function BudgetRequestTab() {
 
                 {/* Grand Summary */}
                 <div className="mt-6 p-4 bg-green-50 rounded border border-green-300">
-                  <h5 className="font-bold text-green-900 mb-3">Ã°Å¸â€œÅ  Grand Summary</h5>
+                  <h5 className="font-bold text-green-900 mb-3">📊  Grand Summary</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-green-700">Total Estimated Sales</p>
-                      <p className="text-lg font-bold text-green-700">Ã¢â€šÂ¹{mdoList.reduce((sum, m) => sum + m.estimatedSales, 0).toLocaleString()}</p>
+                      <p className="text-lg font-bold text-green-700">₹{mdoList.reduce((sum, m) => sum + m.estimatedSales, 0).toLocaleString()}</p>
                     </div>
                     {activities && activities.map((activity, idx) => {
                       const actTotal = mdoList.reduce((sum, m) => sum + (m.activityBudgets?.[activity] || 0), 0);
                       return (
                         <div key={`summary-${activity}-${idx}`}>
                           <p className="text-xs text-green-700">Total {activity}</p>
-                          <p className="text-lg font-bold text-green-700">Ã¢â€šÂ¹{actTotal.toLocaleString()}</p>
+                          <p className="text-lg font-bold text-green-700">₹{actTotal.toLocaleString()}</p>
                         </div>
                       );
                     })}
                     <div>
                       <p className="text-xs text-green-700">Total Budget Allocated</p>
-                      <p className="text-lg font-bold text-green-700">Ã¢â€šÂ¹{(mdoList.reduce((sum, m) => sum + (Object.values(m.activityBudgets || {}).reduce((aSum: number, v: any) => aSum + (v || 0), 0)), 0)).toLocaleString()}</p>
+                      <p className="text-lg font-bold text-green-700">₹{(mdoList.reduce((sum, m) => sum + (Object.values(m.activityBudgets || {}).reduce((aSum: number, v: any) => aSum + (v || 0), 0)), 0)).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-xs text-green-700">MDO Count</p>
@@ -925,7 +925,7 @@ export default function BudgetRequestTab() {
                   }}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  Ã°Å¸â€œÂ¤ Submit {mdoList.length} MDO{mdoList.length > 1 ? 's' : ''} (Ã¢â€šÂ¹{(mdoList.reduce((sum, m) => sum + (Object.values(m.activityBudgets || {}).reduce((aSum: number, v: any) => aSum + (v || 0), 0)), 0)).toLocaleString()})
+                  Ã°Å¸â€œÂ¤ Submit {mdoList.length} MDO{mdoList.length > 1 ? 's' : ''} (₹{(mdoList.reduce((sum, m) => sum + (Object.values(m.activityBudgets || {}).reduce((aSum: number, v: any) => aSum + (v || 0), 0)), 0)).toLocaleString()})
                 </Button>
               )}
               <Button variant="outline" onClick={() => {
@@ -946,7 +946,7 @@ export default function BudgetRequestTab() {
       {(isZonalManager || isRegionalManager || isAreaManager) && visibleRequests.length > 0 && (
         <Card className="p-6 mb-6 border-l-4 border-l-cyan-600">
           <h3 className="text-lg font-bold mb-4">
-            Ã°Å¸â€œÅ  Budget Requests {viewFilters.requestCycle && '- ' + budgetRequestGroups.find(g => g.id === viewFilters.requestCycle)?.requestNumber}
+            📊  Budget Requests {viewFilters.requestCycle && '- ' + budgetRequestGroups.find(g => g.id === viewFilters.requestCycle)?.requestNumber}
           </h3>
           
           {visibleRequests.length === 0 ? (
@@ -972,7 +972,7 @@ export default function BudgetRequestTab() {
                   <div key={cycleId} className="border rounded-lg overflow-hidden">
                     <div className="bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-3 text-white">
                       <h4 className="font-bold">{cycleName}</h4>
-                      <p className="text-sm opacity-90">{cycleRequests.length} request{cycleRequests.length !== 1 ? 's' : ''} Ã¢â‚¬Â¢ Total: Ã¢â€šÂ¹{cycleRequests.reduce((s, r) => s + r.budgetRequired, 0).toLocaleString()}</p>
+                      <p className="text-sm opacity-90">{cycleRequests.length} request{cycleRequests.length !== 1 ? 's' : ''} Ã¢â‚¬Â¢ Total: ₹{cycleRequests.reduce((s, r) => s + r.budgetRequired, 0).toLocaleString()}</p>
                     </div>
                     
                     <div className="p-4 space-y-4">
@@ -988,8 +988,8 @@ export default function BudgetRequestTab() {
                         return (
                           <div key={product} className="bg-blue-50 rounded p-3 border border-blue-200">
                             <h5 className="font-bold text-blue-700 mb-2 flex items-center gap-2 text-sm">
-                              Ã°Å¸â€œÂ¦ {product}
-                              <span className="text-xs bg-blue-100 px-2 py-1 rounded">Ã¢â€šÂ¹{productTotal.toLocaleString()}</span>
+                              📦 {product}
+                              <span className="text-xs bg-blue-100 px-2 py-1 rounded">₹{productTotal.toLocaleString()}</span>
                             </h5>
                             
                             <div className="space-y-2 ml-2">
@@ -1006,7 +1006,7 @@ export default function BudgetRequestTab() {
                                   <div key={activity} className="bg-yellow-50 rounded p-2 border-l-4 border-yellow-400">
                                     <div className="flex justify-between items-center font-semibold text-xs text-yellow-700 mb-1">
                                       <span>Ã¢â€â€Ã¢â€â‚¬ {activity}</span>
-                                      <span>Ã¢â€šÂ¹{activityTotal.toLocaleString()}</span>
+                                      <span>₹{activityTotal.toLocaleString()}</span>
                                     </div>
                                     <div className="space-y-1 ml-2">
                                       {activityReqs.map((req, idx) => (
@@ -1017,7 +1017,7 @@ export default function BudgetRequestTab() {
                                             {req.remarks && <p className="text-slate-500 text-xs italic">{req.remarks}</p>}
                                           </div>
                                           <div className="text-right ml-2 flex-shrink-0">
-                                            <p className="font-bold text-green-600">Ã¢â€šÂ¹{req.budgetRequired.toLocaleString()}</p>
+                                            <p className="font-bold text-green-600">₹{req.budgetRequired.toLocaleString()}</p>
                                             <p className="text-xs text-slate-500">{getStatusBadge(req.status)}</p>
                                           </div>
                                         </div>
@@ -1043,7 +1043,7 @@ export default function BudgetRequestTab() {
       {(isRegionalManager || isZonalManager || isAreaManager) && selectedRequestGroup && (
         <Card className="p-6 mb-6 border-l-4 border-l-blue-600">
           <h3 className="text-lg font-bold mb-4">
-            Ã°Å¸â€œâ€¹ Budget Details for {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
+            📅 Budget Details for {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
           </h3>
           <div className="space-y-4">
             {Object.entries(
@@ -1063,7 +1063,7 @@ export default function BudgetRequestTab() {
                     <h4 className="font-bold text-slate-800">{isAreaManager ? 'My Submissions' : region}</h4>
                     <div className="text-right">
                       <p className="text-sm text-slate-600">{reqs.length} submissions</p>
-                      <p className="font-bold text-lg text-green-600">Ã¢â€šÂ¹{regionTotal.toLocaleString()}</p>
+                      <p className="font-bold text-lg text-green-600">₹{regionTotal.toLocaleString()}</p>
                     </div>
                   </div>
                   <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -1076,7 +1076,7 @@ export default function BudgetRequestTab() {
                       }, {})
                     ).map(([product, productReqs]) => (
                       <div key={product} className="p-3 bg-white rounded border border-slate-100">
-                        <h5 className="font-bold text-slate-800 text-sm mb-2">Ã°Å¸â€œÅ’ {product}</h5>
+                        <h5 className="font-bold text-slate-800 text-sm mb-2">📊’ {product}</h5>
                         <div className="space-y-2 ml-2">
                           {/* Group by Activity */}
                           {Object.entries(
@@ -1092,7 +1092,7 @@ export default function BudgetRequestTab() {
                               <div key={activity} className="bg-slate-50 rounded p-2 border border-slate-100">
                                 <div className="flex justify-between items-center text-xs font-semibold text-slate-700 mb-2">
                                   <span>Ã¢â€â€Ã¢â€â‚¬ {activity}</span>
-                                  <span className="text-green-600">Total: Ã¢â€šÂ¹{activityTotal.toLocaleString()}</span>
+                                  <span className="text-green-600">Total: ₹{activityTotal.toLocaleString()}</span>
                                 </div>
                                 <div className="ml-2 overflow-x-auto">
                                   <table className="w-full text-xs">
@@ -1113,13 +1113,13 @@ export default function BudgetRequestTab() {
                                         return (
                                           <tr key={idx} className="border-b border-slate-200 hover:bg-white">
                                             <td className="px-2 py-1 font-semibold text-slate-900">{req.mdoName}</td>
-                                            <td className="px-2 py-1 text-right text-slate-700">Ã¢â€šÂ¹{req.estimatedSales.toLocaleString()}</td>
+                                            <td className="px-2 py-1 text-right text-slate-700">₹{req.estimatedSales.toLocaleString()}</td>
                                             {activities && activities.map((act, actIdx) => (
                                               <td key={`${act}-${actIdx}`} className="px-2 py-1 text-right text-slate-700">
-                                                Ã¢â€šÂ¹{(req.activityBudgets?.[act] || 0).toLocaleString()}
+                                                ₹{(req.activityBudgets?.[act] || 0).toLocaleString()}
                                               </td>
                                             ))}
-                                            <td className="px-2 py-1 text-right font-bold text-green-600">Ã¢â€šÂ¹{reqTotal.toLocaleString()}</td>
+                                            <td className="px-2 py-1 text-right font-bold text-green-600">₹{reqTotal.toLocaleString()}</td>
                                             <td className="px-2 py-1 text-xs text-slate-600">{req.areaManagerName}</td>
                                           </tr>
                                         );
@@ -1127,12 +1127,12 @@ export default function BudgetRequestTab() {
                                       {/* Row Totals */}
                                       <tr className="bg-slate-200 font-bold text-slate-800">
                                         <td className="px-2 py-1">Subtotal</td>
-                                        <td className="px-2 py-1 text-right">Ã¢â€šÂ¹{activityReqs.reduce((sum, r) => sum + r.estimatedSales, 0).toLocaleString()}</td>
+                                        <td className="px-2 py-1 text-right">₹{activityReqs.reduce((sum, r) => sum + r.estimatedSales, 0).toLocaleString()}</td>
                                         {activities && activities.map((act, idx) => {
                                           const activityTotal = activityReqs.reduce((sum, r) => sum + (r.activityBudgets?.[act] || 0), 0);
-                                          return <td key={`total-${act}-${idx}`} className="px-2 py-1 text-right">Ã¢â€šÂ¹{activityTotal.toLocaleString()}</td>;
+                                          return <td key={`total-${act}-${idx}`} className="px-2 py-1 text-right">₹{activityTotal.toLocaleString()}</td>;
                                         })}
-                                        <td className="px-2 py-1 text-right text-green-700">Ã¢â€šÂ¹{activityTotal.toLocaleString()}</td>
+                                        <td className="px-2 py-1 text-right text-green-700">₹{activityTotal.toLocaleString()}</td>
                                         <td></td>
                                       </tr>
                                     </tbody>
@@ -1155,7 +1155,7 @@ export default function BudgetRequestTab() {
       {/* AIM View: Request Cycles Table */}
       {(isAIM || canManageAll) && budgetRequestGroups.length > 0 && (
         <Card className="p-6 mb-6">
-          <CardTitle>Ã°Å¸â€œâ€¹ Active Budget Request Cycles</CardTitle>
+          <CardTitle>📅 Active Budget Request Cycles</CardTitle>
           <div className="overflow-x-auto">
             <Table>
               <thead>
@@ -1183,8 +1183,8 @@ export default function BudgetRequestTab() {
                       <Td>{group.targetDate || 'Ã¢â‚¬â€'}</Td>
                       <Td><Badge variant={group.status === 'active' ? 'success' : 'warning'}>{group.status}</Badge></Td>
                       <Td className="text-center font-semibold">{groupRequests.length}</Td>
-                      <Td className="font-semibold text-blue-600">Ã¢â€šÂ¹{totalEstimatedSales.toLocaleString()}</Td>
-                      <Td className="font-semibold text-green-600">Ã¢â€šÂ¹{totalBudget.toLocaleString()}</Td>
+                      <Td className="font-semibold text-blue-600">₹{totalEstimatedSales.toLocaleString()}</Td>
+                      <Td className="font-semibold text-green-600">₹{totalBudget.toLocaleString()}</Td>
                     </tr>
                   );
                 })}
@@ -1197,7 +1197,7 @@ export default function BudgetRequestTab() {
       {/* AIM View: Budgets by Request Number - Product & Activity Organization */}
       {(isAIM || canManageAll) && budgetRequestGroups.length > 0 && !selectedRequestGroup && (
         <Card className="p-6 mb-6 border-l-4 border-l-purple-600 bg-purple-50">
-          <h3 className="text-lg font-bold text-purple-900 mb-4">Ã°Å¸â€œÅ  Select Budget Request Session for Detailed Analysis</h3>
+          <h3 className="text-lg font-bold text-purple-900 mb-4">📊  Select Budget Request Session for Detailed Analysis</h3>
           <p className="text-sm text-purple-700 mb-4">Choose a session to view all MDO submissions with estimated sales and budget details, grouped by region and product.</p>
           <Select value={selectedRequestGroup || ''} onChange={e => setSelectedRequestGroup(e.target.value)}>
             <option value="">-- Select a Session for Analysis --</option>
@@ -1205,7 +1205,7 @@ export default function BudgetRequestTab() {
               const sessionRequests = budgetRequests.filter(br => br.requestGroupId === g.id);
               return (
                 <option key={g.id} value={g.id}>
-                  {g.requestNumber}: {g.description} | {sessionRequests.length} submissions | Ã¢â€šÂ¹{sessionRequests.reduce((s, r) => s + r.budgetRequired, 0).toLocaleString()}
+                  {g.requestNumber}: {g.description} | {sessionRequests.length} submissions | ₹{sessionRequests.reduce((s, r) => s + r.budgetRequired, 0).toLocaleString()}
                 </option>
               );
             })}
@@ -1219,11 +1219,11 @@ export default function BudgetRequestTab() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-bold">
-                Ã°Å¸â€œÅ  Detailed Budget Analysis: {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
+                📊  Detailed Budget Analysis: {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
               </h3>
               <p className="text-sm text-slate-600 mt-1">MDO Name | Estimated Sales | Budget Required</p>
             </div>
-            <Button variant="outline" onClick={() => setSelectedRequestGroup(null)}>Ã¢â€ Â Select Different Session</Button>
+            <Button variant="outline" onClick={() => setSelectedRequestGroup(null)}> Select Different Session</Button>
           </div>
           <div className="space-y-6">
             {Object.entries(
@@ -1243,7 +1243,7 @@ export default function BudgetRequestTab() {
                     <h4 className="font-bold text-slate-800 text-lg">{region}</h4>
                     <div className="text-right">
                       <p className="text-sm text-slate-600">{reqs.length} MDO submissions</p>
-                      <p className="font-black text-xl text-green-600">Ã¢â€šÂ¹{regionTotal.toLocaleString()}</p>
+                      <p className="font-black text-xl text-green-600">₹{regionTotal.toLocaleString()}</p>
                     </div>
                   </div>
                   
@@ -1260,8 +1260,8 @@ export default function BudgetRequestTab() {
                       return (
                         <div key={product} className="p-3 bg-white rounded-lg border-2 border-blue-200">
                           <h5 className="font-bold text-blue-700 text-sm mb-3 uppercase flex items-center gap-2">
-                            Ã°Å¸â€œÂ¦ {product}
-                            <span className="text-xs bg-blue-100 px-2 py-1 rounded">Ã¢â€šÂ¹{productTotal.toLocaleString()}</span>
+                            📦 {product}
+                            <span className="text-xs bg-blue-100 px-2 py-1 rounded">₹{productTotal.toLocaleString()}</span>
                           </h5>
                           <div className="space-y-2">
                             {/* Activities in Product */}
@@ -1277,7 +1277,7 @@ export default function BudgetRequestTab() {
                                 <div key={activity} className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded p-2 border-l-4 border-orange-400">
                                   <div className="flex justify-between items-center font-semibold text-xs mb-1">
                                     <span className="text-orange-700">Ã¢â€â€Ã¢â€â‚¬ {activity}</span>
-                                    <span className="text-green-700">Ã¢â€šÂ¹{activityTotal.toLocaleString()}</span>
+                                    <span className="text-green-700">₹{activityTotal.toLocaleString()}</span>
                                   </div>
                                   <div className="space-y-1 ml-2">
                                     {activityReqs.map((req, idx) => (
@@ -1286,11 +1286,11 @@ export default function BudgetRequestTab() {
                                           <p className="font-semibold text-slate-900">{req.mdoName}</p>
                                           <p className="text-slate-500 text-xs">{req.areaManagerName}</p>
                                           <div className="mt-1 flex gap-2 text-slate-600 text-xs">
-                                            <span>Ã°Å¸â€œÅ  Est. Sales: Ã¢â€šÂ¹{req.estimatedSales?.toLocaleString() || '0'}</span>
-                                            <span>Ã°Å¸â€™Â° Budget: Ã¢â€šÂ¹{req.budgetRequired.toLocaleString()}</span>
+                                            <span>📊  Est. Sales: ₹{req.estimatedSales?.toLocaleString() || '0'}</span>
+                                            <span>💰 Budget: ₹{req.budgetRequired.toLocaleString()}</span>
                                           </div>
                                         </div>
-                                        <span className="font-bold text-green-600 whitespace-nowrap ml-2">Ã¢â€šÂ¹{req.budgetRequired.toLocaleString()}</span>
+                                        <span className="font-bold text-green-600 whitespace-nowrap ml-2">₹{req.budgetRequired.toLocaleString()}</span>
                                       </div>
                                     ))}
                                   </div>
@@ -1487,8 +1487,8 @@ export default function BudgetRequestTab() {
                         <Td>{request.rmApprovedAt || request.latestDate}</Td>
                         <Td>{request.rmName}</Td>
                         <Td className="text-center font-semibold">{request.requestCount}</Td>
-                        <Td className="font-semibold">Ã¢â€šÂ¹{request.totalEstimatedSales.toLocaleString()}</Td>
-                        <Td className="font-semibold text-green-600">Ã¢â€šÂ¹{request.totalBudgetRequired.toLocaleString()}</Td>
+                        <Td className="font-semibold">₹{request.totalEstimatedSales.toLocaleString()}</Td>
+                        <Td className="font-semibold text-green-600">₹{request.totalBudgetRequired.toLocaleString()}</Td>
                         <Td>{getStatusBadge(request.status)}</Td>
                         <Td>
                           <Button
@@ -1497,7 +1497,7 @@ export default function BudgetRequestTab() {
                             size="sm"
                             className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
                           >
-                            Ã¢Å“â€œ Final Approve
+                            ✅ Final Approve
                           </Button>
                         </Td>
                       </>
@@ -1508,8 +1508,8 @@ export default function BudgetRequestTab() {
                         <Td>{(request as BudgetRequest).mdoName}</Td>
                         <Td>{(request as BudgetRequest).product}</Td>
                         <Td>{(request as BudgetRequest).activity}</Td>
-                        <Td>Ã¢â€šÂ¹{(request as BudgetRequest).estimatedSales.toLocaleString()}</Td>
-                        <Td className="font-semibold">Ã¢â€šÂ¹{(request as BudgetRequest).budgetRequired.toLocaleString()}</Td>
+                        <Td>₹{(request as BudgetRequest).estimatedSales.toLocaleString()}</Td>
+                        <Td className="font-semibold">₹{(request as BudgetRequest).budgetRequired.toLocaleString()}</Td>
                         <Td>{getStatusBadge((request as BudgetRequest).status)}</Td>
                         {(isZonalManager || isRegionalManager || isAIM || canManageAll) && (
                           <Td>
@@ -1523,7 +1523,7 @@ export default function BudgetRequestTab() {
                               size="sm"
                               className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
                             >
-                              Ã¢Å“â€œ Approve
+                              ✅ Approve
                             </Button>
                           </Td>
                         )}
@@ -1563,10 +1563,10 @@ export default function BudgetRequestTab() {
                       <span className="text-slate-600">Product:</span> {request.product}
                     </div>
                     <div>
-                      <span className="text-slate-600">Estimated Sales:</span> Ã¢â€šÂ¹{request.estimatedSales.toLocaleString()}
+                      <span className="text-slate-600">Estimated Sales:</span> ₹{request.estimatedSales.toLocaleString()}
                     </div>
                     <div>
-                      <span className="text-slate-600">Budget Req:</span> Ã¢â€šÂ¹{request.budgetRequired.toLocaleString()}
+                      <span className="text-slate-600">Budget Req:</span> ₹{request.budgetRequired.toLocaleString()}
                     </div>
                     <div>
                       <span className="text-slate-600">Submitted:</span> {request.createdAt}
@@ -1577,15 +1577,15 @@ export default function BudgetRequestTab() {
                   <div className="flex gap-4 text-xs mb-4 p-3 bg-white rounded border-2 border-slate-200">
                     <div className={cn("flex items-center gap-1 px-2 py-1 rounded", request.zmApprovedAt ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
                       <span>1Ã¯Â¸ÂÃ¢Æ’Â£ ZM: {request.zmName || 'Pending'}</span>
-                      {request.zmApprovedAt && <span className="text-green-600 font-bold">Ã¢Å“â€œ {request.zmApprovedAt}</span>}
+                      {request.zmApprovedAt && <span className="text-green-600 font-bold">✅ {request.zmApprovedAt}</span>}
                     </div>
                     <div className={cn("flex items-center gap-1 px-2 py-1 rounded", request.rmApprovedAt ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
                       <span>2Ã¯Â¸ÂÃ¢Æ’Â£ RM: {request.rmName || 'Pending'}</span>
-                      {request.rmApprovedAt && <span className="text-green-600 font-bold">Ã¢Å“â€œ {request.rmApprovedAt}</span>}
+                      {request.rmApprovedAt && <span className="text-green-600 font-bold">✅ {request.rmApprovedAt}</span>}
                     </div>
                     <div className={cn("flex items-center gap-1 px-2 py-1 rounded", request.status === 'aim-approved' ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
                       <span>3Ã¯Â¸ÂÃ¢Æ’Â£ AIM: {request.aimName || 'Pending'}</span>
-                      {request.aimApprovedAt && <span className="text-green-600 font-bold">Ã¢Å“â€œ {request.aimApprovedAt}</span>}
+                      {request.aimApprovedAt && <span className="text-green-600 font-bold">✅ {request.aimApprovedAt}</span>}
                     </div>
                   </div>
 
@@ -1593,7 +1593,7 @@ export default function BudgetRequestTab() {
                   {relatedEntries.length > 0 && (
                     <div className="mt-4 p-4 bg-blue-50 rounded border-2 border-blue-200">
                       <h5 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
-                        Ã°Å¸â€œÂ¸ Activity Evidence & Supporting Photos
+                        🖼️ Activity Evidence & Supporting Photos
                       </h5>
                       <div className="space-y-3">
                         {relatedEntries.map((entry, idx) => (
@@ -1618,14 +1618,14 @@ export default function BudgetRequestTab() {
                                       document.body.appendChild(modal);
                                     }}
                                   />
-                                  <p className="text-xs text-green-600 mt-1">Ã¢Å“â€œ Uploaded</p>
+                                  <p className="text-xs text-green-600 mt-1">✅ Uploaded</p>
                                 </div>
                               )}
 
                               {/* Expense Photo */}
                               {entry.expensePhoto && (
                                 <div className="p-2 bg-amber-50 rounded border border-amber-200">
-                                  <p className="text-xs font-bold text-amber-900 mb-2">Ã°Å¸â€™Â° Expense Photo</p>
+                                  <p className="text-xs font-bold text-amber-900 mb-2">💰 Expense Photo</p>
                                   <img 
                                     src={entry.expensePhoto} 
                                     alt="Expense" 
@@ -1638,7 +1638,7 @@ export default function BudgetRequestTab() {
                                       document.body.appendChild(modal);
                                     }}
                                   />
-                                  <p className="text-xs text-green-600 mt-1">Ã¢Å“â€œ Uploaded</p>
+                                  <p className="text-xs text-green-600 mt-1">✅ Uploaded</p>
                                 </div>
                               )}
 
@@ -1658,7 +1658,7 @@ export default function BudgetRequestTab() {
                                       document.body.appendChild(modal);
                                     }}
                                   />
-                                  <p className="text-xs text-green-600 mt-1">Ã¢Å“â€œ Uploaded</p>
+                                  <p className="text-xs text-green-600 mt-1">✅ Uploaded</p>
                                 </div>
                               )}
 

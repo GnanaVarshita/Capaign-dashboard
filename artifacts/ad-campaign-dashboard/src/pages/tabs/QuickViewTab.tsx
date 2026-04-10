@@ -8,7 +8,7 @@ import { exportToExcel, exportToPDF } from '../../lib/utils';
 const COLORS = ['#1B4F72', '#2E86C1', '#AED6F1', '#F39C12', '#E74C3C', '#27AE60', '#8E44AD', '#D35400'];
 
 export default function QuickViewTab() {
-  const { getVisiblePOs, calcLiveSpent, calcPendingSpent, products, activities, regions, users, currentUser, getScopedEntries } = useAppContext();
+  const { getVisiblePOs, crops, calcLiveSpent, calcPendingSpent, products, activities, regions, users, currentUser, getScopedEntries } = useAppContext();
   const u = currentUser!;
   const isOwner = u.role === 'Owner' || u.role === 'All India Manager';
   const isRM = u.role === 'Regional Manager';
@@ -25,7 +25,8 @@ export default function QuickViewTab() {
   const [productFilter, setProductFilter] = useState('');
   const [activityFilter, setActivityFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+    const [dateTo, setDateTo] = useState('');
+  const [filterCrop, setFilterCrop] = useState('');
 
   const po = pos.find(p => p.poNumber === selectedPO) || pos[0];
 
@@ -335,7 +336,10 @@ export default function QuickViewTab() {
               </Select>
             </div>
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-500">Product</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-500">Crop</Label><Select value={filterCrop} onChange={e => setFilterCrop(e.target.value)}>
+                <option value="">All Crops</option>
+                {crops && crops.map((c, i) => <option key={i} value={c}>{c}</option>)}
+              </Select>
               <Select value={productFilter} onChange={e => setProductFilter(e.target.value)}>
                 <option value="">All Products</option>
                 {products.map(p => <option key={p} value={p}>{p}</option>)}
@@ -470,3 +474,5 @@ export default function QuickViewTab() {
     </div>
   );
 }
+
+

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, Entry, PO, Region, Bill, ServiceReceiver, VendorProfile, BudgetRequest, BudgetRequestGroup } from '../types';
-import { INITIAL_USERS, INITIAL_ENTRIES, INITIAL_POS, INITIAL_REGIONS, INITIAL_PRODUCTS, INITIAL_ACTIVITIES } from '../lib/mock-data';
+import { INITIAL_USERS, INITIAL_ENTRIES, INITIAL_POS, INITIAL_REGIONS, INITIAL_PRODUCTS, INITIAL_CROPS, INITIAL_ACTIVITIES } from '../lib/mock-data';
 
 interface SpentFilters {
   po?: string;
@@ -11,6 +11,7 @@ interface SpentFilters {
   product?: string;
   activity?: string;
   vendorId?: string;
+  crop?: string;
   dateFrom?: string;
   dateTo?: string;
 }
@@ -31,6 +32,8 @@ interface AppContextType {
   setProducts: React.Dispatch<React.SetStateAction<string[]>>;
   activities: string[];
   setActivities: React.Dispatch<React.SetStateAction<string[]>>;
+  crops: string[];
+  setCrops: React.Dispatch<React.SetStateAction<string[]>>;
   addProduct: (name: string) => void;
   updateProduct: (oldName: string, newName: string) => void;
   deleteProduct: (name: string) => void;
@@ -93,6 +96,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [regions, setRegions] = useState<Region[]>(INITIAL_REGIONS);
   const [products, setProducts] = useState<string[]>(INITIAL_PRODUCTS);
   const [activities, setActivities] = useState<string[]>(INITIAL_ACTIVITIES);
+  const [crops, setCrops] = useState<string[]>(INITIAL_CROPS);
   const [bills, setBills] = useState<Bill[]>([]);
   const [serviceReceivers, setServiceReceivers] = useState<ServiceReceiver[]>([]);
   const [vendorProfiles, setVendorProfiles] = useState<Record<string, VendorProfile>>({});
@@ -113,6 +117,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (data.regions) setRegions(data.regions);
         if (data.products) setProducts(data.products);
         if (data.activities) setActivities(data.activities);
+        if (data.crops) setCrops(data.crops);
         if (data.bills) setBills(data.bills);
         if (data.serviceReceivers) setServiceReceivers(data.serviceReceivers);
         if (data.vendorProfiles) setVendorProfiles(data.vendorProfiles);
@@ -125,10 +130,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       localStorage.setItem('ad_campaign_db', JSON.stringify({
-        users, entries, pos, regions, products, activities, bills, serviceReceivers, vendorProfiles, budgetRequests, budgetRequestGroups
+        users, entries, pos, regions, products, crops, activities, bills, serviceReceivers, vendorProfiles, budgetRequests, budgetRequestGroups
       }));
     } catch {}
-  }, [users, entries, pos, regions, products, activities, bills, serviceReceivers, vendorProfiles, budgetRequests, budgetRequestGroups]);
+  }, [users, entries, pos, regions, products, crops, activities, bills, serviceReceivers, vendorProfiles, budgetRequests, budgetRequestGroups]);
 
   const toast = useCallback((msg: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToastMsg({ msg, type });
@@ -393,6 +398,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (data.regions) setRegions(data.regions);
         if (data.products) setProducts(data.products);
         if (data.activities) setActivities(data.activities);
+        if (data.crops) setCrops(data.crops);
         if (data.bills) setBills(data.bills);
         if (data.serviceReceivers) setServiceReceivers(data.serviceReceivers);
         if (data.vendorProfiles) setVendorProfiles(data.vendorProfiles);
@@ -481,6 +487,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       currentUser, login, logout,
       users, setUsers, entries, setEntries, pos, setPOs, regions, setRegions,
       products, setProducts, activities, setActivities, bills, setBills,
+      crops, setCrops,
       addEntry, updateEntry, updateEntryStatus, deleteEntry,
       addPO, updatePO, approvePO, rejectPO, lapsePO,
       addUser, updateUser, deleteUser, addBill, updateBill,

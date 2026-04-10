@@ -4,7 +4,7 @@ import { Card, CardTitle, Table, Th, Td, Badge, StatusBadge, SearchInput, Select
 import { formatCurrency } from '../../lib/mock-data';
 
 export default function VendorSectionTab() {
-  const { users, entries, currentUser, bills, addBill, updateBill, serviceReceivers, generateInvoiceNumber, pendingBillData, setPendingBillData, navigateToTab } = useAppContext();
+  const { users, entries, currentUser, crops, bills, addBill, updateBill, serviceReceivers, generateInvoiceNumber, pendingBillData, setPendingBillData, navigateToTab } = useAppContext();
   const u = currentUser!;
   const isVendor = u.role === 'Vendor';
 
@@ -12,6 +12,7 @@ export default function VendorSectionTab() {
   const [statusFilter, setStatusFilter] = useState('');
   const [poFilter, setPOFilter] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
+  const [filterCrop, setFilterCrop] = useState('');
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showRaiseBillModal, setShowRaiseBillModal] = useState(false);
@@ -53,13 +54,14 @@ export default function VendorSectionTab() {
       if (statusFilter && e.status !== statusFilter) return false;
       if (poFilter && e.po !== poFilter) return false;
       if (areaFilter && e.area !== areaFilter) return false;
+      if (filterCrop && e.crop !== filterCrop) return false;
       if (search) {
         const q = search.toLowerCase();
         if (![e.area, e.pin, e.po, e.product, e.activity, e.vendorName, e.description, e.userName].join(' ').toLowerCase().includes(q)) return false;
       }
       return true;
     });
-  }, [scopedEntries, statusFilter, poFilter, areaFilter, search]);
+  }, [scopedEntries, statusFilter, poFilter, areaFilter, filterCrop, search]);
 
   // Billing Logic for Vendor
   const billedEntryIds = useMemo(() => new Set(bills.flatMap(b => b.entryIds)), [bills]);
@@ -130,7 +132,10 @@ export default function VendorSectionTab() {
             </Select>
             <Select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="w-40">
               <option value="">All Areas</option>
-              {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
+              {allAreas.map(a => <option key={a} value={a}>{a}</option>)}</Select>
+            <Select value={filterCrop} onChange={e => setFilterCrop(e.target.value)} className="w-40">
+              <option value="">All Crops</option>
+              {crops && crops.map((c, i) => <option key={i} value={c}>{c}</option>)}
             </Select>
           </div>
         </Card>
@@ -347,9 +352,12 @@ export default function VendorSectionTab() {
           </Select>
           <Select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="w-40">
             <option value="">All Areas</option>
-            {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
-          </Select>
-        </div>
+            {allAreas.map(a => <option key={a} value={a}>{a}</option>)}</Select>
+            <Select value={filterCrop} onChange={e => setFilterCrop(e.target.value)} className="w-40">
+              <option value="">All Crops</option>
+              {crops && crops.map((c, i) => <option key={i} value={c}>{c}</option>)}
+            </Select>
+          </div>
       </Card>
 
       {grouped.length === 0 ? (
@@ -406,3 +414,9 @@ export default function VendorSectionTab() {
     </div>
   );
 }
+
+
+
+
+
+

@@ -1,0 +1,12 @@
+name = "ad-campaign-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+JWT_SECRET = "ad-campaign-jwt-secret-2026"
+
+# Uncomment when connecting to Neon DB:
+# [[hyperdrive]]
+# binding = "DB"
+# id = "<your-hyperdrive-id>"

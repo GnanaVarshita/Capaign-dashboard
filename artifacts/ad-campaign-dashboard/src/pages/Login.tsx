@@ -30,9 +30,8 @@ export default function Login() {
     setError('');
     setLoading(true);
     await new Promise(r => setTimeout(r, 320));
-    if (!login(id.trim(), pass)) {
-      setError('Invalid Login ID or Password. Please try again.');
-    }
+    const ok = await login(id.trim(), pass);
+    if (!ok) setError('Invalid Login ID or Password. Please try again.');
     setLoading(false);
   };
 
@@ -40,7 +39,8 @@ export default function Login() {
     setError('');
     setLoading(true);
     await new Promise(r => setTimeout(r, 250));
-    if (!login(loginId, password)) setError('Login failed.');
+    const ok = await login(loginId, password);
+    if (!ok) setError('Login failed.');
     setLoading(false);
   };
 

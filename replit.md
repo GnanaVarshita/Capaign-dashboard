@@ -91,16 +91,39 @@ Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used b
 
 Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
 
+### `artifacts/api-worker` (Cloudflare Worker)
+
+Backend API built with Hono framework, targeting Cloudflare Workers for free hosting.
+
+- **Framework**: Hono v4
+- **Auth**: Custom JWT (HS256) via Web Crypto API — no external libraries needed
+- **Database**: Neon PostgreSQL (serverless). Currently uses in-memory store; swap with Drizzle queries when Neon DB URL is configured.
+- **Deploy**: `wrangler deploy` (Cloudflare free tier)
+- **Entry**: `src/index.ts` — all routes
+- **Seed data**: `src/data/seed.ts` — full mock users, entries, POs, regions
+- **Auth layer**: `src/auth/jwt.ts` (sign/verify), `src/middleware/authMiddleware.ts` (Hono middleware + role guards)
+- **API docs**: `API_DOCS.md` at project root — full endpoint reference with request/response shapes
+- Set `VITE_API_URL` in the frontend `.env.local` to enable API mode: `VITE_API_URL=https://...workers.dev`
+
 ### `artifacts/ad-campaign-dashboard` (`@workspace/ad-campaign-dashboard`)
 
-Frontend-only React + Vite application (no backend). Full-featured Advertising Campaign Dashboard.
+React + Vite frontend. Full-featured Advertising Campaign Dashboard.
 
 - **Port**: `20289` (reads `PORT` env var)
-- **Auth**: localStorage-based, role-gated. 6 roles: Owner, All India Manager, Regional Manager, Zonal Manager, Area Manager, Vendor
-- **Persistence**: All state in `localStorage` under key `ad_campaign_db`
+- **Auth**: `src/hooks/useAuth.ts` — JWT login via API, falls back to localStorage mock
+- **Persistence**: All state in `localStorage` under key `ad_campaign_db` (fallback when no API)
 - **Stack**: React 18, TypeScript, Tailwind CSS, Recharts, lucide-react, clsx, tailwind-merge
-- **Context**: `src/context/AppContext.tsx` — single source of truth for all data + CRUD operations
-- **Components**: `src/components/ui.tsx` — full custom component library (Card, Button, Input, Select, Modal, Table, Badge, Toast, ProgressBar, TabPills, InfoBanner, SearchInput, KpiCard etc.)
+- **Context**: `src/context/AppContext.tsx` — orchestrates domain hooks, provides single API surface
+- **Domain hooks** (`src/hooks/`):
+  - `useAuth.ts` — login/logout with JWT + localStorage fallback
+  - `useEntries.ts` — activity entry CRUD + role-scoped queries
+  - `usePOs.ts` — PO CRUD + visibility scoping
+  - `useBills.ts` — bill creation, submission, payment tracking
+  - `useUsers.ts` — user management CRUD
+  - `useConfig.ts` — products, activities, crops, regions
+  - `useVendors.ts` — vendor profiles + service receivers
+  - `useBudgetRequests.ts` — budget request groups + sequential approval
+- **API client**: `src/lib/api.ts` — fetch wrapper with auto Bearer token injection
 - **Mock data**: `src/lib/mock-data.ts` — 9 users, 4 POs (2 active, 1 expiring, 1 draft), 4 entries, 4 regions with zones/areas
 
 **15 Tabs** (role-gated):

@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authMiddleware, getUser } from "./middleware/authMiddleware";
+import { store } from "./store";
+import { safeUser } from "./helpers";
+
 import authRouter from "./routes/auth";
 import usersRouter from "./routes/users";
 import entriesRouter from "./routes/entries";
@@ -23,26 +26,27 @@ app.use(
   }),
 );
 
-// ==================== PUBLIC ====================
+// PUBLIC
 app.get("/health", (c) =>
   c.json({ status: "ok", timestamp: new Date().toISOString() }),
 );
+
 app.route("/api/auth", authRouter);
 
-// ==================== PROTECTED ====================
+// PROTECTED
 app.use("/api/*", authMiddleware);
 
-// User profile
+// /api/me
 app.get("/api/me", (c) => {
-  const { store } = require("./store");
   const jwtUser = getUser(c);
   const user = store.users.find((u: any) => u.id === jwtUser.id);
+
   if (!user) return c.json({ error: "User not found" }, 404);
-  const { safeUser } = require("./helpers");
+
   return c.json(safeUser(user));
 });
 
-// Mount routers
+// ROUTES
 app.route("/api/users", usersRouter);
 app.route("/api/entries", entriesRouter);
 app.route("/api/pos", posRouter);

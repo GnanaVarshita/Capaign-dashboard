@@ -10,9 +10,9 @@ const statusBadge = (s: string) =>
   <Badge variant="default">{s}</Badge>;
 
 const approvalBadge = (s: string) =>
-  s === 'approved' ? <Badge variant="success">✅ Approved</Badge> :
-  s === 'rejected' ? <Badge variant="error">❌ Rejected</Badge> :
-  <Badge variant="warning">⏳ Pending</Badge>;
+  s === 'approved' ? <Badge variant="success">Approved</Badge> :
+  s === 'rejected' ? <Badge variant="error">Rejected</Badge> :
+  <Badge variant="warning">Pending</Badge>;
 
 export default function POMasterTab() {
   const { pos, setPOs, addPO, updatePO, lapsePO, approvePO, rejectPO, calcLiveSpent, calcPendingSpent, regions, products, setProducts, crops, setCrops, activities, setActivities, currentUser } = useAppContext();
@@ -237,7 +237,7 @@ export default function POMasterTab() {
     <div className="space-y-0">
       {/* PO Master Header */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-[#1A1D23]">📋 PO Master Management</h2>
+        <h2 className="text-xl font-bold text-[#1A1D23]">PO Master Management</h2>
         <p className="text-sm text-[#6B7280] mt-1">Create and manage Purchase Orders, Products, Crops, and Activities</p>
       </div>
 
@@ -246,7 +246,7 @@ export default function POMasterTab() {
         {/* Product Master Card */}
         <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
           <div className="p-4 bg-gradient-to-r from-[#EBF3FA] to-[#F0F9FF] border-b border-[#DDE3ED] flex items-center justify-between">
-            <h3 className="font-bold text-[#1B4F72] flex items-center gap-2">📦 Product Master</h3>
+            <h3 className="font-bold text-[#1B4F72] flex items-center gap-2">Product Master</h3>
             {canManage && <Button size="sm" onClick={openAddProduct}>+ Add Product</Button>}
           </div>
           <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
@@ -264,7 +264,7 @@ export default function POMasterTab() {
                   {canManage && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="sm" variant="outline" onClick={() => openEditProduct(product)} className="text-xs">Edit</Button>
-                      <Button size="sm" variant="danger" onClick={() => deleteProduct(product)} className="text-xs">❌</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteProduct(product)} className="text-xs">Delete</Button>
                     </div>
                   )}
                 </div>
@@ -276,7 +276,7 @@ export default function POMasterTab() {
         {/* Crop Master Card */}
         <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
           <div className="p-4 bg-gradient-to-r from-[#DCFCE7] to-[#ECFDF5] border-b border-[#DDE3ED] flex items-center justify-between">
-            <h3 className="font-bold text-[#166534] flex items-center gap-2">🌾 Crop Master</h3>
+            <h3 className="font-bold text-[#166534] flex items-center gap-2">Crop Master</h3>
             {canManage && <Button size="sm" onClick={openAddCrop}>+ Add Crop</Button>}
           </div>
           <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
@@ -294,7 +294,7 @@ export default function POMasterTab() {
                   {canManage && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="sm" variant="outline" onClick={() => openEditCrop(crop)} className="text-xs">Edit</Button>
-                      <Button size="sm" variant="danger" onClick={() => deleteCrop(crop)} className="text-xs">❌</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteCrop(crop)} className="text-xs">Delete</Button>
                     </div>
                   )}
                 </div>
@@ -305,7 +305,7 @@ export default function POMasterTab() {
         {/* Activity Master Card */}
         <div className="border border-[#DDE3ED] rounded-xl bg-white overflow-hidden">
           <div className="p-4 bg-gradient-to-r from-[#FEF3C7] to-[#FEF9E7] border-b border-[#DDE3ED] flex items-center justify-between">
-            <h3 className="font-bold text-[#B45309] flex items-center gap-2">⚡ Activity Master</h3>
+            <h3 className="font-bold text-[#B45309] flex items-center gap-2">Activity Master</h3>
             {canManage && <Button size="sm" onClick={openAddActivity}>+ Add Activity</Button>}
           </div>
           <div className="max-h-[280px] overflow-y-auto divide-y divide-[#F0F4F8]">
@@ -323,7 +323,7 @@ export default function POMasterTab() {
                   {canManage && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="sm" variant="outline" onClick={() => openEditActivity(activity)} className="text-xs">Edit</Button>
-                      <Button size="sm" variant="danger" onClick={() => deleteActivity(activity)} className="text-xs">❌</Button>
+                      <Button size="sm" variant="danger" onClick={() => deleteActivity(activity)} className="text-xs">Delete</Button>
                     </div>
                   )}
                 </div>
@@ -363,7 +363,7 @@ export default function POMasterTab() {
                     <span className="font-bold text-[#1B4F72] text-sm">{po.poNumber}</span>
                     {statusBadge(po.status)}
                   </div>
-                  <p className="text-xs text-[#9CA3AF] mb-2">{po.from} Ã¢â€ â€™ {po.to}</p>
+                  <p className="text-xs text-[#9CA3AF] mb-2">{po.from} - {po.to}</p>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-[#1A1D23]">{formatLakhs(po.budget)}</span>
                     <span className="text-xs text-[#9CA3AF]">{utilPct}% used</span>
@@ -379,7 +379,7 @@ export default function POMasterTab() {
         <div className="lg:col-span-2 border border-[#DDE3ED] rounded-xl lg:rounded-l-none bg-white overflow-hidden">
           {!selected ? (
             <div className="flex items-center justify-center h-full min-h-[400px] text-[#9CA3AF] flex-col gap-3">
-              <span className="text-4xl">📋</span>
+              
               <p>Select a PO to view details</p>
             </div>
           ) : (
@@ -392,17 +392,17 @@ export default function POMasterTab() {
                     {approvalBadge(selected.approvalStatus)}
                   </div>
                   <p className="text-xs text-[#6B7280] mt-1">📋 {selected.from} to {selected.to}  Created by {selected.createdBy} on {selected.createdAt}</p>
-                  {selected.remarks && <p className="text-xs text-[#6B7280]">💡 {selected.remarks}</p>}
+                  {selected.remarks && <p className="text-xs text-[#6B7280]"> {selected.remarks}</p>}
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   {canManage && <Button size="sm" variant="outline" onClick={openEdit}> Edit</Button>}
                   {canManage && selected.status !== 'Lapsed' && <Button size="sm" variant="danger" onClick={() => { if(confirm('Mark this PO as Lapsed?')) lapsePO(selected.id); }}>Mark Lapsed</Button>}
-                  {canApprove && selected.approvalStatus === 'pending' && <Button size="sm" variant="success" onClick={() => approvePO(selected.id, u.name)}>Ã¢Å“â€œ Approve</Button>}
+                  {canApprove && selected.approvalStatus === 'pending' && <Button size="sm" variant="success" onClick={() => approvePO(selected.id, u.name)}>Approve</Button>}
                 </div>
               </div>
 
               {selected.approvalStatus === 'pending' && (
-                <div className="m-4"><InfoBanner color="amber">Ã¢Å¡Â  This PO is pending approval. Budget allocation is read-only until approved.</InfoBanner></div>
+                <div className="m-4"><InfoBanner color="amber"> This PO is pending approval. Budget allocation is read-only until approved.</InfoBanner></div>
               )}
 
               <div className="p-5 space-y-6 overflow-y-auto max-h-[560px]">
@@ -449,7 +449,7 @@ export default function POMasterTab() {
                             </Td>
                             <Td>
                               {canManage && selected.approvalStatus === 'approved' && (
-                                <Button size="sm" variant="outline" onClick={() => openDistribute(region)}>⚡ Distribute</Button>
+                                <Button size="sm" variant="outline" onClick={() => openDistribute(region)}>Distribute</Button>
                               )}
                             </Td>
                           </tr>
@@ -542,8 +542,8 @@ export default function POMasterTab() {
               ))}
             </div>
             <div className="flex justify-between gap-3 pt-2">
-              <Button variant="secondary" onClick={() => setWizardStep(1)}>Ã¢â€ Â Back</Button>
-              <Button onClick={() => setWizardStep(3)}>Next Ã¢â€ â€™</Button>
+              <Button variant="secondary" onClick={() => setWizardStep(1)}>Back</Button>
+              <Button onClick={() => setWizardStep(3)}>Next </Button>
             </div>
           </div>
         )}
@@ -559,12 +559,12 @@ export default function POMasterTab() {
               <div>
                 <p className="text-[#6B7280] mb-1">Region Budgets:</p>
                 {Object.entries(form.regionBudgets).filter(([, v]) => parseFloat(v) > 0).map(([r, v]) => (
-                  <p key={r} className="text-xs">Ã¢â‚¬Â¢ {r}: <strong>{formatCurrency(parseFloat(v))}</strong></p>
+                  <p key={r} className="text-xs">{r}: <strong>{formatCurrency(parseFloat(v))}</strong></p>
                 ))}
               </div>
             </div>
             <div className="flex justify-between gap-3 pt-2">
-              <Button variant="secondary" onClick={() => setWizardStep(2)}>Ã¢â€ Â Back</Button>
+              <Button variant="secondary" onClick={() => setWizardStep(2)}>Back</Button>
               <Button onClick={handleSavePO}>{editMode ? 'Save Changes' : 'Create PO'}</Button>
             </div>
           </div>

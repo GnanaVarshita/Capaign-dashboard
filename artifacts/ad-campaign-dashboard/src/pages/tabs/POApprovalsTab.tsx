@@ -11,9 +11,9 @@ export default function POApprovalsTab() {
   const decidedPOs = pos.filter(p => p.approvalStatus !== 'pending');
 
   const statusBadge = (s: string) =>
-    s === 'approved' ? <Badge variant="success">✓ Approved</Badge> :
-    s === 'rejected' ? <Badge variant="error">✗ Rejected</Badge> :
-    <Badge variant="warning">⏳ Pending</Badge>;
+    s === 'approved' ? <Badge variant="success">Approved</Badge> :
+    s === 'rejected' ? <Badge variant="error">Rejected</Badge> :
+    <Badge variant="warning">Pending</Badge>;
 
   return (
     <div className="space-y-6">
@@ -23,7 +23,7 @@ export default function POApprovalsTab() {
           <Badge variant={pendingPOs.length > 0 ? 'warning' : 'success'}>{pendingPOs.length} Pending</Badge>
         </CardTitle>
         {pendingPOs.length === 0 ? (
-          <div className="py-12 text-center text-[#9CA3AF]">✅ No pending PO approvals.</div>
+          <div className="py-12 text-center text-[#9CA3AF]"> No pending PO approvals.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {pendingPOs.map(po => (
@@ -49,8 +49,8 @@ export default function POApprovalsTab() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="success" size="sm" className="flex-1" onClick={() => approvePO(po.id, u.name)}>✓ Approve</Button>
-                  <Button variant="danger" size="sm" className="flex-1" onClick={() => rejectPO(po.id)}>✗ Reject</Button>
+                  <Button variant="success" size="sm" className="flex-1" onClick={() => approvePO(po.id, u.name)}>Approve</Button>
+                  <Button variant="danger" size="sm" className="flex-1" onClick={() => rejectPO(po.id)}>Reject</Button>
                 </div>
               </div>
             ))}

@@ -226,7 +226,7 @@ export default function BudgetRequestTab() {
       {/* Page Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">📊  Budget Request Management</h1>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">Budget Request Management</h1>
           <p className="text-sm text-slate-500 mt-1">
             {isAreaManager && 'Submit budget requests for your MDOs through the hierarchy. Select a request number or wait for AIM to create one.'}
             {isZonalManager && 'Approve budget requests from your zone.'}
@@ -249,7 +249,7 @@ export default function BudgetRequestTab() {
       {/* Create Request Group Modal (AIM Only) */}
       {(isAIM || canManageAll) && showCreateRequestGroup && (
         <Card className="p-6 mb-6 border-l-4 border-l-blue-600 bg-blue-50">
-          <h3 className="text-lg font-bold mb-4">📅 Create New Budget Request Cycle</h3>
+          <h3 className="text-lg font-bold mb-4"> Create New Budget Request Cycle</h3>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2">
@@ -319,7 +319,7 @@ export default function BudgetRequestTab() {
                 setRequestGroupForm({ description: '', targetDate: '', selectedRegions: [] });
                 setShowCreateRequestGroup(false);
               }} className="bg-blue-600 hover:bg-blue-700">
-                ✅ Create Cycle
+                Create Cycle
               </Button>
               <Button variant="outline" onClick={() => {
                 setRequestGroupForm({ description: '', targetDate: '', selectedRegions: [] });
@@ -401,7 +401,7 @@ export default function BudgetRequestTab() {
       {/* Request Cycle Selector - Show for all managers to select cycles for viewing/submitting */}
       {(isZonalManager || isRegionalManager || isAreaManager) && budgetRequestGroups.length > 0 && (
         <Card className="p-6 mb-6 border-l-4 border-l-cyan-600 bg-cyan-50">
-          <h3 className="text-lg font-bold text-cyan-900 mb-4">📅 Available Budget Request Cycles</h3>
+          <h3 className="text-lg font-bold text-cyan-900 mb-4"> Available Budget Request Cycles</h3>
           <div className="space-y-3">
             <div>
               <Label className="text-sm font-bold">Select a Request Cycle to View or Submit Budget Requests</Label>
@@ -424,7 +424,7 @@ export default function BudgetRequestTab() {
       {/* Session Filter for AIM & RM */}
       {(isAIM || isRegionalManager || canManageAll) && budgetRequestGroups.length > 0 && !isAreaManager && (
         <Card className="p-6 mb-6 border-l-4 border-l-purple-600 bg-purple-50">
-          <h3 className="text-lg font-bold text-purple-900 mb-4">📅 Filter by Budget Request Session</h3>
+          <h3 className="text-lg font-bold text-purple-900 mb-4"> Filter by Budget Request Session</h3>
           <div className="space-y-3">
             <div>
               <Label className="text-sm font-bold">Select a Budget Request Session to View Requests</Label>
@@ -447,7 +447,7 @@ export default function BudgetRequestTab() {
       {/* Advanced Filters for Requests (when requests exist) */}
       {(isZonalManager || isRegionalManager || isAreaManager) && (
         <Card className="p-6 mb-6 border-l-4 border-l-indigo-600 bg-indigo-50">
-          <h3 className="text-lg font-bold text-indigo-900 mb-4">Ã°Å¸â€Â Filter Budget Requests by Multiple Criteria</h3>
+          <h3 className="text-lg font-bold text-indigo-900 mb-4">Filter Budget Requests by Multiple Criteria</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
             {/* Session Number Filter */}
             <div>
@@ -570,7 +570,7 @@ export default function BudgetRequestTab() {
       {isAreaManager && budgetRequestGroups.length > 0 && (
         <Card className="p-6 mb-6 border-l-4 border-l-red-600 bg-red-50">
           <div className="flex items-start gap-3 mb-4">
-            <span className="text-2xl">📅</span>
+            <span className="text-2xl"></span>
             <div>
               <h3 className="text-lg font-bold text-red-900">Step 1: Select Request Cycle to Submit Budget</h3>
               <p className="text-sm text-red-700 mt-1">Choose which AIM-created request cycle you want to submit budget requests under. This organizes your submissions and helps in PO creation.</p>
@@ -590,7 +590,7 @@ export default function BudgetRequestTab() {
                 <option value="">-- SELECT A REQUEST CYCLE --</option>
                 {budgetRequestGroups.filter(g => g.status === 'active').map(g => (
                   <option key={g.id} value={g.id}>
-                    📊’ {g.requestNumber} - {g.description || '(No description)'} {g.targetDate ? `| Target: ${g.targetDate}` : ''}
+                    ’ {g.requestNumber} - {g.description || '(No description)'} {g.targetDate ? `| Target: ${g.targetDate}` : ''}
                   </option>
                 ))}
               </Select>
@@ -635,7 +635,7 @@ export default function BudgetRequestTab() {
             {/* MDO Entry Form */}
             <div className="p-4 bg-amber-50 rounded-lg border-2 border-amber-200">
               <h4 className="text-sm font-bold text-amber-800 mb-3 uppercase flex items-center gap-2">
-                Ã¢Å“ÂÃ¯Â¸Â Step 2B: Enter MDO Budget Request Details
+                 Step 2B: Enter MDO Budget Request Details
               </h4>
               <p className="text-xs text-amber-700 mb-4">Select a product and add MDOs with estimated sales and budget allocations</p>
               
@@ -654,7 +654,7 @@ export default function BudgetRequestTab() {
                 </Select>
                 {selectedProduct && (
                   <div className="mt-2 p-2 bg-amber-100 rounded text-sm text-amber-900">
-                    📦 <span className="font-semibold">{selectedProduct}</span> - Now adding MDOs for this product
+                     <span className="font-semibold">{selectedProduct}</span> - Now adding MDOs for this product
                   </div>
                 )}
               </div>
@@ -745,7 +745,7 @@ export default function BudgetRequestTab() {
 
               {!selectedProduct && (
                 <div className="p-3 bg-amber-100 rounded border border-amber-300 text-sm text-amber-900">
-                  <p className="font-semibold">Ã°Å¸â€˜â€  Select a product above to start adding MDOs</p>
+                  <p className="font-semibold">Please select a product above to start adding MDOs</p>
                 </div>
               )}
             </div>
@@ -754,7 +754,7 @@ export default function BudgetRequestTab() {
             {mdoList.length > 0 && (
               <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-bold text-slate-900">📅 Budget Details: {mdoList.length} MDO{mdoList.length !== 1 ? 's' : ''}</h4>
+                  <h4 className="font-bold text-slate-900"> Budget Details: {mdoList.length} MDO{mdoList.length !== 1 ? 's' : ''}</h4>
                   <Button 
                     variant="outline"
                     onClick={() => setMdoList([])}
@@ -779,7 +779,7 @@ export default function BudgetRequestTab() {
                     return (
                       <div key={product} className="bg-white rounded border border-slate-200 overflow-hidden">
                         <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 text-white">
-                          <h5 className="font-bold text-sm">📦 {product}</h5>
+                          <h5 className="font-bold text-sm">{product}</h5>
                         </div>
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
@@ -813,7 +813,7 @@ export default function BudgetRequestTab() {
                                         onClick={() => setMdoList(mdoList.filter((_, i) => i !== mdoList.indexOf(mdo)))}
                                         className="text-red-500 hover:text-red-700 text-lg"
                                       >
-                                        🗑️
+                                        Delete
                                       </Button>
                                     </td>
                                   </tr>
@@ -844,7 +844,7 @@ export default function BudgetRequestTab() {
 
                 {/* Grand Summary */}
                 <div className="mt-6 p-4 bg-green-50 rounded border border-green-300">
-                  <h5 className="font-bold text-green-900 mb-3">📊  Grand Summary</h5>
+                  <h5 className="font-bold text-green-900 mb-3"> Grand Summary</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-green-700">Total Estimated Sales</p>
@@ -946,7 +946,7 @@ export default function BudgetRequestTab() {
       {(isZonalManager || isRegionalManager || isAreaManager) && visibleRequests.length > 0 && (
         <Card className="p-6 mb-6 border-l-4 border-l-cyan-600">
           <h3 className="text-lg font-bold mb-4">
-            📊  Budget Requests {viewFilters.requestCycle && '- ' + budgetRequestGroups.find(g => g.id === viewFilters.requestCycle)?.requestNumber}
+              Budget Requests {viewFilters.requestCycle && '- ' + budgetRequestGroups.find(g => g.id === viewFilters.requestCycle)?.requestNumber}
           </h3>
           
           {visibleRequests.length === 0 ? (
@@ -988,7 +988,7 @@ export default function BudgetRequestTab() {
                         return (
                           <div key={product} className="bg-blue-50 rounded p-3 border border-blue-200">
                             <h5 className="font-bold text-blue-700 mb-2 flex items-center gap-2 text-sm">
-                              📦 {product}
+                              {product}
                               <span className="text-xs bg-blue-100 px-2 py-1 rounded">₹{productTotal.toLocaleString()}</span>
                             </h5>
                             
@@ -1005,7 +1005,7 @@ export default function BudgetRequestTab() {
                                 return (
                                   <div key={activity} className="bg-yellow-50 rounded p-2 border-l-4 border-yellow-400">
                                     <div className="flex justify-between items-center font-semibold text-xs text-yellow-700 mb-1">
-                                      <span>Ã¢â€â€Ã¢â€â‚¬ {activity}</span>
+                                      <span>{activity}</span>
                                       <span>₹{activityTotal.toLocaleString()}</span>
                                     </div>
                                     <div className="space-y-1 ml-2">
@@ -1043,7 +1043,7 @@ export default function BudgetRequestTab() {
       {(isRegionalManager || isZonalManager || isAreaManager) && selectedRequestGroup && (
         <Card className="p-6 mb-6 border-l-4 border-l-blue-600">
           <h3 className="text-lg font-bold mb-4">
-            📅 Budget Details for {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
+             Budget Details for {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
           </h3>
           <div className="space-y-4">
             {Object.entries(
@@ -1076,7 +1076,7 @@ export default function BudgetRequestTab() {
                       }, {})
                     ).map(([product, productReqs]) => (
                       <div key={product} className="p-3 bg-white rounded border border-slate-100">
-                        <h5 className="font-bold text-slate-800 text-sm mb-2">📊’ {product}</h5>
+                        <h5 className="font-bold text-slate-800 text-sm mb-2">’ {product}</h5>
                         <div className="space-y-2 ml-2">
                           {/* Group by Activity */}
                           {Object.entries(
@@ -1091,7 +1091,7 @@ export default function BudgetRequestTab() {
                             return (
                               <div key={activity} className="bg-slate-50 rounded p-2 border border-slate-100">
                                 <div className="flex justify-between items-center text-xs font-semibold text-slate-700 mb-2">
-                                  <span>Ã¢â€â€Ã¢â€â‚¬ {activity}</span>
+                                  <span> {activity}</span>
                                   <span className="text-green-600">Total: ₹{activityTotal.toLocaleString()}</span>
                                 </div>
                                 <div className="ml-2 overflow-x-auto">
@@ -1155,7 +1155,7 @@ export default function BudgetRequestTab() {
       {/* AIM View: Request Cycles Table */}
       {(isAIM || canManageAll) && budgetRequestGroups.length > 0 && (
         <Card className="p-6 mb-6">
-          <CardTitle>📅 Active Budget Request Cycles</CardTitle>
+          <CardTitle> Active Budget Request Cycles</CardTitle>
           <div className="overflow-x-auto">
             <Table>
               <thead>
@@ -1178,9 +1178,9 @@ export default function BudgetRequestTab() {
                   return (
                     <tr key={group.id}>
                       <Td className="font-bold text-[#1B4F72]">{group.requestNumber}</Td>
-                      <Td>{group.description || 'Ã¢â‚¬â€'}</Td>
+                      <Td>{group.description || 'description'}</Td>
                       <Td>{group.aimName}</Td>
-                      <Td>{group.targetDate || 'Ã¢â‚¬â€'}</Td>
+                      <Td>{group.targetDate || 'target date'}</Td>
                       <Td><Badge variant={group.status === 'active' ? 'success' : 'warning'}>{group.status}</Badge></Td>
                       <Td className="text-center font-semibold">{groupRequests.length}</Td>
                       <Td className="font-semibold text-blue-600">₹{totalEstimatedSales.toLocaleString()}</Td>
@@ -1197,7 +1197,7 @@ export default function BudgetRequestTab() {
       {/* AIM View: Budgets by Request Number - Product & Activity Organization */}
       {(isAIM || canManageAll) && budgetRequestGroups.length > 0 && !selectedRequestGroup && (
         <Card className="p-6 mb-6 border-l-4 border-l-purple-600 bg-purple-50">
-          <h3 className="text-lg font-bold text-purple-900 mb-4">📊  Select Budget Request Session for Detailed Analysis</h3>
+          <h3 className="text-lg font-bold text-purple-900 mb-4">  Select Budget Request Session for Detailed Analysis</h3>
           <p className="text-sm text-purple-700 mb-4">Choose a session to view all MDO submissions with estimated sales and budget details, grouped by region and product.</p>
           <Select value={selectedRequestGroup || ''} onChange={e => setSelectedRequestGroup(e.target.value)}>
             <option value="">-- Select a Session for Analysis --</option>
@@ -1219,7 +1219,7 @@ export default function BudgetRequestTab() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-bold">
-                📊  Detailed Budget Analysis: {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
+                  Detailed Budget Analysis: {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
               </h3>
               <p className="text-sm text-slate-600 mt-1">MDO Name | Estimated Sales | Budget Required</p>
             </div>
@@ -1276,7 +1276,7 @@ export default function BudgetRequestTab() {
                               return (
                                 <div key={activity} className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded p-2 border-l-4 border-orange-400">
                                   <div className="flex justify-between items-center font-semibold text-xs mb-1">
-                                    <span className="text-orange-700">Ã¢â€â€Ã¢â€â‚¬ {activity}</span>
+                                    <span className="text-orange-700">{activity}</span>
                                     <span className="text-green-700">₹{activityTotal.toLocaleString()}</span>
                                   </div>
                                   <div className="space-y-1 ml-2">
@@ -1286,8 +1286,8 @@ export default function BudgetRequestTab() {
                                           <p className="font-semibold text-slate-900">{req.mdoName}</p>
                                           <p className="text-slate-500 text-xs">{req.areaManagerName}</p>
                                           <div className="mt-1 flex gap-2 text-slate-600 text-xs">
-                                            <span>📊  Est. Sales: ₹{req.estimatedSales?.toLocaleString() || '0'}</span>
-                                            <span>💰 Budget: ₹{req.budgetRequired.toLocaleString()}</span>
+                                            <span>Est. Sales: ₹{req.estimatedSales?.toLocaleString() || '0'}</span>
+                                            <span>Budget: ₹{req.budgetRequired.toLocaleString()}</span>
                                           </div>
                                         </div>
                                         <span className="font-bold text-green-600 whitespace-nowrap ml-2">₹{req.budgetRequired.toLocaleString()}</span>
@@ -1523,7 +1523,7 @@ export default function BudgetRequestTab() {
                               size="sm"
                               className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
                             >
-                              ✅ Approve
+                              Approve
                             </Button>
                           </Td>
                         )}
@@ -1576,16 +1576,16 @@ export default function BudgetRequestTab() {
                   {/* Approval Workflow Status */}
                   <div className="flex gap-4 text-xs mb-4 p-3 bg-white rounded border-2 border-slate-200">
                     <div className={cn("flex items-center gap-1 px-2 py-1 rounded", request.zmApprovedAt ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
-                      <span>1Ã¯Â¸ÂÃ¢Æ’Â£ ZM: {request.zmName || 'Pending'}</span>
-                      {request.zmApprovedAt && <span className="text-green-600 font-bold">✅ {request.zmApprovedAt}</span>}
+                      <span>ZM: {request.zmName || 'Pending'}</span>
+                      {request.zmApprovedAt && <span className="text-green-600 font-bold">{request.zmApprovedAt}</span>}
                     </div>
                     <div className={cn("flex items-center gap-1 px-2 py-1 rounded", request.rmApprovedAt ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
-                      <span>2Ã¯Â¸ÂÃ¢Æ’Â£ RM: {request.rmName || 'Pending'}</span>
+                      <span>RM: {request.rmName || 'Pending'}</span>
                       {request.rmApprovedAt && <span className="text-green-600 font-bold">✅ {request.rmApprovedAt}</span>}
                     </div>
                     <div className={cn("flex items-center gap-1 px-2 py-1 rounded", request.status === 'aim-approved' ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
-                      <span>3Ã¯Â¸ÂÃ¢Æ’Â£ AIM: {request.aimName || 'Pending'}</span>
-                      {request.aimApprovedAt && <span className="text-green-600 font-bold">✅ {request.aimApprovedAt}</span>}
+                      <span>AIM: {request.aimName || 'Pending'}</span>
+                      {request.aimApprovedAt && <span className="text-green-600 font-bold"> {request.aimApprovedAt}</span>}
                     </div>
                   </div>
 
@@ -1605,7 +1605,7 @@ export default function BudgetRequestTab() {
                               {/* Campaign Photo */}
                               {entry.campaignPhoto && (
                                 <div className="p-2 bg-blue-50 rounded border border-blue-200">
-                                  <p className="text-xs font-bold text-blue-900 mb-2">Ã°Å¸â€œÂ· Campaign Photo</p>
+                                  <p className="text-xs font-bold text-blue-900 mb-2">Campaign Photo</p>
                                   <img 
                                     src={entry.campaignPhoto} 
                                     alt="Campaign" 
@@ -1625,7 +1625,7 @@ export default function BudgetRequestTab() {
                               {/* Expense Photo */}
                               {entry.expensePhoto && (
                                 <div className="p-2 bg-amber-50 rounded border border-amber-200">
-                                  <p className="text-xs font-bold text-amber-900 mb-2">💰 Expense Photo</p>
+                                  <p className="text-xs font-bold text-amber-900 mb-2">Expense Photo</p>
                                   <img 
                                     src={entry.expensePhoto} 
                                     alt="Expense" 
@@ -1638,14 +1638,14 @@ export default function BudgetRequestTab() {
                                       document.body.appendChild(modal);
                                     }}
                                   />
-                                  <p className="text-xs text-green-600 mt-1">✅ Uploaded</p>
+                                  <p className="text-xs text-green-600 mt-1">Uploaded</p>
                                 </div>
                               )}
 
                               {/* Other Photo */}
                               {entry.otherPhoto && (
                                 <div className="p-2 bg-purple-50 rounded border border-purple-200">
-                                  <p className="text-xs font-bold text-purple-900 mb-2">Ã°Å¸â€œÂ¹ Other Photo</p>
+                                  <p className="text-xs font-bold text-purple-900 mb-2">Other Photo</p>
                                   <img 
                                     src={entry.otherPhoto} 
                                     alt="Other" 
@@ -1658,7 +1658,7 @@ export default function BudgetRequestTab() {
                                       document.body.appendChild(modal);
                                     }}
                                   />
-                                  <p className="text-xs text-green-600 mt-1">✅ Uploaded</p>
+                                  <p className="text-xs text-green-600 mt-1">Uploaded</p>
                                 </div>
                               )}
 

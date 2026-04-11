@@ -119,8 +119,8 @@ export default function TransactionMasterTab() {
             </button>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => exportToExcel(filtered, 'transactions.xls')}>📥 Excel</Button>
-            <Button variant="secondary" size="sm" onClick={() => exportToPDF(filtered, 'Transaction Ledger')}>📄 PDF</Button>
+            <Button variant="secondary" size="sm" onClick={() => exportToExcel(filtered, 'transactions.xls')}>Excel</Button>
+            <Button variant="secondary" size="sm" onClick={() => exportToPDF(filtered, 'Transaction Ledger')}>PDF</Button>
             <SearchInput value={search} onChange={setSearch} placeholder="Search transactions..." />
           </div>
         </div>

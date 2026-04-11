@@ -105,12 +105,12 @@ export default function VendorSectionTab() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <span className="text-2xl">🏪</span> Vendor Section
+              Vendor Section
             </h2>
             <p className="text-xs text-slate-500 mt-1">Your approved activities ready for billing, and your billing history</p>
           </div>
           <div className="px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-xs font-medium text-amber-700 flex items-center gap-2">
-            <span>🏪</span>
+            
             <strong>Vendor View:</strong> Approved activities show as "Pending for Billing".
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function VendorSectionTab() {
         <Card className="overflow-hidden border-l-4 border-l-[#C2410C]">
           <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">🧾 Pending for Billing</h3>
+              <h3 className="font-bold text-slate-800 flex items-center gap-2">Pending for Billing</h3>
               <p className="text-[11px] text-slate-500 mt-0.5">Select approved activities below and raise a combined bill</p>
             </div>
             <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ export default function VendorSectionTab() {
         {/* Section 2: Billing History */}
         <Card className="overflow-hidden border-l-4 border-l-primary">
           <div className="p-4 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">📁 Billing History</h3>
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">Billing History</h3>
           </div>
           <div className="overflow-x-auto">
             <Table>
@@ -299,7 +299,7 @@ export default function VendorSectionTab() {
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setShowRaiseBillModal(false)}>Cancel</Button>
                 <Button onClick={handleRaiseBill} disabled={!billForm.invoiceNumber} className="bg-blue-600 hover:bg-blue-700 text-white border-none">
-                  📋 Raise Bill
+                  Raise Bill
                 </Button>
               </div>
             </div>
@@ -331,7 +331,7 @@ export default function VendorSectionTab() {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
         <div>
           <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <span className="text-2xl">🏪</span> Vendor Section
+            Vendor Section
           </h2>
           <p className="text-xs text-slate-500 mt-1">Activities submitted by Area Managers, grouped by their assigned vendor</p>
         </div>
@@ -342,9 +342,9 @@ export default function VendorSectionTab() {
           <SearchInput value={search} onChange={setSearch} placeholder="Search by area, PO, product..." />
           <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-36">
             <option value="">All Statuses</option>
-            <option value="pending">⏳ Pending</option>
-            <option value="approved">✅ Approved</option>
-            <option value="rejected">❌ Rejected</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
           </Select>
           <Select value={poFilter} onChange={e => setPOFilter(e.target.value)} className="w-44">
             <option value="">All POs</option>

@@ -73,10 +73,10 @@ export default function OverviewTab() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard label="Total PO Budget" value={formatLakhs(totalBudget)} sub={`${activePOs.length} active POs`} color="#1B4F72" icon="📋" />
-        <KpiCard label="Total Utilized" value={formatLakhs(totalSpent)} sub={`${pct(totalSpent, totalBudget)}% used`} color="#16A34A" icon="✅" />
-        <KpiCard label="Unutilized" value={formatLakhs(unutilized)} sub={`+ ₹${(totalPending/1000).toFixed(0)}K pending`} color="#B45309" icon="⚠️" />
-        <KpiCard label="Active Regions" value={regionData.length.toString()} sub={`${approvedCount} approved entries`} color="#6D28D9" icon="🗺️" />
+        <KpiCard label="Total PO Budget" value={formatLakhs(totalBudget)} sub={`${activePOs.length} active POs`} color="#1B4F72" />
+        <KpiCard label="Total Utilized" value={formatLakhs(totalSpent)} sub={`${pct(totalSpent, totalBudget)}% used`} color="#16A34A"  />
+        <KpiCard label="Unutilized" value={formatLakhs(unutilized)} sub={`+ ₹${(totalPending/1000).toFixed(0)}K pending`} color="#B45309" />
+        <KpiCard label="Active Regions" value={regionData.length.toString()} sub={`${approvedCount} approved entries`} color="#6D28D9"  />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -126,9 +126,9 @@ export default function OverviewTab() {
         <CardTitle>
           Regional Performance
           <div className="flex gap-2 text-xs font-semibold">
-            <span className="text-green-600">✓ {approvedCount} approved</span>
-            <span className="text-amber-600">⏳ {pendingCount} pending</span>
-            <span className="text-red-600">✗ {rejectedCount} rejected</span>
+            <span className="text-green-600"> {approvedCount} approved</span>
+            <span className="text-amber-600"> {pendingCount} pending</span>
+            <span className="text-red-600"> {rejectedCount} rejected</span>
           </div>
         </CardTitle>
         <Table>

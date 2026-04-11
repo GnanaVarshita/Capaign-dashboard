@@ -130,7 +130,7 @@ export default function ActivitySheetTab() {
 
       <Card className="p-6">
         <CardTitle>Submit Activity Entry</CardTitle>
-        {error && <InfoBanner color="red"><span>⚠ {error}</span></InfoBanner>}
+        {error && <InfoBanner color="red"><span> {error}</span></InfoBanner>}
         <form onSubmit={handleSubmit} className="space-y-5 mt-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div><Label required>Date</Label><Input type="date" value={form.date} onChange={e => set('date', e.target.value)} /></div>
@@ -213,13 +213,13 @@ export default function ActivitySheetTab() {
 
           {/* Photo Upload Fields */}
           <div className="border-t-2 border-slate-200 pt-4">
-            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">📸 Photo Uploads for Verification</h4>
+            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"> Photo Uploads for Verification</h4>
             <p className="text-sm text-slate-600 mb-4">Upload photos for ZM/RM/AIM verification (will be sent with activity entry)</p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Campaign Photo */}
               <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                <Label className="font-bold text-sm text-blue-900 mb-2 block">📷 Campaign Photo</Label>
+                <Label className="font-bold text-sm text-blue-900 mb-2 block">Campaign Photo</Label>
                 <Input 
                   type="file" 
                   accept="image/*" 
@@ -239,7 +239,7 @@ export default function ActivitySheetTab() {
 
               {/* Expense Photo */}
               <div className="p-3 bg-amber-50 rounded border border-amber-200">
-                <Label className="font-bold text-sm text-amber-900 mb-2 block">💰 Expense Photo</Label>
+                <Label className="font-bold text-sm text-amber-900 mb-2 block">Expense Photo</Label>
                 <Input 
                   type="file" 
                   accept="image/*" 
@@ -259,7 +259,7 @@ export default function ActivitySheetTab() {
 
               {/* Other Photo */}
               <div className="p-3 bg-purple-50 rounded border border-purple-200">
-                <Label className="font-bold text-sm text-purple-900 mb-2 block">📹 Other Photo</Label>
+                <Label className="font-bold text-sm text-purple-900 mb-2 block"> Other Photo</Label>
                 <Input 
                   type="file" 
                   accept="image/*" 

@@ -166,7 +166,7 @@ export default function BillingTab() {
       {/* Page Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">🧾 Billing Section</h1>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">Billing Section</h1>
           <p className="text-sm text-slate-500 mt-1">
             {isVendor 
               ? 'Prepare GST tax invoices for your approved activities and manage service receiver details.' 
@@ -174,8 +174,8 @@ export default function BillingTab() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="bg-green-700 text-white hover:bg-green-800 border-none">⬇️ All Bills Excel</Button>
-          <Button variant="outline" className="bg-[#1B4F72] text-white hover:bg-[#153d5a] border-none">📄 All Bills PDF</Button>
+          <Button variant="outline" className="bg-green-700 text-white hover:bg-green-800 border-none">All Bills Excel</Button>
+          <Button variant="outline" className="bg-[#1B4F72] text-white hover:bg-[#153d5a] border-none">All Bills PDF</Button>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export default function BillingTab() {
             activeTab === 'bills' ? "border-[#1B4F72] text-[#1B4F72]" : "border-transparent text-slate-500 hover:text-slate-700"
           )}
         >
-          📋 Bills
+          Bills
         </button>
         {isVendor && (
           <>
@@ -199,7 +199,7 @@ export default function BillingTab() {
                 activeTab === 'receivers' ? "border-[#1B4F72] text-[#1B4F72]" : "border-transparent text-slate-500 hover:text-slate-700"
               )}
             >
-              🏢 Service Receivers
+              Service Receivers
             </button>
             <button 
               onClick={() => setActiveTab('myprofile')}
@@ -208,7 +208,7 @@ export default function BillingTab() {
                 activeTab === 'myprofile' ? "border-[#C2410C] text-[#C2410C]" : "border-transparent text-slate-500 hover:text-slate-700"
               )}
             >
-              🏪 My Details
+              My Details
             </button>
           </>
         )}
@@ -219,10 +219,10 @@ export default function BillingTab() {
           {editingBill && !showInvoicePreview && (
             <Card className="p-6 mb-6 border-l-4 border-l-orange-500 bg-orange-50">
               <div className="flex items-start gap-3 mb-4">
-                <span className="text-2xl">⚠️</span>
+                
                 <div>
                   <h3 className="text-lg font-bold text-orange-900">Review Bill Details Before Submission</h3>
-                  <p className="text-sm text-orange-700 mt-1">Click "👁️ Preview Invoice" below to review all selected activities, charges, and calculations before submitting your bill.</p>
+                  <p className="text-sm text-orange-700 mt-1">Click "Preview Invoice" below to review all selected activities, charges, and calculations before submitting your bill.</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -261,8 +261,8 @@ export default function BillingTab() {
                   <Textarea value={editingBill.remarks} onChange={e => setEditingBill({...editingBill, remarks: e.target.value})} />
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={handlePreviewInvoice} className="bg-blue-600 hover:bg-blue-700 flex-1">👁️ Preview Invoice & Review Details</Button>
-                  <Button variant="outline" onClick={() => { setEditingBill(null); setPendingBillData(null); }}>❌ Cancel</Button>
+                  <Button onClick={handlePreviewInvoice} className="bg-blue-600 hover:bg-blue-700 flex-1">Preview Invoice & Review Details</Button>
+                  <Button variant="outline" onClick={() => { setEditingBill(null); setPendingBillData(null); }}>Cancel</Button>
                 </div>
               </div>
             </Card>
@@ -374,7 +374,7 @@ export default function BillingTab() {
                         <span className="font-bold">{previewBill.gstRate}%</span>
                       )}
                     </div>
-                    <p>Taxable: {formatCurrency(previewBill.taxable)} × {previewBill.gstRate}% = {formatCurrency(previewBill.gstAmt)}</p>
+                    <p>Taxable: {formatCurrency(previewBill.taxable)} {previewBill.gstRate}% = {formatCurrency(previewBill.gstAmt)}</p>
                     <p className="mt-2 p-2 bg-green-100 rounded font-bold">Grand Total: {formatCurrency(previewBill.totalAmount)}</p>
                   </div>
 
@@ -396,7 +396,7 @@ export default function BillingTab() {
                       onClick={() => setEditInvoiceMode(true)}
                       className="bg-blue-600 hover:bg-blue-700 text-white border-none shadow-lg font-bold text-base px-6 py-2"
                     >
-                      ✏️ Edit Details
+                      Edit Details
                     </Button>
                   )}
                   {editInvoiceMode && (
@@ -404,7 +404,7 @@ export default function BillingTab() {
                       onClick={() => setEditInvoiceMode(false)}
                       className="bg-slate-600 hover:bg-slate-700 text-white border-none shadow-lg font-bold text-base px-6 py-2"
                     >
-                      ✓ Done Editing
+                       Done Editing
                     </Button>
                   )}
                   <Button 
@@ -448,7 +448,7 @@ export default function BillingTab() {
                     }}
                     className="bg-amber-600 hover:bg-amber-700 text-white border-none shadow-lg font-bold text-base px-6 py-2"
                   >
-                    💾 Save as Draft
+                    Save as Draft
                   </Button>
                   <Button 
                     onClick={() => {
@@ -458,21 +458,21 @@ export default function BillingTab() {
                     }}
                     className="bg-green-600 hover:bg-green-700 text-white border-none shadow-lg font-bold text-base px-8 py-3"
                   >
-                    ✅ SUBMIT BILL
+                    SUBMIT BILL
                   </Button>
                   <Button 
                     onClick={() => { setShowInvoicePreview(false); setEditInvoiceMode(false); }}
                     variant="outline"
                     className="font-semibold"
                   >
-                    ← Back
+                     Back
                   </Button>
                   <Button 
                     onClick={() => { setShowInvoicePreview(false); setEditInvoiceMode(false); setEditingBill(null); setPendingBillData(null); }}
                     variant="outline"
                     className="bg-red-50 text-red-700 hover:bg-red-100"
                   >
-                    ✕ Cancel
+                     Cancel
                   </Button>
                 </div>
               </div>
@@ -508,12 +508,12 @@ export default function BillingTab() {
             {/* Left Column: Bill List */}
             <Card className="p-0 overflow-hidden">
               <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                <span className="text-xs font-bold text-slate-700 uppercase">📋 Bills ({visBillings.length})</span>
+                <span className="text-xs font-bold text-slate-700 uppercase"> Bills ({visBillings.length})</span>
               </div>
               <div className="max-h-[600px] overflow-y-auto">
                 {visBillings.length === 0 ? (
                   <div className="p-8 text-center text-slate-400">
-                    <div className="text-4xl mb-2">📭</div>
+                    
                     <p className="text-sm font-semibold text-slate-600">No bills yet</p>
                     <p className="text-xs mt-1">
                       {isVendor ? 'Go to Vendor Section → Select approved activities → Raise Bill.' : 'Bills raised by vendors will appear here.'}
@@ -753,18 +753,18 @@ function InvoiceDetail({ billId }: { billId: string }) {
             </div>
             {isIGST ? (
               <div className="mt-4 p-2 bg-red-50 text-red-700 text-[10px] font-bold rounded flex items-center gap-2 border border-red-100">
-                ⚠️ INTER-STATE (IGST) — {vState} → {rState}
+                INTER-STATE (IGST) — {vState} → {rState}
               </div>
             ) : (
               receiverGST && <div className="mt-4 p-2 bg-green-50 text-green-700 text-[10px] font-bold rounded flex items-center gap-2 border border-green-100">
-                ✅ INTRA-STATE (CGST+SGST) — {rState}
+                 INTRA-STATE (CGST+SGST) — {rState}
               </div>
             )}
           </div>
 
           {/* Bill From */}
           <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-4">
-            <h3 className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-4">🏪 Bill From — Service Provider</h3>
+            <h3 className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-4">Bill From — Service Provider</h3>
             {canEdit ? (
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 space-y-1">
@@ -950,7 +950,7 @@ function InvoiceDetail({ billId }: { billId: string }) {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 pb-2">💰 Summary</h3>
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 pb-2">Summary</h3>
             <div className="bg-gradient-to-br from-[#1B4F72] to-[#2C82B0] rounded-xl p-5 text-white shadow-lg text-center">
                <p className="text-[10px] uppercase opacity-70 tracking-widest font-bold mb-1">Grand Total</p>
                <h4 className="text-3xl font-black mb-2">{formatCurrency(totalWithGST)}</h4>
@@ -964,7 +964,7 @@ function InvoiceDetail({ billId }: { billId: string }) {
             {/* Bank Details Area */}
             {(vp?.bankName || vp?.accountNo || canEdit) && (
               <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <h3 className="text-[9px] font-black text-green-600 uppercase mb-3 text-center">🏦 Bank Details for Payment</h3>
+                <h3 className="text-[9px] font-black text-green-600 uppercase mb-3 text-center">Bank Details for Payment</h3>
                 <div className="grid grid-cols-1 gap-2 text-[10px] font-mono">
                   <div className="bg-white p-2 rounded border border-green-100">
                     <span className="text-green-600 font-bold">Account Name:</span> {vp?.tradeName || bill.vendorName}
@@ -984,7 +984,7 @@ function InvoiceDetail({ billId }: { billId: string }) {
             
             {/* Signature Area */}
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-               <h3 className="text-[9px] font-black text-slate-400 uppercase mb-4 text-center">✍️ Declaration & Signature</h3>
+               <h3 className="text-[9px] font-black text-slate-400 uppercase mb-4 text-center">Declaration & Signature</h3>
                <div className="text-[9px] text-slate-600 mb-3 p-2 bg-white rounded border border-slate-100 italic">
                   <p>I/We hereby declare that the particulars given above are true and correct and it is based on the invoices/documents issued for the said supply of services.</p>
                </div>
@@ -1021,7 +1021,7 @@ function InvoiceDetail({ billId }: { billId: string }) {
                           </div>
                         </div>
                         <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center text-slate-400 italic mt-2">
-                          <p className="text-[9px]">✍️ Mark this bill as submitted to digitally sign</p>
+                          <p className="text-[9px]"> Mark this bill as submitted to digitally sign</p>
                         </div>
                       </>
                     ) : (
@@ -1077,7 +1077,7 @@ function ServiceReceiversTab() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-bold text-slate-800">🏢 Service Receivers</h3>
+          <h3 className="text-lg font-bold text-slate-800">Service Receivers</h3>
           <p className="text-xs text-slate-500 mt-1">Manage the companies you bill. Their details will be used in "Bill To" section of your invoices.</p>
         </div>
         <Button onClick={() => setShowModal(true)}>+ Add Receiver</Button>
@@ -1175,7 +1175,7 @@ function MyProfileTab() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-[#C2410C]">🏪 My Service Provider Details</h3>
+        <h3 className="text-lg font-bold text-[#C2410C]">My Service Provider Details</h3>
         <p className="text-xs text-slate-500 mt-1">These details appear as "Bill From" on all your GST invoices. Fill them once — they'll auto-populate every new bill.</p>
       </div>
 

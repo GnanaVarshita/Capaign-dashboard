@@ -171,8 +171,8 @@ export default function UserMgmtTab() {
                 <Td className="font-mono text-xs text-[#6B7280]">{user.loginId}</Td>
                 <Td><RoleBadge role={user.role} /></Td>
                 <Td className="text-xs text-[#6B7280]">
-                  {user.territory?.region && <div>📍 {user.territory.region}{user.territory?.zone ? ` · ${user.territory.zone}` : ''}{user.territory?.area ? ` · ${user.territory.area}` : ''}</div>}
-                  {user.territory?.tradeName && <div>🏪 {user.territory.tradeName}</div>}
+                  {user.territory?.region && <div> {user.territory.region}{user.territory?.zone ? ` · ${user.territory.zone}` : ''}{user.territory?.area ? ` · ${user.territory.area}` : ''}</div>}
+                  {user.territory?.tradeName && <div> {user.territory.tradeName}</div>}
                   {!user.territory?.region && !user.territory?.tradeName && <span>All Regions</span>}
                 </Td>
                 <Td>
@@ -189,8 +189,8 @@ export default function UserMgmtTab() {
                 </Td>
                 <Td>
                   <div className="flex gap-1">
-                    <Button size="sm" variant="secondary" onClick={() => openEdit(user.id)}>✏️ Edit</Button>
-                    <Button size="sm" variant="ghost" onClick={() => openCreds(user.id)} title={u.role === 'Owner' ? 'View/Edit credentials' : 'Edit credentials'}>🔑</Button>
+                    <Button size="sm" variant="secondary" onClick={() => openEdit(user.id)}>Edit</Button>
+                    <Button size="sm" variant="ghost" onClick={() => openCreds(user.id)} title={u.role === 'Owner' ? 'View/Edit credentials' : 'Edit credentials'}>Credentials</Button>
                     {user.id !== u.id && (
                       <Button size="sm" variant={user.status === 'active' ? 'danger' : 'success'} onClick={() => updateUser(user.id, { status: user.status === 'active' ? 'inactive' : 'active' })}>
                         {user.status === 'active' ? '⊘' : '✓'}
@@ -205,7 +205,7 @@ export default function UserMgmtTab() {
       </Card>
 
       <Modal open={showModal} onClose={() => setShowModal(false)} title={editId ? 'Edit User' : 'Add New User'} width="max-w-2xl">
-        {formError && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">⚠ {formError}</div>}
+        {formError && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">{formError}</div>}
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2"><Label required>Full Name</Label><Input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Full Name" /></div>
           <div><Label required>Login ID</Label><Input value={form.loginId} onChange={e => set('loginId', e.target.value)} placeholder="loginid" /></div>
@@ -315,7 +315,7 @@ export default function UserMgmtTab() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="text-xs text-[#1B4F72] font-semibold hover:underline"
                   >
-                    {showPassword ? '🙈 Hide' : '👁️ Show'}
+                    {showPassword ? 'Hide' : 'Show'}
                   </button>
                 )}
               </div>

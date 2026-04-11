@@ -101,7 +101,7 @@ export default function HierarchyTab() {
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: region.color }} />
                     <div>
-                      <h3 className="font-bold text-[#1B4F72]">🗺️ {region.name} Region</h3>
+                      <h3 className="font-bold text-[#1B4F72]">{region.name} Region</h3>
                       <p className="text-xs text-[#6B7280]">
                         Budget: <strong>{formatCurrency(rBudget)}</strong> · Spent: <strong className="text-green-600">{formatCurrency(rSpent)}</strong>
                         {region.states?.length > 0 && ` · ${region.states.slice(0, 2).join(', ')}${region.states.length > 2 ? '...' : ''}`}
@@ -145,7 +145,7 @@ export default function HierarchyTab() {
                               onClick={() => toggleZone(zone.name)}
                             >
                               <div className="flex items-center gap-2">
-                                <span className="text-sm">📍</span>
+                              
                                 <div>
                                   <p className="font-semibold text-[#374151] text-sm">{zone.name}</p>
                                   <p className="text-xs text-[#9CA3AF]">
@@ -171,7 +171,7 @@ export default function HierarchyTab() {
                                     <div className="w-full">
                                       {zone.areas.map(a => (
                                         <div key={a.name} className="p-2 bg-[#F8FAFC] rounded-lg text-xs text-[#374151] mb-1">
-                                          📌 {a.name} {a.manager && `— ${a.manager}`}
+                                           {a.name} {a.manager && `— ${a.manager}`}
                                         </div>
                                       ))}
                                     </div>
@@ -213,10 +213,10 @@ export default function HierarchyTab() {
                     <Badge variant={v.status === 'active' ? 'success' : 'error'}>{v.status}</Badge>
                   </div>
                   <div className="space-y-1 text-xs text-[#6B7280]">
-                    {v.phone && <p>📞 {v.phone}</p>}
-                    {v.email && <p>✉️ {v.email}</p>}
+                    {v.phone && <p> {v.phone}</p>}
+                    {v.email && <p> {v.email}</p>}
                     {v.territory?.assignedZones?.map((z, i) => (
-                      <p key={i}>📍 {z.zone}, {z.region} — {z.activities?.join(', ')}</p>
+                      <p key={i}> {z.zone}, {z.region} — {z.activities?.join(', ')}</p>
                     ))}
                   </div>
                   {approved > 0 && (

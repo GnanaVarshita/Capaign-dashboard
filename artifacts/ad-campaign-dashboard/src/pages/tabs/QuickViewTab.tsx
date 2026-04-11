@@ -364,8 +364,8 @@ export default function QuickViewTab() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => exportToExcel(filteredEntries, 'quick-view-activities.xls')}>📥 Excel</Button>
-            <Button variant="secondary" size="sm" onClick={() => exportToPDF(filteredEntries, 'Quick View Activities')}>📄 PDF</Button>
+            <Button variant="secondary" size="sm" onClick={() => exportToExcel(filteredEntries, 'quick-view-activities.xls')}>Excel</Button>
+            <Button variant="secondary" size="sm" onClick={() => exportToPDF(filteredEntries, 'Quick View Activities')}>PDF</Button>
           </div>
         </div>
       </Card>
@@ -422,7 +422,7 @@ export default function QuickViewTab() {
                         <ProgressBar value={rPct} className="flex-1" />
                         <span className="text-xs font-bold text-[#374151] w-10 text-right">{rPct}%</span>
                       </div>
-                      {r.pending > 0 && <p className="text-[10px] text-amber-600 mt-0.5">⏳ {formatCurrency(r.pending)} pending</p>}
+                      {r.pending > 0 && <p className="text-[10px] text-amber-600 mt-0.5">{formatCurrency(r.pending)} pending</p>}
                     </div>
                   );
                 })}
@@ -467,7 +467,7 @@ export default function QuickViewTab() {
 
       {!po && (
         <Card className="p-12 text-center text-[#9CA3AF]">
-          <p className="text-2xl mb-3">📊</p>
+       
           <p>No approved POs available.</p>
         </Card>
       )}

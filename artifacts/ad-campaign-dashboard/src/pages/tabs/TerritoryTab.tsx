@@ -76,7 +76,7 @@ export default function TerritoryTab() {
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#1B4F72]/5 to-transparent border-b border-[#DDE3ED]">
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 rounded-full" style={{ backgroundColor: region.color }} />
-              <h3 className="font-bold text-[#1B4F72] text-base">🗺️ {region.name} Region</h3>
+              <h3 className="font-bold text-[#1B4F72] text-base">{region.name} Region</h3>
               <Badge variant="blue">{region.zones.length} zones</Badge>
             </div>
             <Button size="sm" onClick={() => setAddZoneModal(region.name)}>+ Add Zone</Button>
@@ -98,7 +98,7 @@ export default function TerritoryTab() {
                 <div key={zone.name} className="border border-[#DDE3ED] rounded-xl overflow-hidden">
                   <div className="flex items-center justify-between p-3 bg-[#F8FAFC]">
                     <div className="flex items-center gap-2">
-                      <span>📍</span>
+                      
                       <div>
                         <span className="font-semibold text-[#374151]">{zone.name}</span>
                         {zone.manager && <span className="text-xs text-[#9CA3AF] ml-2">ZM: {zone.manager}</span>}
@@ -107,7 +107,7 @@ export default function TerritoryTab() {
                     </div>
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => setAddAreaModal({ region: region.name, zone: zone.name })}>+ Area</Button>
-                      <Button size="sm" variant="danger" onClick={() => removeZone(region.name, zone.name)}>✕</Button>
+                      <Button size="sm" variant="danger" onClick={() => removeZone(region.name, zone.name)}>Delete </Button>
                     </div>
                   </div>
 
@@ -115,9 +115,9 @@ export default function TerritoryTab() {
                     <div className="p-3 flex flex-wrap gap-2">
                       {zone.areas.map(area => (
                         <div key={area.name} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#DDE3ED] rounded-lg text-xs">
-                          <span className="text-[#374151] font-medium">📌 {area.name}</span>
+                          <span className="text-[#374151] font-medium">{area.name}</span>
                           {area.manager && <span className="text-[#9CA3AF]">— {area.manager}</span>}
-                          <button onClick={() => removeArea(region.name, zone.name, area.name)} className="text-red-400 hover:text-red-600 ml-1 font-bold leading-none">×</button>
+                          <button onClick={() => removeArea(region.name, zone.name, area.name)} className="text-red-400 hover:text-red-600 ml-1 font-bold leading-none">Remove</button>
                         </div>
                       ))}
                     </div>

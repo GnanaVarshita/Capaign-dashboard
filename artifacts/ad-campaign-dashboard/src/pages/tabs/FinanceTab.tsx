@@ -95,7 +95,7 @@ export default function FinanceTab() {
     <div className="space-y-6">
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">💰 Finance Section</h1>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">Finance Section</h1>
           <p className="text-sm text-slate-500 mt-1">
             {isVendor ? 'Track your submitted bills and payments received. You can request modification if needed.' : 'Manage vendor bill payments and financial overview. Approve bill modifications as needed.'}
           </p>
@@ -105,7 +105,7 @@ export default function FinanceTab() {
       {/* Filter Section for Owner/Admin */}
       {canManage && (
         <Card className="p-4 border-l-4 border-l-blue-600 bg-blue-50">
-          <h3 className="text-sm font-bold text-slate-700 mb-3">🔍 Filters</h3>
+          <h3 className="text-sm font-bold text-slate-700 mb-3">Filters</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             {/* Vendor Filter */}
             <div>
@@ -154,7 +154,7 @@ export default function FinanceTab() {
                 }}
                 className="w-full"
               >
-                🔄 Clear All
+                Clear All
               </Button>
             </div>
           </div>
@@ -245,12 +245,12 @@ export default function FinanceTab() {
                           </Badge>
                           {hasModifyRequest && (
                             <Badge className="text-[10px] px-2 py-1 bg-orange-100 text-orange-800">
-                              ⚠️ Modify Requested
+                              Modify Requested
                             </Badge>
                           )}
                           {bill.modificationApprovedBy && !hasModifyRequest && (
                             <Badge className="text-[10px] px-2 py-1 bg-green-100 text-green-800">
-                              ✓ Modify Approved
+                              Modify Approved
                             </Badge>
                           )}
                         </div>
@@ -267,17 +267,17 @@ export default function FinanceTab() {
                                   variant="outline"
                                   className="text-xs"
                                 >
-                                  📝 Request Modify
+                                   Request Modify
                                 </Button>
                               )}
                               {bill.modificationRequested && !bill.modificationApprovedAt && (
                                 <Badge className="text-[9px] px-2 py-1 bg-yellow-100 text-yellow-800 text-center">
-                                  ⏳ Awaiting Approval
+                                  Awaiting Approval
                                 </Badge>
                               )}
                               {bill.modificationApprovedBy && (
                                 <Badge className="text-[9px] px-2 py-1 bg-green-100 text-green-800 text-center">
-                                  ✓ Approved - Go to Billing
+                                  Approved - Go to Billing
                                 </Badge>
                               )}
                             </>
@@ -292,7 +292,7 @@ export default function FinanceTab() {
                                   size="sm"
                                   className="text-xs bg-green-600 hover:bg-green-700"
                                 >
-                                  ✓ Approve Modify
+                                   Approve Modify
                                 </Button>
                               )}
                               {!hasModifyRequest && (
@@ -302,7 +302,7 @@ export default function FinanceTab() {
                                   size="sm"
                                   className="text-xs"
                                 >
-                                  {bill.status === 'paid' ? '✓ Paid' : 'Mark as Paid'}
+                                  {bill.status === 'paid' ? ' Paid' : 'Mark as Paid'}
                                 </Button>
                               )}
                             </>
@@ -338,7 +338,7 @@ export default function FinanceTab() {
                 }}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
-                ✓ Send Request
+                Send Request
               </Button>
               <Button
                 onClick={() => setShowModifyModal(null)}

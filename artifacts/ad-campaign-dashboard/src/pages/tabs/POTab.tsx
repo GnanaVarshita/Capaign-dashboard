@@ -103,7 +103,7 @@ export default function POTab() {
             <div className="p-4 bg-[#F8FAFC] border-b border-[#DDE3ED]">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <h3 className="font-bold text-[#1B4F72] text-base">🗺️ {region} Region</h3>
+                  <h3 className="font-bold text-[#1B4F72] text-base"> {region} Region</h3>
                   <p className="text-xs text-[#6B7280] mt-0.5">Budget: <strong>{formatCurrency(rBudget)}</strong> · Spent: <strong className="text-green-600">{formatCurrency(rSpent)}</strong> · Pending: <strong className="text-amber-600">{rPending > 0 ? formatCurrency(rPending) : '—'}</strong></p>
                 </div>
                 <div className="flex items-center gap-2">

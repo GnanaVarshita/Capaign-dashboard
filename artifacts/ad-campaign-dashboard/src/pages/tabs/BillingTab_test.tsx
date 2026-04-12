@@ -297,6 +297,34 @@ export default function BillingTab() {
                       <p className="text-sm"><span className="font-semibold">Remarks:</span> {previewBill.remarks}</p>
                     </div>
                   )}
+                              </div>
+
+                {/* Export Excel Button */}
+                <div className="mt-4 flex gap-2 justify-end">
+                  <Button
+                    onClick={() => {
+                      const exportData = mdoList.map((mdo, idx) => ({
+                        'SNo': idx + 1,
+                        'Product': mdo.product,
+                        'Crop': mdo.crop || 'N/A',
+                        'MDO Name': mdo.mdoName,
+                        'Est. Sales': mdo.estimatedSales,
+                        ...Object.fromEntries(
+                          activities.map(a => [`${a} Budget`, mdo.activityBudgets?.[a] || 0])
+                        ),
+                        'Total Budget': Object.values(mdo.activityBudgets || {}).reduce((s: number, v: any) => s + (v || 0), 0),
+                        'Remarks': mdo.remarks || ''
+                      }));
+                      
+                      exportToExcel(
+                        exportData, 
+                        `Budget_Request_${budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber || 'Export'}.xls`
+                      );
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    📊 Download as Excel
+                  </Button>
                 </div>
 
                 {/* Action Buttons */}

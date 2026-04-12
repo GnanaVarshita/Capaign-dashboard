@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Button, Table, Th, Td, Badge, Modal, Label, Input, Textarea, cn, Select } from '../../components/ui';
+import { exportToExcel } from '../../lib/utils';
 import { BudgetRequest } from '../../types';
 
 export default function BudgetRequestTab() {
@@ -186,7 +187,7 @@ export default function BudgetRequestTab() {
   };
 
 
-  const handleApprove = (request: BudgetRequest | any) => {
+const handleApprove = (request: BudgetRequest | any) => {
     if (isAIM && request.id.startsWith('region-')) {
       // Approve all requests in this region
       const regionRequests = budgetRequests.filter(br => 
@@ -639,6 +640,27 @@ export default function BudgetRequestTab() {
               </h4>
               <p className="text-xs text-amber-700 mb-4">Select a product and add MDOs with estimated sales and budget allocations</p>
               
+              {/* Crop Selector - NEW */}
+{selectedProduct && (
+  <div className="mb-6 p-3 bg-white rounded border-2 border-green-300">
+    <Label className="font-bold text-sm text-green-900">Select Crop (Optional)</Label>
+    <Select value={formData.crop || ''} onChange={e => setFormData({...formData, crop: e.target.value})}>
+      <option value="">-- No Specific Crop --</option>
+      {crops && crops.length > 0 ? (
+        crops.map((c, idx) => (
+          <option key={`${c}-${idx}`} value={c}>{c}</option>
+        ))
+      ) : (
+        <option disabled>No crops available</option>
+      )}
+    </Select>
+    {formData.crop && (
+      <div className="mt-2 p-2 bg-green-100 rounded text-sm text-green-900">
+        Selected Crop: <span className="font-semibold">{formData.crop}</span>
+      </div>
+    )}
+  </div>
+)}
               {/* Product Selector */}
               <div className="mb-6 p-3 bg-white rounded border-2 border-amber-300">
                 <Label className="font-bold text-sm text-amber-900">Select Product *</Label>
@@ -808,13 +830,32 @@ export default function BudgetRequestTab() {
                                     ))}
                                     <td className="px-3 py-2 text-right font-semibold text-blue-600">₹{totalBudget.toLocaleString()}</td>
                                     <td className="px-3 py-2 text-center">
-                                      <Button 
-                                        variant="ghost" 
-                                        onClick={() => setMdoList(mdoList.filter((_, i) => i !== mdoList.indexOf(mdo)))}
-                                        className="text-red-500 hover:text-red-700 text-lg"
-                                      >
-                                        Delete
-                                      </Button>
+                                      <div className="flex gap-1 justify-center">
+                                        <Button 
+                                          variant="ghost" 
+                                          onClick={() => {
+                                            setFormData({
+                                              mdoName: mdo.mdoName,
+                                              estimatedSales: mdo.estimatedSales,
+                                              activityBudgets: mdo.activityBudgets || {},
+                                              remarks: mdo.remarks || '',
+                                              crop: mdo.crop || ''
+                                            });
+                                            setSelectedProduct(mdo.product);
+                                            setMdoList(mdoList.filter((_, i) => i !== mdoList.indexOf(mdo)));
+                                          }}
+                                          className="text-blue-500 hover:text-blue-700 text-sm font-semibold"
+                                        >
+                                          Edit
+                                        </Button>
+                                        <Button 
+                                          variant="ghost" 
+                                          onClick={() => setMdoList(mdoList.filter((_, i) => i !== mdoList.indexOf(mdo)))}
+                                          className="text-red-500 hover:text-red-700 text-sm font-semibold"
+                                        >
+                                          Delete
+                                        </Button>
+                                      </div>
                                     </td>
                                   </tr>
                                 );

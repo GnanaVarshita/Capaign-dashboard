@@ -462,7 +462,7 @@ export default function POMasterTab() {
                   </Table>
                 </div>
 
-                {Object.entries(selected.allocations || {}).map(([region, prods]) => {
+                {/* {Object.entries(selected.allocations || {}).map(([region, prods]) => {
                   if (Object.keys(prods).length === 0) return null;
                   return (
                     <div key={region}>
@@ -491,7 +491,69 @@ export default function POMasterTab() {
                       </div>
                     </div>
                   );
-                })}
+                })} */}
+
+                {Object.entries(selected.allocations || {}).map(([region, prods]) => {
+  if (Object.keys(prods).length === 0) return null;
+  
+  // Calculate actual totals properly for product/crop/activity structure
+  const regionAllocations: Record<string, number> = {};
+  Object.entries(prods as Record<string, Record<string, Record<string, number>>>).forEach(([prod, crops_obj]) => {
+    Object.values(crops_obj).forEach(activities => {
+      Object.values(activities).forEach(amount => {
+        regionAllocations[prod] = (regionAllocations[prod] || 0) + (amount || 0);
+      });
+    });
+  });
+  
+  return (
+    <div key={region}>
+      <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-2">
+        {region} Product/Crop/Activity Allocation
+      </p>
+      <div className="space-y-4">
+        {Object.entries(prods as Record<string, Record<string, Record<string, number>>>).map(([prod, crops_obj]) => {
+          // Sum all crops and activities for this product
+          const pTotal = Object.values(crops_obj).reduce((s: number, activities) => {
+            return s + Object.values(activities).reduce((cs: number, v: any) => cs + (typeof v === 'number' ? v : 0), 0);
+          }, 0);
+          
+          const pSpent = calcLiveSpent({ po: selected.poNumber, region, product: prod });
+          if (pTotal === 0) return null;
+          
+          return (
+            <div key={prod} className="border border-[#DDE3ED] rounded-xl p-3">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-bold text-[#374151] text-sm">{prod}</span>
+                <span className="text-xs text-[#6B7280]">{formatCurrency(pTotal)}</span>
+              </div>
+              <ProgressBar value={pct(pSpent, pTotal)} className="mb-3" />
+              
+              {/* Iterate through crops FIRST */}
+              {Object.entries(crops_obj).map(([crop, activities]) => {
+                const cropTotal = Object.values(activities).reduce((s: number, v: any) => s + (typeof v === 'number' ? v : 0), 0);
+                if (cropTotal === 0) return null;
+                
+                return (
+                  <div key={`${prod}-${crop}`} className="ml-2 mb-2 pb-2 border-b border-[#F0F4F8] last:border-0">
+                    <p className="text-xs font-semibold text-[#6B7280] mb-1.5">{crop}</p>
+                    {/* Then iterate through activities */}
+                    {Object.entries(activities).map(([act, val]) => (
+                      <div key={`${prod}-${crop}-${act}`} className="flex justify-between text-xs py-1 pl-3">
+                        <span className="text-[#6B7280]">{act}</span>
+                        <span className="font-semibold text-[#1B4F72]">{formatCurrency(val || 0)}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+})}
               </div>
             </>
           )}

@@ -23,7 +23,9 @@ pnpm -F @workspace/ad-campaign-dashboard run dev
 # 4. Open browser
 # Visit: http://localhost:5173
 ```
+
 #
+
 ---
 
 ## 🛠️ Prerequisites
@@ -60,20 +62,26 @@ pnpm install
 For the full experience, you need both the **API Server** and the **Frontend** running.
 
 ### Step 1: Start the Backend (API Server)
+
 Open a terminal and run:
+
 ```powershell
 cd artifacts/api-server
 pnpm run dev
 ```
+
 - **Default Port**: `3001`
 - **URL**: `http://localhost:3001`
 
 ### Step 2: Start the Frontend (Dashboard)
+
 Open a **second** terminal and run:
+
 ```powershell
 cd artifacts/ad-campaign-dashboard
 pnpm run dev
 ```
+
 - **Default Port**: `5173`
 - **URL**: `http://localhost:5173`
 
@@ -81,27 +89,31 @@ pnpm run dev
 
 ## ✅ Common Commands (Windows)
 
-| Task | Command |
-|------|---------|
-| Install all deps | `pnpm install` |
-| Start Frontend | `pnpm -F @workspace/ad-campaign-dashboard run dev` |
-| Start Backend | `pnpm -F @workspace/api-server run dev` |
-| Build All | `pnpm run build` |
-| Type Check | `pnpm run typecheck` |
-| Clean Reinstall | `Remove-Item -Recurse -Force node_modules; pnpm install` |
+| Task             | Command                                                  |
+| ---------------- | -------------------------------------------------------- |
+| Install all deps | `pnpm install`                                           |
+| Start Frontend   | `pnpm -F @workspace/ad-campaign-dashboard run dev`       |
+| Start Backend    | `pnpm -F @workspace/api-server run dev`                  |
+| Build All        | `pnpm run build`                                         |
+| Type Check       | `pnpm run typecheck`                                     |
+| Clean Reinstall  | `Remove-Item -Recurse -Force node_modules; pnpm install` |
 
 ---
 
 ## 🐛 Troubleshooting Windows Issues
 
 ### 1. "Scripts are disabled on this system"
+
 If you get a security error when running `pnpm`, run this in PowerShell as Administrator:
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
 ### 2. Port already in use (3001 or 5173)
+
 If a port is blocked, you can use a custom port using `cross-env` (already integrated):
+
 ```powershell
 # Change backend port
 cross-env PORT=3002 pnpm run dev
@@ -111,13 +123,17 @@ pnpm run dev -- --port 5174
 ```
 
 ### 3. Environment Variables
+
 Windows CMD and PowerShell handle variables differently. To solve this, I've added `cross-env` to the project. You can now use the same syntax everywhere:
+
 ```powershell
 cross-env NODE_ENV=development pnpm run dev
 ```
 
 ### 4. Node Version Errors
+
 Ensure you are using Node 18 or higher. Check with:
+
 ```powershell
 node -v
 ```
@@ -125,11 +141,13 @@ node -v
 ---
 
 ## 📂 Project Structure (Local)
+
 - `artifacts/ad-campaign-dashboard`: React Frontend
 - `artifacts/api-server`: Express Backend
 - `lib/`: Shared libraries (API clients, Database schemas)
 - `package.json`: Root configuration with cross-platform scripts
 
 ---
+
 saved changes
 **Happy Coding! 🚀**

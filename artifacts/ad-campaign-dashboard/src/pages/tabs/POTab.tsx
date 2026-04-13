@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, ProgressBar, Table, Th, Td, Badge, cn } from '../../components/ui';
 import { formatCurrency, formatLakhs, pct } from '../../lib/mock-data';
@@ -114,8 +114,10 @@ export default function POTab() {
             </div>
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filteredProducts.map(prod => {
-                const pAlloc = allocations[prod] || {};
-                const pTotal = Object.values(pAlloc).reduce((s, v) => s + (v as number), 0);
+                const prodAllocData = allocations[prod] || {}; // FIX: Handle 3-level structure (product -> crop -> activity)
+                const pTotal = Object.values(prodAllocData as Record<string, Record<string, number>>).reduce((s: number, cropActivities: any) => {
+                  return s + Object.values(cropActivities).reduce((cs: number, v: any) => cs + (typeof v === 'number' ? v : 0), 0);
+                }, 0);
                 if (pTotal === 0 && productFilter === 'All') return null;
                 const pSpent = calcLiveSpent({ po: po.poNumber, region, product: prod });
                 const pPct = pct(pSpent, pTotal);

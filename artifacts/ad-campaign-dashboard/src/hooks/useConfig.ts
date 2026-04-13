@@ -29,15 +29,22 @@ export function useConfig() {
   const [regions, setRegions]       = useState<Region[]>(stored.regions);
 
   const fetchConfig = useCallback(async () => {
-    if (!API_URL) return;
-    try {
-      const data = await api.get('/api/config');
-      if (data.products)   setProducts(data.products);
-      if (data.activities) setActivities(data.activities);
-      if (data.crops)      setCrops(data.crops);
-      const regionData = await api.get('/api/regions');
-      setRegions(regionData);
-    } catch {}
+    if (API_URL) {
+      try {
+        const data = await api.get('/api/config');
+        if (data.products)   setProducts(data.products);
+        if (data.activities) setActivities(data.activities);
+        if (data.crops)      setCrops(data.crops);
+        const regionData = await api.get('/api/regions');
+        setRegions(regionData);
+        return;
+      } catch {}
+    }
+    const fresh = loadFromStorage();
+    setProducts(fresh.products);
+    setCrops(fresh.crops);
+    setActivities(fresh.activities);
+    setRegions(fresh.regions);
   }, []);
 
   // --- Products ---

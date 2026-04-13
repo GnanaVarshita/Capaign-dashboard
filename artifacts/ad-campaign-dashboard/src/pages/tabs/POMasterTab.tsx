@@ -2,6 +2,7 @@
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Button, Input, Select, Textarea, Label, Table, Th, Td, Badge, Modal, ProgressBar, SearchInput, InfoBanner, cn } from '../../components/ui';
 import { formatCurrency, formatLakhs, pct } from '../../lib/mock-data';
+import { POWizardModal, PODistributionModal, MasterItemModal } from './components/POMasterModals';
 
 const statusBadge = (s: string) =>
   s === 'Active' ? <Badge variant="success">{s}</Badge> :
@@ -411,7 +412,7 @@ export default function POMasterTab() {
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { label: userRegion ? 'My Region Budget' : 'Total PO Budget', value: formatCurrency(userRegion ? (selected.regionBudgets[userRegion] || 0) : selected.budget), color: 'text-[#1B4F72]' },
-                      { label: userRegion ? 'Distributed Amount' : 'Assigned to Regions', value: formatCurrency(userRegion ? Object.values((selected.allocations[userRegion] || {}) as Record<string, Record<string, number>>).reduce((s, p) => s + Object.values(p).reduce((s2, v) => s2 + v, 0), 0) : Object.values(selected.regionBudgets || {}).reduce((s, v) => s + (v as number), 0)), color: 'text-[#374151]' },
+                      { label: userRegion ? 'Distributed Amount' : 'Assigned to Regions', value: formatCurrency(userRegion ? Object.values((selected.allocations[userRegion] || {}) as Record<string, Record<string, Record<string, number>>>).reduce((s, crops_obj) => s + Object.values(crops_obj).reduce((cs, acts) => cs + Object.values(acts).reduce((as, v) => as + (typeof v === 'number' ? v : 0), 0), 0), 0) : Object.values(selected.regionBudgets || {}).reduce((s, v) => s + (v as number), 0)), color: 'text-[#374151]' },
                       { label: 'Spent (Approved)', value: formatCurrency(calcLiveSpent({ po: selected.poNumber, ...(userRegion ? { region: userRegion } : {}) })), color: 'text-green-600' }
                     ].map(k => (
                       <div key={k.label} className="bg-[#F8FAFC] rounded-xl p-3 text-center border border-[#DDE3ED]">
@@ -432,7 +433,7 @@ export default function POMasterTab() {
                       {Object.entries(selected.regionBudgets || {})
                         .filter(([region]) => !userRegion || region === userRegion)
                         .map(([region, budget]) => {
-                        const distributed = Object.values((selected.allocations[region] || {}) as Record<string, Record<string, number>>).reduce((s: number, p) => s + Object.values(p).reduce((s2: number, v: number) => s2 + v, 0), 0);
+                        const distributed = Object.values((selected.allocations[region] || {}) as Record<string, Record<string, Record<string, number>>>).reduce((s: number, crops_obj) => s + Object.values(crops_obj).reduce((cs: number, acts) => cs + Object.values(acts).reduce((as: number, v: any) => as + (typeof v === 'number' ? v : 0), 0), 0), 0);
                         const spent = calcLiveSpent({ po: selected.poNumber, region });
                         const utilPct = pct(spent, budget as number);
                         return (
@@ -560,198 +561,78 @@ export default function POMasterTab() {
         </div>
       </div>
 
-      {/* PO Wizard Modal */}
-      <Modal open={showWizard} onClose={() => setShowWizard(false)} title={editMode ? 'Edit Purchase Order' : 'Create Purchase Order'} width="max-w-2xl">
-        <div className="flex gap-2 mb-6">
-          {[1, 2, 3].map(s => (
-            <div key={s} className={cn('flex-1 h-1.5 rounded-full transition-all', s <= wizardStep ? 'bg-[#1B4F72]' : 'bg-[#E5E9EF]')} />
-          ))}
-        </div>
+      {/* PO Wizard Modal — extracted component */}
+      <POWizardModal
+        open={showWizard}
+        onClose={() => setShowWizard(false)}
+        editMode={editMode}
+        wizardStep={wizardStep}
+        setWizardStep={setWizardStep}
+        form={form}
+        setForm={setForm}
+        regions={regions}
+        onSave={handleSavePO}
+        onAutoGen={autoGenPO}
+      />
 
-        {wizardStep === 1 && (
-          <div className="space-y-4">
-            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 1 PO Details</p>
-            <div className="flex gap-3">
-              <div className="flex-1"><Label required>PO Number</Label><Input value={form.poNumber} onChange={e => setForm(f => ({ ...f, poNumber: e.target.value }))} placeholder="PO-2026-001" /></div>
-              <Button variant="secondary" onClick={autoGenPO} className="self-end h-9">Auto-generate</Button>
-            </div>
-            <div><Label required>Total Budget (₹)</Label><Input type="number" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} placeholder="1000000" /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label required>From Date</Label><Input type="date" value={form.from} onChange={e => setForm(f => ({ ...f, from: e.target.value }))} /></div>
-              <div><Label required>To Date</Label><Input type="date" value={form.to} onChange={e => setForm(f => ({ ...f, to: e.target.value }))} /></div>
-            </div>
-            <div><Label>Remarks</Label><Textarea value={form.remarks} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))} rows={2} placeholder="e.g. Q1 2026 National Campaign" /></div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="secondary" onClick={() => setShowWizard(false)}>Cancel</Button>
-              <Button onClick={() => setWizardStep(2)} disabled={!form.poNumber || !form.budget || !form.from || !form.to}>Next </Button>
-            </div>
-          </div>
-        )}
+      {/* Distribution Modal — extracted component */}
+      <PODistributionModal
+        open={showDistModal}
+        onClose={() => setShowDistModal(false)}
+        distRegion={distRegion}
+        regionBudget={selected?.regionBudgets[distRegion] || 0}
+        products={products}
+        crops={crops}
+        activities={activities}
+        distData={distData}
+        setDistData={setDistData}
+        onSave={saveDistribution}
+      />
 
-        {wizardStep === 2 && (
-          <div className="space-y-4">
-            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 2 Region Budget Allocation</p>
-            <p className="text-xs text-[#9CA3AF]">Total Budget: <strong className="text-[#1B4F72]">{formatCurrency(parseFloat(form.budget) || 0)}</strong> Ã‚Â· Remaining: <strong>{formatCurrency(Math.max(0, (parseFloat(form.budget) || 0) - Object.values(form.regionBudgets).reduce((s, v) => s + (parseFloat(v) || 0), 0)))}</strong></p>
-            <div className="space-y-2">
-              {regions.map(r => (
-                <div key={r.name} className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 w-24">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
-                    <span className="text-sm font-semibold text-[#374151]">{r.name}</span>
-                  </div>
-                  <Input type="number" min="0" value={form.regionBudgets[r.name] || ''} onChange={e => setForm(f => ({ ...f, regionBudgets: { ...f.regionBudgets, [r.name]: e.target.value } }))} placeholder="0" className="flex-1" />
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between gap-3 pt-2">
-              <Button variant="secondary" onClick={() => setWizardStep(1)}>Back</Button>
-              <Button onClick={() => setWizardStep(3)}>Next </Button>
-            </div>
-          </div>
-        )}
+      {/* Product Master Modal — extracted component */}
+      <MasterItemModal
+        open={showProductModal}
+        onClose={() => { setShowProductModal(false); setProductForm({ name: '', description: '' }); setEditingProduct(null); }}
+        title={editingProduct ? 'Edit Product' : 'Add Product'}
+        label="Product Name"
+        placeholder="e.g. Rice, Wheat, Fertilizer"
+        itemName={productForm.name}
+        setItemName={n => setProductForm(f => ({ ...f, name: n }))}
+        itemDescription={productForm.description}
+        setItemDescription={d => setProductForm(f => ({ ...f, description: d }))}
+        isEditing={!!editingProduct}
+        onSave={saveProduct}
+      />
 
-        {wizardStep === 3 && (
-          <div className="space-y-4">
-            <p className="text-sm font-bold text-[#6B7280] mb-3">Step 3 Review & Save</p>
-            <div className="bg-[#F8FAFC] rounded-xl p-4 space-y-2 text-sm">
-              <p><span className="text-[#6B7280]">PO Number:</span> <strong>{form.poNumber}</strong></p>
-              <p><span className="text-[#6B7280]">Budget:</span> <strong className="text-[#1B4F72]">{formatCurrency(parseFloat(form.budget) || 0)}</strong></p>
-              <p><span className="text-[#6B7280]">Period:</span> <strong>{form.from} to {form.to}</strong></p>
-              {form.remarks && <p><span className="text-[#6B7280]">Remarks:</span> {form.remarks}</p>}
-              <div>
-                <p className="text-[#6B7280] mb-1">Region Budgets:</p>
-                {Object.entries(form.regionBudgets).filter(([, v]) => parseFloat(v) > 0).map(([r, v]) => (
-                  <p key={r} className="text-xs">{r}: <strong>{formatCurrency(parseFloat(v))}</strong></p>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-between gap-3 pt-2">
-              <Button variant="secondary" onClick={() => setWizardStep(2)}>Back</Button>
-              <Button onClick={handleSavePO}>{editMode ? 'Save Changes' : 'Create PO'}</Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {/* Activity Master Modal — extracted component */}
+      <MasterItemModal
+        open={showActivityModal}
+        onClose={() => { setShowActivityModal(false); setActivityForm({ name: '', description: '' }); setEditingActivity(null); }}
+        title={editingActivity ? 'Edit Activity' : 'Add Activity'}
+        label="Activity Name"
+        placeholder="e.g. Village Meeting, Demo, Training"
+        itemName={activityForm.name}
+        setItemName={n => setActivityForm(f => ({ ...f, name: n }))}
+        itemDescription={activityForm.description}
+        setItemDescription={d => setActivityForm(f => ({ ...f, description: d }))}
+        isEditing={!!editingActivity}
+        onSave={saveActivity}
+      />
 
-      {/* Distribution Modal */}
-      <Modal open={showDistModal} onClose={() => setShowDistModal(false)} title={`Distribute Budget  ${distRegion}`} width="max-w-2xl">
-        <div className="space-y-4">
-          <p className="text-xs text-[#9CA3AF]">Region Budget: <strong className="text-[#1B4F72]">{selected && formatCurrency(selected.regionBudgets[distRegion] || 0)}</strong></p>
-          {products.map(prod => (
-            <div key={prod} className="border border-[#DDE3ED] rounded-xl p-4">
-              <p className="font-bold text-[#374151] text-sm mb-3">{prod}</p>
-              {crops.map(crop => (
-                <div key={crop} className="border border-[#E5E7EB] rounded-lg p-3 mb-3 bg-[#F9FAFB]">
-                  <p className="font-semibold text-[#374151] text-sm mb-2">{crop}</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {activities.map(act => (
-                      <div key={act}>
-                        <Label className="text-[9px]">{act}</Label>
-                        <Input type="number" min="0" value={distData[prod]?.[crop]?.[act] || ''} onChange={e => setDistData(d => ({ ...d, [prod]: { ...(d[prod] || {}), [crop]: { ...(d[prod]?.[crop] || {}), [act]: parseFloat(e.target.value) || 0 } } }))} placeholder="0" className="h-8 text-xs" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="secondary" onClick={() => setShowDistModal(false)}>Cancel</Button>
-            <Button onClick={saveDistribution}>Save Distribution</Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Product Master Modal */}
-      <Modal open={showProductModal} onClose={() => setShowProductModal(false)} title={editingProduct ? 'Edit Product' : 'Add Product'} width="max-w-lg">
-        <div className="space-y-4">
-          <div>
-            <Label required>Product Name</Label>
-            <Input 
-              value={productForm.name} 
-              onChange={(e) => setProductForm(f => ({ ...f, name: e.target.value }))} 
-              placeholder="e.g. Rice, Wheat, Fertilizer"
-              autoFocus
-            />
-          </div>
-          <div>
-            <Label>Description (Optional)</Label>
-            <Textarea 
-              value={productForm.description} 
-              onChange={(e) => setProductForm(f => ({ ...f, description: e.target.value }))} 
-              placeholder="Add optional description..."
-              rows={2}
-            />
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setShowProductModal(false)}>Cancel</Button>
-            <Button onClick={saveProduct} disabled={!productForm.name.trim()}>
-              {editingProduct ? 'Update Product' : 'Add Product'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Activity Master Modal */}
-      <Modal open={showActivityModal} onClose={() => setShowActivityModal(false)} title={editingActivity ? 'Edit Activity' : 'Add Activity'} width="max-w-lg">
-        <div className="space-y-4">
-          <div>
-            <Label required>Activity Name</Label>
-            <Input 
-              value={activityForm.name} 
-              onChange={(e) => setActivityForm(f => ({ ...f, name: e.target.value }))} 
-              placeholder="e.g. Village Meeting, Demo, Training"
-              autoFocus
-            />
-          </div>
-          <div>
-            <Label>Description (Optional)</Label>
-            <Textarea 
-              value={activityForm.description} 
-              onChange={(e) => setActivityForm(f => ({ ...f, description: e.target.value }))} 
-              placeholder="Add optional description..."
-              rows={2}
-            />
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setShowActivityModal(false)}>Cancel</Button>
-            <Button onClick={saveActivity} disabled={!activityForm.name.trim()}>
-              {editingActivity ? 'Update Activity' : 'Add Activity'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-
-      {/* Crop Master Modal */}
-      <Modal open={showCropModal} onClose={() => setShowCropModal(false)} title={editingCrop ? 'Edit Crop' : 'Add Crop'} width="max-w-lg">
-        <div className="space-y-4">
-          <div>
-            <Label required>Crop Name</Label>
-            <Input 
-              value={cropForm.name} 
-              onChange={(e) => setCropForm(f => ({ ...f, name: e.target.value }))} 
-              placeholder="e.g. Wheat, Rice, Cotton, Corn"
-              autoFocus
-            />
-          </div>
-          <div>
-            <Label>Description (Optional)</Label>
-            <Textarea 
-              value={cropForm.description} 
-              onChange={(e) => setCropForm(f => ({ ...f, description: e.target.value }))} 
-              placeholder="Add optional description..."
-              rows={2}
-            />
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setShowCropModal(false)}>Cancel</Button>
-            <Button onClick={saveCrop} disabled={!cropForm.name.trim()}>
-              {editingCrop ? 'Update Crop' : 'Add Crop'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* Crop Master Modal — extracted component */}
+      <MasterItemModal
+        open={showCropModal}
+        onClose={() => { setShowCropModal(false); setCropForm({ name: '', description: '' }); setEditingCrop(null); }}
+        title={editingCrop ? 'Edit Crop' : 'Add Crop'}
+        label="Crop Name"
+        placeholder="e.g. Wheat, Rice, Cotton, Corn"
+        itemName={cropForm.name}
+        setItemName={n => setCropForm(f => ({ ...f, name: n }))}
+        itemDescription={cropForm.description}
+        setItemDescription={d => setCropForm(f => ({ ...f, description: d }))}
+        isEditing={!!editingCrop}
+        onSave={saveCrop}
+      />
     </div>
   );
 }

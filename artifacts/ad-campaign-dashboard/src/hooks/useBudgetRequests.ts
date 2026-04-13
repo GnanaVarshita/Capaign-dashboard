@@ -24,15 +24,20 @@ export function useBudgetRequests(currentUser: User | null) {
   const [budgetRequestGroups, setBudgetRequestGroups] = useState<BudgetRequestGroup[]>(stored.budgetRequestGroups);
 
   const fetchBudgetRequests = useCallback(async () => {
-    if (!API_URL) return;
-    try {
-      const [requests, groups] = await Promise.all([
-        api.get('/api/budget-requests'),
-        api.get('/api/budget-request-groups'),
-      ]);
-      setBudgetRequests(requests);
-      setBudgetRequestGroups(groups);
-    } catch {}
+    if (API_URL) {
+      try {
+        const [requests, groups] = await Promise.all([
+          api.get('/api/budget-requests'),
+          api.get('/api/budget-request-groups'),
+        ]);
+        setBudgetRequests(requests);
+        setBudgetRequestGroups(groups);
+        return;
+      } catch {}
+    }
+    const fresh = loadFromStorage();
+    setBudgetRequests(fresh.budgetRequests);
+    setBudgetRequestGroups(fresh.budgetRequestGroups);
   }, []);
 
   // --- Groups ---

@@ -3,6 +3,7 @@ import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Button, Table, Th, Td, Badge, Modal, Label, Input, Textarea, cn, Select } from '../../components/ui';
 import { exportToExcel } from '../../lib/utils';
 import { BudgetRequest } from '../../types';
+import { AreaManagerRequestForm } from './components/AreaManagerRequestForm';
 
 export default function BudgetRequestTab() {
   const { currentUser, budgetRequests, budgetRequestGroups, createBudgetRequestGroup, addBudgetRequest, addBudgetRequestToGroup, approveBudgetRequest, users, products, activities, regions, entries, crops } = useAppContext();
@@ -567,420 +568,70 @@ const handleApprove = (request: BudgetRequest | any) => {
         </Card>
       )}
 
-      {/* Request Cycle Selector for AM - REQUIRED STEP */}
+      {/* Area Manager Request Form — extracted component (Step 1 + Step 2 + MDO list) */}
       {isAreaManager && budgetRequestGroups.length > 0 && (
-        <Card className="p-6 mb-6 border-l-4 border-l-red-600 bg-red-50">
-          <div className="flex items-start gap-3 mb-4">
-            <span className="text-2xl"></span>
-            <div>
-              <h3 className="text-lg font-bold text-red-900">Step 1: Select Request Cycle to Submit Budget</h3>
-              <p className="text-sm text-red-700 mt-1">Choose which AIM-created request cycle you want to submit budget requests under. This organizes your submissions and helps in PO creation.</p>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-bold">Available Request Cycles *</Label>
-              <Select 
-                value={selectedRequestGroup || ''} 
-                onChange={e => {
-                  setSelectedRequestGroup(e.target.value);
-                  if (e.target.value) setShowNewRequestForm(true);
-                }}
-              >
-                <option value="">-- SELECT A REQUEST CYCLE --</option>
-                {budgetRequestGroups.filter(g => g.status === 'active').map(g => (
-                  <option key={g.id} value={g.id}>
-                    ’ {g.requestNumber} - {g.description || '(No description)'} {g.targetDate ? `| Target: ${g.targetDate}` : ''}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            
-            {selectedRequestGroup && (
-              <div className="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
-                <p className="font-bold text-green-800">
-                  Ã¢Å“â€¦ Selected: {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
-                </p>
-                <p className="text-sm text-green-700 mt-1">
-                  Now proceed to Step 2 to submit budget requests for activities under this cycle
-                </p>
-              </div>
-            )}
-            
-            {!selectedRequestGroup && budgetRequestGroups.filter(g => g.status === 'active').length === 0 && (
-              <p className="text-sm text-red-600 italic font-semibold">No active request cycles available. Please contact AIM to create one.</p>
-            )}
-          </div>
-        </Card>
-      )}
-
-      {/* New Request Form (Area Manager) - STEP 2 */}
-      {isAreaManager && showNewRequestForm && selectedRequestGroup && (
-        <Card className="p-6 border-l-4 border-l-green-600 bg-green-50">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-green-200">
-            <div>
-              <h3 className="text-lg font-bold text-green-900">
-                Ã°Å¸â€œÂ Step 2: Submit Budget Requests for Activities
-              </h3>
-              <p className="text-sm text-green-700 mt-1">
-                For Request Cycle: <span className="font-bold">{budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}</span>
-              </p>
-            </div>
-            <Badge variant="success" className="uppercase text-sm px-3 py-1">
-              {budgetRequestGroups.find(g => g.id === selectedRequestGroup)?.requestNumber}
-            </Badge>
-          </div>
-          
-          <div className="space-y-4">
-            {/* MDO Entry Form */}
-            <div className="p-4 bg-amber-50 rounded-lg border-2 border-amber-200">
-              <h4 className="text-sm font-bold text-amber-800 mb-3 uppercase flex items-center gap-2">
-                 Step 2B: Enter MDO Budget Request Details
-              </h4>
-              <p className="text-xs text-amber-700 mb-4">Select a product and add MDOs with estimated sales and budget allocations</p>
-              
-              {/* Crop Selector - NEW */}
-{selectedProduct && (
-  <div className="mb-6 p-3 bg-white rounded border-2 border-green-300">
-    <Label className="font-bold text-sm text-green-900">Select Crop (Optional)</Label>
-    <Select value={formData.crop || ''} onChange={e => setFormData({...formData, crop: e.target.value})}>
-      <option value="">-- No Specific Crop --</option>
-      {crops && crops.length > 0 ? (
-        crops.map((c, idx) => (
-          <option key={`${c}-${idx}`} value={c}>{c}</option>
-        ))
-      ) : (
-        <option disabled>No crops available</option>
-      )}
-    </Select>
-    {formData.crop && (
-      <div className="mt-2 p-2 bg-green-100 rounded text-sm text-green-900">
-        Selected Crop: <span className="font-semibold">{formData.crop}</span>
-      </div>
-    )}
-  </div>
-)}
-              {/* Product Selector */}
-              <div className="mb-6 p-3 bg-white rounded border-2 border-amber-300">
-                <Label className="font-bold text-sm text-amber-900">Select Product *</Label>
-                <Select value={selectedProduct || ''} onChange={e => setSelectedProduct(e.target.value || null)}>
-                  <option value="">-- Select Product to Add MDOs --</option>
-                  {products && products.length > 0 ? (
-                    products.map((p, idx) => (
-                      <option key={`${p}-${idx}`} value={p}>{p}</option>
-                    ))
-                  ) : (
-                    <option disabled>No products available</option>
-                  )}
-                </Select>
-                {selectedProduct && (
-                  <div className="mt-2 p-2 bg-amber-100 rounded text-sm text-amber-900">
-                     <span className="font-semibold">{selectedProduct}</span> - Now adding MDOs for this product
-                  </div>
-                )}
-              </div>
-
-              {/* MDO Entry Fields */}
-              {selectedProduct && (
-                <div>
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div>
-                      <Label className="font-bold text-xs">MDO Name *</Label>
-                      <Input
-                        placeholder="Enter MDO name"
-                        value={formData.mdoName}
-                        onChange={e => setFormData({...formData, mdoName: e.target.value})}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Label className="font-bold text-xs">Estimated Sales *</Label>
-                      <Input
-                        type="number"
-                        placeholder="Enter estimated sales"
-                        value={formData.estimatedSales}
-                        onChange={e => setFormData({...formData, estimatedSales: Number(e.target.value)})}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Activity Budget Fields */}
-                  <div className="mb-4 p-3 bg-white rounded border-2 border-blue-200">
-                    <Label className="font-bold text-sm text-blue-900 mb-3 block">Ã°Å¸Å½Â¯ Budget by Activity</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {activities && activities.map((activity, idx) => (
-                        <div key={`${activity}-${idx}`}>
-                          <Label className="text-xs font-semibold text-slate-700">{activity}</Label>
-                          <Input
-                            type="number"
-                            placeholder="₹0"
-                            value={formData.activityBudgets[activity] || 0}
-                            onChange={e => setFormData({
-                              ...formData,
-                              activityBudgets: {
-                                ...formData.activityBudgets,
-                                [activity]: Number(e.target.value)
-                              }
-                            })}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 p-2 bg-blue-50 rounded text-sm text-blue-900 font-semibold">
-                      Total Budget: ₹{Object.values(formData.activityBudgets).reduce((sum, v) => sum + (v || 0), 0).toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Remarks</Label>
-                    <Textarea
-                      placeholder="Enter any remarks"
-                      value={formData.remarks}
-                      onChange={e => setFormData({...formData, remarks: e.target.value})}
-                      rows={2}
-                    />
-                  </div>
-                  <Button 
-                    onClick={() => {
-                      if (!formData.mdoName || !formData.estimatedSales) {
-                        alert('Please fill MDO Name and Estimated Sales');
-                        return;
-                      }
-                      const totalBudget = Object.values(formData.activityBudgets).reduce((sum, v) => sum + (v || 0), 0);
-                      if (totalBudget === 0) {
-                        alert('Please allocate budget to at least one activity');
-                        return;
-                      }
-                      setMdoList([...mdoList, {
-                        ...formData,
-                        product: selectedProduct,
-                        totalBudget
-                      }]);
-                      setFormData({ mdoName: '', estimatedSales: 0, activityBudgets: {}, remarks: '', crop: '' });
-                    }} 
-                    className="bg-blue-600 hover:bg-blue-700 w-full mt-4"
-                  >
-                    + Add MDO to {selectedProduct}
-                  </Button>
-                </div>
-              )}
-
-              {!selectedProduct && (
-                <div className="p-3 bg-amber-100 rounded border border-amber-300 text-sm text-amber-900">
-                  <p className="font-semibold">Please select a product above to start adding MDOs</p>
-                </div>
-              )}
-            </div>
-
-            {/* Added MDO List - Table Format by Product */}
-            {mdoList.length > 0 && (
-              <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-bold text-slate-900"> Budget Details: {mdoList.length} MDO{mdoList.length !== 1 ? 's' : ''}</h4>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setMdoList([])}
-                    className="text-red-600 hover:text-red-700 text-xs"
-                  >
-                    Clear All
-                  </Button>
-                </div>
-
-                {/* Group by Product */}
-                <div className="space-y-6">
-                  {Object.entries(
-                    mdoList.reduce((groups: Record<string, any[]>, mdo) => {
-                      if (!groups[mdo.product]) groups[mdo.product] = [];
-                      groups[mdo.product].push(mdo);
-                      return groups;
-                    }, {})
-                  ).map(([product, mdos]: [string, any[]]) => {
-                    const productTotalEstimatedSales = mdos.reduce((sum, m) => sum + m.estimatedSales, 0);
-                    const productTotalBudget = mdos.reduce((sum, m) => sum + (m.totalBudget || 0), 0);
-
-                    return (
-                      <div key={product} className="bg-white rounded border border-slate-200 overflow-hidden">
-                        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 text-white">
-                          <h5 className="font-bold text-sm">{product}</h5>
-                        </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b-2 border-slate-200 bg-blue-50">
-                                <th className="px-3 py-2 text-left font-bold text-slate-700 min-w-[120px]">MDO Name</th>
-                                <th className="px-3 py-2 text-right font-bold text-slate-700 min-w-[100px]">Est Sales</th>
-                                {activities && activities.map((activity, idx) => (
-                                  <th key={`${activity}-${idx}`} className="px-3 py-2 text-right font-bold text-slate-700 min-w-[100px]">{activity}</th>
-                                ))}
-                                <th className="px-3 py-2 text-right font-bold text-slate-700 min-w-[100px]">Total</th>
-                                <th className="px-3 py-2 text-center font-bold text-slate-700 min-w-[60px]">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {mdos.map((mdo: any, idx: number) => {
-                                const totalBudget = (Object.values(mdo.activityBudgets || {}) as any[]).reduce((sum: number, v: any) => sum + Number(v ?? 0), 0);
-                                return (
-                                  <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                                    <td className="px-3 py-2 font-semibold text-slate-900">{mdo.mdoName}</td>
-                                    <td className="px-3 py-2 text-right text-slate-700">₹{mdo.estimatedSales.toLocaleString()}</td>
-                                    {activities && activities.map((activity, actIdx) => (
-                                      <td key={`${activity}-${actIdx}`} className="px-3 py-2 text-right text-slate-700">
-                                        ₹{(mdo.activityBudgets?.[activity] || 0).toLocaleString()}
-                                      </td>
-                                    ))}
-                                    <td className="px-3 py-2 text-right font-semibold text-blue-600">₹{totalBudget.toLocaleString()}</td>
-                                    <td className="px-3 py-2 text-center">
-                                      <div className="flex gap-1 justify-center">
-                                        <Button 
-                                          variant="ghost" 
-                                          onClick={() => {
-                                            setFormData({
-                                              mdoName: mdo.mdoName,
-                                              estimatedSales: mdo.estimatedSales,
-                                              activityBudgets: mdo.activityBudgets || {},
-                                              remarks: mdo.remarks || '',
-                                              crop: mdo.crop || ''
-                                            });
-                                            setSelectedProduct(mdo.product);
-                                            setMdoList(mdoList.filter((_, i) => i !== mdoList.indexOf(mdo)));
-                                          }}
-                                          className="text-blue-500 hover:text-blue-700 text-sm font-semibold"
-                                        >
-                                          Edit
-                                        </Button>
-                                        <Button 
-                                          variant="ghost" 
-                                          onClick={() => setMdoList(mdoList.filter((_, i) => i !== mdoList.indexOf(mdo)))}
-                                          className="text-red-500 hover:text-red-700 text-sm font-semibold"
-                                        >
-                                          Delete
-                                        </Button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                              {/* Product Totals Row */}
-                              <tr className="bg-blue-100 font-bold border-t-2 border-blue-300">
-                                <td className="px-3 py-3 text-slate-900">{product} Total</td>
-                                <td className="px-3 py-3 text-right text-slate-900">₹{productTotalEstimatedSales.toLocaleString()}</td>
-                                {activities && activities.map((activity, actIdx) => {
-                                  const activityTotal = mdos.reduce((sum, m) => sum + (m.activityBudgets?.[activity] || 0), 0);
-                                  return (
-                                    <td key={`total-${activity}-${actIdx}`} className="px-3 py-3 text-right text-slate-900">
-                                      ₹{activityTotal.toLocaleString()}
-                                    </td>
-                                  );
-                                })}
-                                <td className="px-3 py-3 text-right text-blue-700">₹{productTotalBudget.toLocaleString()}</td>
-                                <td></td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Grand Summary */}
-                <div className="mt-6 p-4 bg-green-50 rounded border border-green-300">
-                  <h5 className="font-bold text-green-900 mb-3"> Grand Summary</h5>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-green-700">Total Estimated Sales</p>
-                      <p className="text-lg font-bold text-green-700">₹{mdoList.reduce((sum, m) => sum + m.estimatedSales, 0).toLocaleString()}</p>
-                    </div>
-                    {activities && activities.map((activity, idx) => {
-                      const actTotal = mdoList.reduce((sum, m) => sum + (m.activityBudgets?.[activity] || 0), 0);
-                      return (
-                        <div key={`summary-${activity}-${idx}`}>
-                          <p className="text-xs text-green-700">Total {activity}</p>
-                          <p className="text-lg font-bold text-green-700">₹{actTotal.toLocaleString()}</p>
-                        </div>
-                      );
-                    })}
-                    <div>
-                      <p className="text-xs text-green-700">Total Budget Allocated</p>
-                      <p className="text-lg font-bold text-green-700">₹{(mdoList.reduce((sum, m) => sum + (Object.values(m.activityBudgets || {}).reduce((aSum: number, v: any) => aSum + (v || 0), 0)), 0)).toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-green-700">MDO Count</p>
-                      <p className="text-lg font-bold text-green-700">{mdoList.length}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-wrap">
-              {mdoList.length > 0 && (
-                <Button 
-                  onClick={() => {
-                    if (selectedRequestGroup) {
-                      mdoList.forEach(mdo => {
-                        const totalBudget = (Object.values(mdo.activityBudgets || {}) as any[]).reduce((sum: number, v: any) => sum + Number(v ?? 0), 0);
-                        addBudgetRequestToGroup(selectedRequestGroup, {
-                          areaManagerId: u.id,
-                          areaManagerName: u.name,
-                          area: u.territory.area || '',
-                          zone: u.territory.zone || '',
-                          region: u.territory.region || '',
-                          mdoName: mdo.mdoName,
-                          product: mdo.product,
-                          activity: mdo.product,
-                          crop: mdo.crop || '',
-                          estimatedSales: mdo.estimatedSales,
-                          activityBudgets: mdo.activityBudgets || {},
-                          budgetRequired: totalBudget,
-                          remarks: mdo.remarks
-                        });
-                      });
-                    } else {
-                      mdoList.forEach(mdo => {
-                        const totalBudget = (Object.values(mdo.activityBudgets || {}) as any[]).reduce((sum: number, v: any) => sum + Number(v ?? 0), 0);
-                        addBudgetRequest({
-                          areaManagerId: u.id,
-                          areaManagerName: u.name,
-                          area: u.territory.area || '',
-                          zone: u.territory.zone || '',
-                          region: u.territory.region || '',
-                          mdoName: mdo.mdoName,
-                          product: mdo.product,
-                          activity: mdo.product,
-                          crop: mdo.crop || '',
-                          estimatedSales: mdo.estimatedSales,
-                          activityBudgets: mdo.activityBudgets || {},
-                          budgetRequired: totalBudget,
-                          remarks: mdo.remarks
-                        });
-                      });
-                    }
-                    const totalSubmittedBudget = mdoList.reduce((sum, m) => sum + (Object.values(m.activityBudgets || {}).reduce((aSum: number, v: any) => aSum + (v || 0), 0)), 0);
-                    setMdoList([]);
-                    setFormData({ mdoName: '', estimatedSales: 0, activityBudgets: {}, remarks: '', crop: '' });
-                    setShowNewRequestForm(false);
-                    setSelectedRequestGroup(null);
-                    setSelectedProduct(null);
-                  }}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Ã°Å¸â€œÂ¤ Submit {mdoList.length} MDO{mdoList.length > 1 ? 's' : ''} (₹{(mdoList.reduce((sum, m) => sum + (Object.values(m.activityBudgets || {}).reduce((aSum: number, v: any) => aSum + (v || 0), 0)), 0)).toLocaleString()})
-                </Button>
-              )}
-              <Button variant="outline" onClick={() => {
-                setShowNewRequestForm(false);
-                setMdoList([]);
-                setSelectedRequestGroup(null);
-                setSelectedProduct(null);
-                setFormData({ mdoName: '', estimatedSales: 0, activityBudgets: {}, remarks: '', crop: '' });
-              }}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </Card>
+        <AreaManagerRequestForm
+          selectedRequestGroup={selectedRequestGroup}
+          setSelectedRequestGroup={setSelectedRequestGroup}
+          budgetRequestGroups={budgetRequestGroups}
+          showNewRequestForm={showNewRequestForm}
+          setShowNewRequestForm={setShowNewRequestForm}
+          selectedProduct={selectedProduct}
+          setSelectedProduct={setSelectedProduct}
+          formData={formData}
+          setFormData={setFormData}
+          mdoList={mdoList}
+          setMdoList={setMdoList}
+          products={products}
+          activities={activities}
+          crops={crops}
+          onSubmit={() => {
+            if (selectedRequestGroup) {
+              mdoList.forEach(mdo => {
+                const totalBudget = Object.values(mdo.activityBudgets || {}).reduce((sum, v) => sum + Number(v ?? 0), 0);
+                addBudgetRequestToGroup(selectedRequestGroup, {
+                  areaManagerId: u.id,
+                  areaManagerName: u.name,
+                  area: u.territory.area || '',
+                  zone: u.territory.zone || '',
+                  region: u.territory.region || '',
+                  mdoName: mdo.mdoName,
+                  product: mdo.product,
+                  activity: mdo.product,
+                  crop: mdo.crop || '',
+                  estimatedSales: mdo.estimatedSales,
+                  activityBudgets: mdo.activityBudgets || {},
+                  budgetRequired: totalBudget,
+                  remarks: mdo.remarks,
+                });
+              });
+            } else {
+              mdoList.forEach(mdo => {
+                const totalBudget = Object.values(mdo.activityBudgets || {}).reduce((sum, v) => sum + Number(v ?? 0), 0);
+                addBudgetRequest({
+                  areaManagerId: u.id,
+                  areaManagerName: u.name,
+                  area: u.territory.area || '',
+                  zone: u.territory.zone || '',
+                  region: u.territory.region || '',
+                  mdoName: mdo.mdoName,
+                  product: mdo.product,
+                  activity: mdo.product,
+                  crop: mdo.crop || '',
+                  estimatedSales: mdo.estimatedSales,
+                  activityBudgets: mdo.activityBudgets || {},
+                  budgetRequired: totalBudget,
+                  remarks: mdo.remarks,
+                });
+              });
+            }
+            setMdoList([]);
+            setFormData({ mdoName: '', estimatedSales: 0, activityBudgets: {}, remarks: '', crop: '' });
+            setShowNewRequestForm(false);
+            setSelectedRequestGroup(null);
+            setSelectedProduct(null);
+          }}
+        />
       )}
 
       {/* Filtered Requests Display for RM, ZM, AM */}

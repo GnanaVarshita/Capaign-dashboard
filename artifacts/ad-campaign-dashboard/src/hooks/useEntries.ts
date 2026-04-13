@@ -73,11 +73,14 @@ export function useEntries(currentUser: User | null) {
   }, [currentUser, entries]);
 
   const fetchEntries = useCallback(async () => {
-    if (!API_URL) return;
-    try {
-      const data = await api.get('/api/entries');
-      setEntries(data);
-    } catch {}
+    if (API_URL) {
+      try {
+        const data = await api.get('/api/entries');
+        setEntries(data);
+        return;
+      } catch {}
+    }
+    setEntries(loadFromStorage());
   }, []);
 
   const addEntry = useCallback(async (entryData: Omit<Entry, 'id' | 'status' | 'decidedBy' | 'decidedAt'>) => {

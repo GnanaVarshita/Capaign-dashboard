@@ -42,11 +42,14 @@ export function usePOs(currentUser: User | null) {
   }, [currentUser, pos]);
 
   const fetchPOs = useCallback(async () => {
-    if (!API_URL) return;
-    try {
-      const data = await api.get('/api/pos');
-      setPOs(data);
-    } catch {}
+    if (API_URL) {
+      try {
+        const data = await api.get('/api/pos');
+        setPOs(data);
+        return;
+      } catch {}
+    }
+    setPOs(loadFromStorage());
   }, []);
 
   const addPO = useCallback(async (poData: Omit<PO, 'id'>) => {

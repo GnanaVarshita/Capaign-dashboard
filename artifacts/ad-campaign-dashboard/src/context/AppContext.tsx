@@ -147,6 +147,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     budgetHook.budgetRequests, budgetHook.budgetRequestGroups,
   ]);
 
+  // ---------- Real-time: reload all domain data from localStorage ----------
+  const reloadAll = useCallback(() => {
+    entryHook.fetchEntries();
+    poHook.fetchPOs();
+    billHook.fetchBills();
+    budgetHook.fetchBudgetRequests();
+    configHook.fetchConfig();
+  }, [entryHook, poHook, billHook, budgetHook, configHook]);
+
+  // Listen for changes from other browser tabs
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === 'ad_campaign_db') reloadAll();
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, [reloadAll]);
+
+  // Auto-refresh every 30 seconds so same-browser updates propagate without logout
+  useEffect(() => {
+    const id = setInterval(reloadAll, 30_000);
+    return () => clearInterval(id);
+  }, [reloadAll]);
+
   // ---------- Toast ----------
   const toast = useCallback((msg: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToastMsg({ msg, type });
@@ -161,13 +185,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // ---------- Refresh ----------
   const refreshData = useCallback(() => {
-    configHook.fetchConfig();
-    entryHook.fetchEntries();
-    poHook.fetchPOs();
-    billHook.fetchBills();
-    budgetHook.fetchBudgetRequests();
+    reloadAll();
     toast('Data refreshed!', 'success');
-  }, [configHook, entryHook, poHook, billHook, budgetHook, toast]);
+  }, [reloadAll, toast]);
 
   // ---------- Scoped helpers (pass users from hook) ----------
   const getScopedEntries     = useCallback(() => entryHook.getScopedEntries(userHook.users),            [entryHook, userHook.users]);

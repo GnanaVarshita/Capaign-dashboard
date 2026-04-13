@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, ProgressBar, Table, Th, Td, Badge, cn } from '../../components/ui';
 import { formatCurrency, formatLakhs, pct } from '../../lib/mock-data';
@@ -12,7 +12,6 @@ export default function POTab() {
   const po = pos.find(p => p.id === selectedPO) || pos[0];
 
   const userRegion = currentUser?.territory?.region;
-  const userZone = currentUser?.territory?.zone;
 
   const regionKeys = useMemo(() => {
     if (!po) return [];
@@ -114,13 +113,25 @@ export default function POTab() {
             </div>
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filteredProducts.map(prod => {
-                const prodAllocData = allocations[prod] || {}; // FIX: Handle 3-level structure (product -> crop -> activity)
-                const pTotal = Object.values(prodAllocData as Record<string, Record<string, number>>).reduce((s: number, cropActivities: any) => {
-                  return s + Object.values(cropActivities).reduce((cs: number, v: any) => cs + (typeof v === 'number' ? v : 0), 0);
+                // 3-level structure: product -> crop -> activity -> amount
+                const prodAllocData = (allocations[prod] || {}) as Record<string, Record<string, number>>;
+
+                // Sum total for this product across all crops and activities
+                const pTotal = Object.values(prodAllocData).reduce((s, cropActivities) => {
+                  return s + Object.values(cropActivities).reduce((cs, v) => cs + (typeof v === 'number' ? v : 0), 0);
                 }, 0);
+
                 if (pTotal === 0 && productFilter === 'All') return null;
                 const pSpent = calcLiveSpent({ po: po.poNumber, region, product: prod });
                 const pPct = pct(pSpent, pTotal);
+
+                // Aggregate activity totals across all crops
+                const activityTotals: Record<string, number> = {};
+                Object.values(prodAllocData).forEach(cropActivities => {
+                  Object.entries(cropActivities).forEach(([act, val]) => {
+                    activityTotals[act] = (activityTotals[act] || 0) + (typeof val === 'number' ? val : 0);
+                  });
+                });
 
                 return (
                   <div key={prod} className="border border-[#DDE3ED] rounded-xl p-4">
@@ -131,7 +142,7 @@ export default function POTab() {
                     <ProgressBar value={pPct} className="mb-3" />
                     <div className="space-y-2">
                       {activities.map(act => {
-                        const aVal = pAlloc[act] || 0;
+                        const aVal = activityTotals[act] || 0;
                         if (!aVal) return null;
                         const aSpent = calcLiveSpent({ po: po.poNumber, region, product: prod, activity: act });
                         const aPct = pct(aSpent, aVal);
@@ -143,7 +154,7 @@ export default function POTab() {
                           </div>
                         );
                       })}
-                      {Object.keys(pAlloc).length === 0 && <p className="text-xs text-[#9CA3AF] italic">No allocation breakdown</p>}
+                      {Object.keys(activityTotals).length === 0 && <p className="text-xs text-[#9CA3AF] italic">No allocation breakdown</p>}
                     </div>
                     <div className="mt-3 pt-3 border-t border-[#F0F4F8] flex justify-between text-xs font-bold">
                       <span className="text-green-600">Spent: {formatCurrency(pSpent)}</span>
@@ -152,7 +163,10 @@ export default function POTab() {
                   </div>
                 );
               })}
-              {filteredProducts.every(prod => Object.values(allocations[prod] || {}).reduce((s, v) => s + (v as number), 0) === 0) && (
+              {filteredProducts.every(prod => {
+                const d = (allocations[prod] || {}) as Record<string, Record<string, number>>;
+                return Object.values(d).reduce((s, ca) => s + Object.values(ca).reduce((cs, v) => cs + (typeof v === 'number' ? v : 0), 0), 0) === 0;
+              }) && (
                 <p className="text-xs text-[#9CA3AF] italic col-span-3 py-4">No allocation data for this region.</p>
               )}
             </div>

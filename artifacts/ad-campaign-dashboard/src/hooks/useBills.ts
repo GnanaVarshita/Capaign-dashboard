@@ -22,11 +22,14 @@ export function useBills(currentUser: User | null) {
   }, [bills]);
 
   const fetchBills = useCallback(async () => {
-    if (!API_URL) return;
-    try {
-      const data = await api.get('/api/bills');
-      setBills(data);
-    } catch {}
+    if (API_URL) {
+      try {
+        const data = await api.get('/api/bills');
+        setBills(data);
+        return;
+      } catch {}
+    }
+    setBills(loadFromStorage());
   }, []);
 
   const addBill = useCallback(async (billData: Omit<Bill, 'id'>): Promise<string> => {

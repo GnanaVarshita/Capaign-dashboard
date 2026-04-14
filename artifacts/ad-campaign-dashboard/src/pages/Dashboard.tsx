@@ -46,8 +46,9 @@ import FinanceTab from './tabs/FinanceTab';
 import BudgetRequestTab from './tabs/BudgetRequestTab';
 import BudgetRequestTab_test from './tabs/BudgetRequestTab_test';
 import SettingsTab from './tabs/SettingsTab';
+import QuotationTab from './tabs/QuotationTab';
 
-type TabId = 'overview' | 'po' | 'hierarchy' | 'activities' | 'vendor' | 'billing' | 'billing-test' | 'sheet' | 'approvals' | 'po-approvals' | 'po-master' | 'users' | 'territory' | 'quick' | 'transactions' | 'settings' | 'finance' | 'budget-request' | 'budget-request-test';
+type TabId = 'overview' | 'po' | 'hierarchy' | 'activities' | 'vendor' | 'billing' | 'billing-test' | 'sheet' | 'approvals' | 'po-approvals' | 'po-master' | 'users' | 'territory' | 'quick' | 'transactions' | 'settings' | 'finance' | 'budget-request' | 'budget-request-test' | 'quotation';
 
 const TAB_ICONS: Record<string, React.ReactNode> = {
   overview: <LayoutDashboard className="w-4 h-4" />,
@@ -69,6 +70,7 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   finance: <Banknote className="w-4 h-4" />,
   'budget-request': <PieChart className="w-4 h-4" />,
   'budget-request-test': <PieChart className="w-4 h-4" />,
+  'quotation': <User className="w-4 h-4" />,
 };
 
 export default function Dashboard() {
@@ -93,10 +95,11 @@ export default function Dashboard() {
   const canSeeUsers = u.role === 'Owner' || u.perms.manage;
   const canSeeTerritory = u.role === 'Owner';
   const canSeeSettings = u.role === 'Owner' || !!u.perms.settings;
-  const canSeeBilling = ['Owner', 'Vendor'].includes(u.role);
+  const canSeeBilling = ['Owner', 'Vendor', 'All India Manager'].includes(u.role);
   const canSeeFinance = ['Owner', 'Vendor'].includes(u.role);
   const canSeeVendors = !['All India Manager', 'Regional Manager', 'Zonal Manager', 'Area Manager'].includes(u.role);
   const canSeeBudgetRequest = ['Area Manager', 'Zonal Manager', 'Regional Manager', 'All India Manager', 'Owner', 'Finance Administrator'].includes(u.role);
+  const canSeeQuotation = ['Owner', 'All India Manager', 'Finance Administrator', 'Vendor'].includes(u.role);
 
   interface Tab { id: TabId; label: string; badge?: number | null }
   const tabs: Tab[] = [
@@ -119,6 +122,7 @@ export default function Dashboard() {
     ...(canSeeFinance ? [{ id: 'finance' as TabId, label: 'Finance' }] : []),
     ...(canSeeBudgetRequest ? [{ id: 'budget-request' as TabId, label: 'Budget Requests' }] : []),
     ...(canSeeBudgetRequest && u.role === 'Owner' ? [{ id: 'budget-request-test' as TabId, label: 'Budget Requests 🧪 (Test)' }] : []),
+    ...(canSeeQuotation ? [{ id: 'quotation' as TabId, label: 'Quotations' }] : []),
   ].filter(t => u.role === 'Owner' || !u.tabPerms || u.tabPerms[t.id] !== false);
 
   const activeTabObj = tabs.find(t => t.id === activeTab);
@@ -144,6 +148,7 @@ export default function Dashboard() {
       case 'billing-test':    return <BillingTab_test />;
       case 'budget-request':  return <BudgetRequestTab />;
       case 'budget-request-test': return <BudgetRequestTab_test />;
+      case 'quotation':       return <QuotationTab />;
       default:                return <OverviewTab />;
     }
   };

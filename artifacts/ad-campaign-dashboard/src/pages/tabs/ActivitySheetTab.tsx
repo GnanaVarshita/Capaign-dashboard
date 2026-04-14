@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Button, Input, Select, Textarea, Label, Table, Th, Td, Badge, StatusBadge, RoleBadge, SearchInput, InfoBanner, cn } from '../../components/ui';
 import { formatCurrency } from '../../lib/mock-data';
+import { exportToExcel, exportToPDF } from '../../lib/utils';
 
 export default function ActivitySheetTab() {
   const { currentUser, getVisiblePOs, crops, products, activities, users, addEntry, getMyEntries, deleteEntry, calcLiveSpent, calcPendingSpent, toast } = useAppContext();
@@ -298,6 +299,24 @@ export default function ActivitySheetTab() {
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </Select>
+            <Button variant="secondary" size="sm" onClick={() => {
+              const rows = filteredEntries.map((e, i) => ({
+                '#': i + 1, Date: e.date, Area: e.area || '', PIN: e.pin || '',
+                'PO Number': e.po, 'Zonal Manager': e.zmName || '', 'Regional Manager': e.rmName || '',
+                Vendor: e.vendorName || '', Product: e.product, Crop: e.crop || '',
+                Activity: e.activity, 'Amount (₹)': e.amount, Description: e.description,
+                Status: e.status, 'Decided By': e.decidedBy || ''
+              }));
+              exportToExcel(rows, `Activity_Sheet_${u.name.replace(' ', '_')}`);
+            }}>Excel</Button>
+            <Button variant="secondary" size="sm" onClick={() => {
+              const rows = filteredEntries.map((e, i) => ({
+                '#': i + 1, Date: e.date, Area: e.area || '', PO: e.po,
+                Vendor: e.vendorName || '', Product: e.product, Activity: e.activity,
+                'Amount (₹)': e.amount, Description: e.description, Status: e.status
+              }));
+              exportToPDF(rows, `Activity_Sheet_${u.name}`);
+            }}>PDF</Button>
           </div>
         </div>
         <Table>

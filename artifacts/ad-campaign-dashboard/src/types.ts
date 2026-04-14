@@ -126,6 +126,9 @@ export interface Bill {
   date?: string; // Invoice date
   submittedAt?: string;
   paidAt?: string;
+  paymentMode?: string;
+  paymentRef?: string;
+  paymentRemarks?: string;
   invoiceNumber?: string;
   remarks?: string;
   serviceReceiverId?: string;
@@ -216,6 +219,50 @@ export interface BudgetRequestGroup {
   description?: string;
   targetDate?: string;
   selectedRegions?: string[]; // Specific regions for this request cycle (AIM can select which regions this applies to)
+}
+
+export interface QuotationItem {
+  id: string;
+  activity: string;
+  product: string;
+  crop: string;
+  region?: string;
+  unit?: string;
+  estimatedQuantity?: number;
+}
+
+export interface QuotationSubmission {
+  vendorId: string;
+  vendorName: string;
+  submittedAt: string;
+  status: 'draft' | 'submitted';
+  quotedItems: Array<{
+    itemId: string;
+    activity: string;
+    product: string;
+    crop: string;
+    region?: string;
+    quotedPricePerUnit: number;
+    remarks?: string;
+  }>;
+  totalQuotedAmount: number;
+  remarks?: string;
+}
+
+export interface Quotation {
+  id: string;
+  poId: string;
+  poNumber: string;
+  requestedById: string;
+  requestedByName: string;
+  requestedByRole: string;
+  createdAt: string;
+  dueDate?: string;
+  remarks?: string;
+  status: 'open' | 'closed';
+  vendorIds: string[];
+  items: QuotationItem[];
+  submissions: Record<string, QuotationSubmission>;
 }
 
 export interface BudgetRequest {

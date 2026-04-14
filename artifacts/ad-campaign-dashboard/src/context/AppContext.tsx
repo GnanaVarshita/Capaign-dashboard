@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User, Entry, PO, Region, Bill, ServiceReceiver, VendorProfile, BudgetRequest, BudgetRequestGroup } from '../types';
+import { User, Entry, PO, Region, Bill, ServiceReceiver, VendorProfile, BudgetRequest, BudgetRequestGroup, Quotation, QuotationSubmission } from '../types';
 
 // Domain hooks
 import { useAuth }           from '../hooks/useAuth';
@@ -10,6 +10,7 @@ import { useBills }          from '../hooks/useBills';
 import { useConfig }         from '../hooks/useConfig';
 import { useVendors }        from '../hooks/useVendors';
 import { useBudgetRequests } from '../hooks/useBudgetRequests';
+import { useQuotations }     from '../hooks/useQuotations';
 
 interface SpentFilters {
   po?: string; region?: string; zone?: string; area?: string;
@@ -94,6 +95,15 @@ interface AppContextType {
   updateBudgetRequest: (id: string, updates: Partial<BudgetRequest>) => void;
   approveBudgetRequest: (id: string, approverRole: 'zonal' | 'regional' | 'aim', approverName: string, approverIdField: string) => void;
 
+  // Quotations
+  quotations: Quotation[];
+  setQuotations: React.Dispatch<React.SetStateAction<Quotation[]>>;
+  addQuotation: (data: Omit<Quotation, 'id' | 'submissions'>) => string;
+  updateQuotation: (id: string, updates: Partial<Quotation>) => void;
+  deleteQuotation: (id: string) => void;
+  submitQuotation: (quotationId: string, vendorId: string, submission: Omit<QuotationSubmission, 'submittedAt'>) => void;
+  saveDraftQuotation: (quotationId: string, vendorId: string, submission: Omit<QuotationSubmission, 'submittedAt' | 'status'>) => void;
+
   // UI helpers
   refreshData: () => void;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -116,6 +126,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const configHook     = useConfig();
   const vendorHook     = useVendors(auth.currentUser);
   const budgetHook     = useBudgetRequests(auth.currentUser);
+  const quotationHook  = useQuotations(auth.currentUser);
 
   // ---------- UI state ----------
   const [toastMsg, setToastMsg]           = useState<{ msg: string; type: string } | null>(null);
@@ -138,6 +149,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         vendorProfiles:      vendorHook.vendorProfiles,
         budgetRequests:      budgetHook.budgetRequests,
         budgetRequestGroups: budgetHook.budgetRequestGroups,
+        quotations:          quotationHook.quotations,
       }));
     } catch {}
   }, [
@@ -145,6 +157,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     configHook.products, configHook.activities, configHook.crops,
     billHook.bills, vendorHook.serviceReceivers, vendorHook.vendorProfiles,
     budgetHook.budgetRequests, budgetHook.budgetRequestGroups,
+    quotationHook.quotations,
   ]);
 
   // ---------- Real-time: reload all domain data from localStorage ----------
@@ -154,7 +167,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     billHook.fetchBills();
     budgetHook.fetchBudgetRequests();
     configHook.fetchConfig();
-  }, [entryHook, poHook, billHook, budgetHook, configHook]);
+    quotationHook.fetchQuotations();
+  }, [entryHook, poHook, billHook, budgetHook, configHook, quotationHook]);
 
   // Listen for changes from other browser tabs
   useEffect(() => {
@@ -255,6 +269,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateBudgetRequest     = useCallback((id: string, u: Partial<BudgetRequest>) => { budgetHook.updateBudgetRequest(id, u); }, [budgetHook]);
   const approveBudgetRequest    = useCallback((id: string, role: 'zonal' | 'regional' | 'aim', name: string, appId: string) => { budgetHook.approveBudgetRequest(id, role, name, appId); toast(`Budget approved!`); }, [budgetHook, toast]);
 
+  const addQuotation        = useCallback((d: Omit<Quotation, 'id' | 'submissions'>): string => { return quotationHook.addQuotation(d); }, [quotationHook]);
+  const updateQuotation     = useCallback((id: string, u: Partial<Quotation>) => { quotationHook.updateQuotation(id, u); }, [quotationHook]);
+  const deleteQuotation     = useCallback((id: string) => { quotationHook.deleteQuotation(id); toast('Quotation deleted.', 'info'); }, [quotationHook, toast]);
+  const submitQuotation     = useCallback((qId: string, vendorId: string, sub: Omit<QuotationSubmission, 'submittedAt'>) => { quotationHook.submitQuotation(qId, vendorId, sub); toast('Quotation submitted!'); }, [quotationHook, toast]);
+  const saveDraftQuotation  = useCallback((qId: string, vendorId: string, sub: Omit<QuotationSubmission, 'submittedAt' | 'status'>) => { quotationHook.saveDraftQuotation(qId, vendorId, sub); toast('Draft saved.', 'info'); }, [quotationHook, toast]);
+
   return (
     <AppContext.Provider value={{
       // Auth
@@ -299,6 +319,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       budgetRequestGroups: budgetHook.budgetRequestGroups,
       createBudgetRequestGroup,
       addBudgetRequest, addBudgetRequestToGroup, updateBudgetRequest, approveBudgetRequest,
+
+      // Quotations
+      quotations: quotationHook.quotations,
+      setQuotations: quotationHook.setQuotations,
+      addQuotation, updateQuotation, deleteQuotation, submitQuotation, saveDraftQuotation,
 
       // UI
       refreshData, toast, toastMsg,

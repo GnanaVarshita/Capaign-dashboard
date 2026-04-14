@@ -35,7 +35,7 @@ const ALL_TABS: { id: string; label: string }[] = [
   { id: 'po-approvals', label: 'PO Approvals' }, { id: 'po-master', label: 'PO Master' },
   { id: 'users', label: 'Users' }, { id: 'territory', label: 'Territory' },
   { id: 'quick', label: 'Quick View' }, { id: 'transactions', label: 'Transactions' },
-  { id: 'settings', label: 'Settings' }
+  { id: 'settings', label: 'Settings' }, { id: 'quotation', label: 'Quotation' }
 ];
 
 export default function UserMgmtTab() {

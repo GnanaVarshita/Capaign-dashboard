@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Button, Table, Th, Td, Badge, Modal, Label, Input, Textarea, cn, Select } from '../../components/ui';
 import { formatCurrency } from '../../lib/mock-data';
-import { exportToExcel } from '../../lib/utils';
+import { exportToExcel, exportToPDF } from '../../lib/utils';
 import { Bill, ServiceReceiver, VendorProfile, GST_STATES } from '../../types';
 
 // Number to Indian words conversion (Rupees format)
@@ -48,7 +48,8 @@ export default function BillingTab() {
   const { currentUser, crops, bills, entries, users, 
     serviceReceivers, addServiceReceiver, updateServiceReceiver, deleteServiceReceiver,
     vendorProfiles, updateVendorProfile,
-    updateBill, pendingBillData, setPendingBillData, addBill
+    updateBill, pendingBillData, setPendingBillData, addBill,
+    navigateToTab
   } = useAppContext();
   const u = currentUser!;
   const isVendor = u.role === 'Vendor';
@@ -58,7 +59,7 @@ export default function BillingTab() {
   const [editingBill, setEditingBill] = useState<any>(null);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const [previewBill, setPreviewBill] = useState<any>(null);
-    const [editInvoiceMode, setEditInvoiceMode] = useState(false);
+  const [editInvoiceMode, setEditInvoiceMode] = useState(false);
   const [filterCrop, setFilterCrop] = useState('');
 
   useEffect(() => {
@@ -174,8 +175,30 @@ export default function BillingTab() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="bg-green-700 text-white hover:bg-green-800 border-none">All Bills Excel</Button>
-          <Button variant="outline" className="bg-[#1B4F72] text-white hover:bg-[#153d5a] border-none">All Bills PDF</Button>
+          <Button variant="outline" className="bg-green-700 text-white hover:bg-green-800 border-none" onClick={() => {
+            const rows = visBillings.map(b => ({
+              'Invoice No': b.invoiceNumber || b.id,
+              'Vendor': b.vendorName,
+              'Date': b.date || b.createdAt,
+              'Activity Amount': b.activityAmount || 0,
+              'Service Charges': b.serviceChargeAmt || 0,
+              'GST Rate': `${b.gstRate}%`,
+              'Total Amount': b.totalAmount || 0,
+              'Status': b.status,
+              'Submitted At': b.submittedAt || '',
+              'Paid At': b.paidAt || '',
+              'Payment Mode': b.paymentMode || '',
+              'Payment Ref': b.paymentRef || '',
+            }));
+            exportToExcel(rows, `bills-export-${new Date().toISOString().split('T')[0]}.xls`);
+          }}>📊 All Bills Excel</Button>
+          <Button variant="outline" className="bg-[#1B4F72] text-white hover:bg-[#153d5a] border-none" onClick={() => exportToPDF(visBillings.map(b => ({
+            'Invoice No': b.invoiceNumber || b.id,
+            'Vendor': b.vendorName,
+            'Date': b.date || b.createdAt,
+            'Total': b.totalAmount,
+            'Status': b.status
+          })), 'Bills Summary')}>🖨️ All Bills PDF</Button>
         </div>
       </div>
 
@@ -513,11 +536,30 @@ export default function BillingTab() {
               <div className="max-h-[600px] overflow-y-auto">
                 {visBillings.length === 0 ? (
                   <div className="p-8 text-center text-slate-400">
-                    
+                    <div className="text-4xl mb-3">🧾</div>
                     <p className="text-sm font-semibold text-slate-600">No bills yet</p>
-                    <p className="text-xs mt-1">
-                      {isVendor ? 'Go to Vendor Section → Select approved activities → Raise Bill.' : 'Bills raised by vendors will appear here.'}
-                    </p>
+                    {isVendor ? (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs text-slate-500">To raise a bill:</p>
+                        <ol className="text-xs text-slate-500 text-left inline-block">
+                          <li>1. Go to the <strong>Vendors</strong> tab</li>
+                          <li>2. Select approved activities</li>
+                          <li>3. Click <strong>Raise Bill</strong></li>
+                        </ol>
+                        <div className="pt-2">
+                          <Button size="sm" onClick={() => navigateToTab('vendor')} className="bg-[#1B4F72] text-white">
+                            Go to Vendors Tab →
+                          </Button>
+                        </div>
+                        {serviceReceivers.filter(r => r.vendorId === u.id).length === 0 && (
+                          <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded p-2 mt-2">
+                            ⚠️ You have no service receivers. Add one in "Service Receivers" tab before raising a bill.
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs mt-1">Bills raised by vendors will appear here.</p>
+                    )}
                   </div>
                 ) : (
                   visBillings.map(b => (
@@ -583,6 +625,8 @@ const getGstStateCode = (gst?: string) => {
 
 function InvoiceDetail({ billId }: { billId: string }) {
   const { bills, entries, updateBill, currentUser, vendorProfiles, serviceReceivers } = useAppContext();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ mode: 'NEFT', date: new Date().toISOString().split('T')[0], utrRef: '', remarks: '' });
   const bill = bills.find(b => b.id === billId);
   const isVendor = currentUser?.role === 'Vendor';
 
@@ -648,13 +692,17 @@ function InvoiceDetail({ billId }: { billId: string }) {
   };
 
   const handleStatusChange = (newStatus: 'submitted' | 'paid') => {
+    if (newStatus === 'paid') {
+      setPaymentForm({ mode: 'NEFT', date: new Date().toISOString().split('T')[0], utrRef: '', remarks: '' });
+      setShowPaymentModal(true);
+      return;
+    }
     const updates: Partial<Bill> = { 
       status: newStatus,
       totalAmount: totalWithGST,
       activityAmount: activityAmt
     };
     if (newStatus === 'submitted') updates.submittedAt = new Date().toISOString().split('T')[0];
-    if (newStatus === 'paid') updates.paidAt = new Date().toISOString().split('T')[0];
     updateBill(billId, updates);
   };
 
@@ -687,6 +735,12 @@ function InvoiceDetail({ billId }: { billId: string }) {
         <div className="text-right flex flex-col items-end gap-3">
           <div className="text-xs opacity-80">
             <p>Bill Date: <strong>{bill.date || bill.createdAt}</strong></p>
+            {bill.status === 'paid' && bill.paidAt && (
+              <p>Paid On: <strong>{bill.paidAt}</strong>{bill.paymentMode ? ` via ${bill.paymentMode}` : ''}</p>
+            )}
+            {bill.status === 'paid' && bill.paymentRef && (
+              <p>Ref: <strong className="font-mono">{bill.paymentRef}</strong></p>
+            )}
           </div>
           <div className="flex gap-2 no-print flex-wrap">
             {bill.status === 'draft' && isVendor && (
@@ -1036,6 +1090,55 @@ function InvoiceDetail({ billId }: { billId: string }) {
         </div>
       </div>
     </Card>
+
+    {/* Payment Confirmation Modal */}
+    {showPaymentModal && (
+      <Modal open={showPaymentModal} title="Confirm Payment" onClose={() => setShowPaymentModal(false)}>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">Record payment details before marking this bill as paid.</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label required>Payment Mode</Label>
+              <Select value={paymentForm.mode} onChange={e => setPaymentForm(f => ({ ...f, mode: e.target.value }))}>
+                <option value="NEFT">NEFT</option>
+                <option value="RTGS">RTGS</option>
+                <option value="IMPS">IMPS</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Cash">Cash</option>
+                <option value="UPI">UPI</option>
+              </Select>
+            </div>
+            <div>
+              <Label required>Payment Date</Label>
+              <Input type="date" value={paymentForm.date} onChange={e => setPaymentForm(f => ({ ...f, date: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <Label>UTR / Reference No.</Label>
+            <Input value={paymentForm.utrRef} onChange={e => setPaymentForm(f => ({ ...f, utrRef: e.target.value }))} placeholder="e.g. UTR123456789" />
+          </div>
+          <div>
+            <Label>Remarks (optional)</Label>
+            <Input value={paymentForm.remarks} onChange={e => setPaymentForm(f => ({ ...f, remarks: e.target.value }))} placeholder="e.g. Full payment as per invoice" />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="secondary" onClick={() => setShowPaymentModal(false)}>Cancel</Button>
+            <Button className="bg-green-600 hover:bg-green-700 text-white border-none" onClick={() => {
+              updateBill(bill.id, {
+                status: 'paid',
+                totalAmount: totalWithGST,
+                activityAmount: activityAmt,
+                paidAt: paymentForm.date,
+                paymentMode: paymentForm.mode,
+                paymentRef: paymentForm.utrRef,
+                paymentRemarks: paymentForm.remarks
+              });
+              setShowPaymentModal(false);
+            }}>✅ Confirm Payment</Button>
+          </div>
+        </div>
+      </Modal>
+    )}
     </>
   );
 }

@@ -221,6 +221,30 @@ export interface BudgetRequestGroup {
   selectedRegions?: string[]; // Specific regions for this request cycle (AIM can select which regions this applies to)
 }
 
+export interface VendorQuotationItem {
+  product: string;
+  crop: string;
+  activity: string;
+  allocatedAmount: number;
+  quotedRate?: number;
+  quantity?: number;
+  remarks?: string;
+}
+
+export interface VendorQuotation {
+  id: string;
+  poId: string;
+  poNumber: string;
+  vendorId: string;
+  vendorName: string;
+  vendorCode?: string;
+  region: string;
+  items: VendorQuotationItem[];
+  status: 'draft' | 'submitted';
+  submittedAt?: string;
+  createdAt: string;
+}
+
 export interface QuotationItem {
   id: string;
   activity: string;

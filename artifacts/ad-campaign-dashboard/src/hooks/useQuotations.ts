@@ -1,100 +1,72 @@
 import { useState, useCallback } from 'react';
-import { Quotation, QuotationSubmission, User } from '../types';
+import { VendorQuotation, VendorQuotationItem, User } from '../types';
 
-function loadFromStorage(): Quotation[] {
+function loadFromStorage(): VendorQuotation[] {
   try {
     const raw = localStorage.getItem('ad_campaign_db');
-    if (raw) return JSON.parse(raw).quotations ?? [];
+    if (raw) return JSON.parse(raw).vendorQuotations ?? [];
   } catch {}
   return [];
 }
 
 export function useQuotations(currentUser: User | null) {
-  const [quotations, setQuotations] = useState<Quotation[]>(loadFromStorage);
+  const [vendorQuotations, setVendorQuotations] = useState<VendorQuotation[]>(loadFromStorage);
 
   const fetchQuotations = useCallback(() => {
-    setQuotations(loadFromStorage());
+    setVendorQuotations(loadFromStorage());
   }, []);
 
-  const addQuotation = useCallback((data: Omit<Quotation, 'id' | 'submissions'>): string => {
-    const q: Quotation = {
-      ...data,
-      id: `quot-${Date.now()}`,
-      submissions: {}
-    };
-    setQuotations(prev => [q, ...prev]);
-    return q.id;
-  }, []);
-
-  const updateQuotation = useCallback((id: string, updates: Partial<Quotation>) => {
-    setQuotations(prev => prev.map(q => q.id === id ? { ...q, ...updates } : q));
-  }, []);
-
-  const deleteQuotation = useCallback((id: string) => {
-    setQuotations(prev => prev.filter(q => q.id !== id));
-  }, []);
-
-  const submitQuotation = useCallback((
-    quotationId: string,
-    vendorId: string,
-    submission: Omit<QuotationSubmission, 'submittedAt'>
+  const upsertVendorQuotation = useCallback((
+    poId: string,
+    poNumber: string,
+    region: string,
+    items: VendorQuotationItem[],
+    status: 'draft' | 'submitted'
   ) => {
-    setQuotations(prev => prev.map(q => {
-      if (q.id !== quotationId) return q;
-      return {
-        ...q,
-        submissions: {
-          ...q.submissions,
-          [vendorId]: {
-            ...submission,
-            submittedAt: new Date().toISOString().split('T')[0],
-            status: 'submitted'
-          }
-        }
+    if (!currentUser) return;
+    const now = new Date().toISOString().split('T')[0];
+    setVendorQuotations(prev => {
+      const existing = prev.find(q => q.poId === poId && q.vendorId === currentUser.id && q.region === region);
+      if (existing) {
+        return prev.map(q =>
+          q.id === existing.id
+            ? { ...q, items, status, submittedAt: status === 'submitted' ? now : q.submittedAt }
+            : q
+        );
+      }
+      const newQ: VendorQuotation = {
+        id: `vq-${Date.now()}`,
+        poId, poNumber,
+        vendorId: currentUser.id,
+        vendorName: currentUser.name,
+        vendorCode: currentUser.territory?.vendorCode,
+        region, items, status,
+        submittedAt: status === 'submitted' ? now : undefined,
+        createdAt: now
       };
-    }));
+      return [newQ, ...prev];
+    });
+  }, [currentUser]);
+
+  const deleteVendorQuotation = useCallback((id: string) => {
+    setVendorQuotations(prev => prev.filter(q => q.id !== id));
   }, []);
 
-  const saveDraftQuotation = useCallback((
-    quotationId: string,
-    vendorId: string,
-    submission: Omit<QuotationSubmission, 'submittedAt' | 'status'>
-  ) => {
-    setQuotations(prev => prev.map(q => {
-      if (q.id !== quotationId) return q;
-      const existing = q.submissions[vendorId];
-      return {
-        ...q,
-        submissions: {
-          ...q.submissions,
-          [vendorId]: {
-            ...submission,
-            submittedAt: existing?.submittedAt || new Date().toISOString().split('T')[0],
-            status: 'draft'
-          }
-        }
-      };
-    }));
-  }, []);
-
-  const getVendorQuotations = useCallback((): Quotation[] => {
+  const getVendorQuotations = useCallback((): VendorQuotation[] => {
     if (!currentUser || currentUser.role !== 'Vendor') return [];
-    return quotations.filter(q => q.vendorIds.includes(currentUser.id) && q.status === 'open');
-  }, [quotations, currentUser]);
+    return vendorQuotations.filter(q => q.vendorId === currentUser.id);
+  }, [vendorQuotations, currentUser]);
 
-  const getAdminQuotations = useCallback((): Quotation[] => {
-    return quotations;
-  }, [quotations]);
+  const getAdminQuotations = useCallback((): VendorQuotation[] => {
+    return vendorQuotations;
+  }, [vendorQuotations]);
 
   return {
-    quotations,
-    setQuotations,
+    vendorQuotations,
+    setVendorQuotations,
     fetchQuotations,
-    addQuotation,
-    updateQuotation,
-    deleteQuotation,
-    submitQuotation,
-    saveDraftQuotation,
+    upsertVendorQuotation,
+    deleteVendorQuotation,
     getVendorQuotations,
     getAdminQuotations,
   };

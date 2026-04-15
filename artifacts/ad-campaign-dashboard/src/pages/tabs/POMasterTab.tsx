@@ -87,19 +87,24 @@ export default function POMasterTab() {
   };
 
   const handleSavePO = () => {
-    const poData = {
-      poNumber: form.poNumber, budget: parseFloat(form.budget) || 0,
-      from: form.from, to: form.to, status: form.status,
-      remarks: form.remarks, createdBy: u.name,
-      createdAt: new Date().toISOString().split('T')[0],
-      approvalStatus: 'pending' as const, approvedBy: '', approvedAt: '', rejectionReason: '',
-      regionBudgets: Object.fromEntries(Object.entries(form.regionBudgets).filter(([, v]) => v && parseFloat(v) > 0).map(([k, v]) => [k, parseFloat(v)])),
-      allocations: {}, zoneAllocations: {}
-    };
+    const regionBudgets = Object.fromEntries(
+      Object.entries(form.regionBudgets).filter(([, v]) => v && parseFloat(v) > 0).map(([k, v]) => [k, parseFloat(v)])
+    );
     if (editMode && selected) {
-      updatePO(selected.id, poData);
+      updatePO(selected.id, {
+        poNumber: form.poNumber, budget: parseFloat(form.budget) || 0,
+        from: form.from, to: form.to, status: selected.status,
+        remarks: form.remarks, regionBudgets
+      });
     } else {
-      addPO(poData);
+      addPO({
+        poNumber: form.poNumber, budget: parseFloat(form.budget) || 0,
+        from: form.from, to: form.to, status: 'Draft' as const,
+        remarks: form.remarks, createdBy: u.name,
+        createdAt: new Date().toISOString().split('T')[0],
+        approvalStatus: 'pending' as const, approvedBy: '', approvedAt: '', rejectionReason: '',
+        regionBudgets, allocations: {}, zoneAllocations: {}
+      });
     }
     setShowWizard(false);
   };

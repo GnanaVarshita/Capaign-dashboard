@@ -1,777 +1,500 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Button, Input, Label, Table, Th, Td, Badge, Modal, Select, cn } from '../../components/ui';
-import { Quotation, QuotationItem } from '../../types';
+import { VendorQuotation, VendorQuotationItem } from '../../types';
 import { exportToExcel } from '../../lib/utils';
 import { formatCurrency } from '../../lib/mock-data';
-import { FileText, Plus, Send, Eye, Tag, ChevronDown, ChevronUp, ClipboardList, Users } from 'lucide-react';
-
-type AdminTab = 'requests' | 'responses';
-type VendorTab = 'open' | 'submitted';
+import { FileText, Send, ChevronDown, ChevronUp, ClipboardList, CheckCircle, Clock, Eye } from 'lucide-react';
 
 export default function QuotationTab() {
-  const { currentUser, quotations, pos, users, crops, products, activities, addQuotation, updateQuotation, deleteQuotation, submitQuotation, saveDraftQuotation } = useAppContext();
+  const { currentUser, pos, users, vendorQuotations, upsertVendorQuotation, deleteVendorQuotation } = useAppContext();
   const u = currentUser!;
   const isVendor = u.role === 'Vendor';
-  const isAdmin = ['Owner', 'All India Manager', 'Finance Administrator'].includes(u.role);
+  const isAdmin = ['Owner', 'All India Manager', 'Finance Administrator', 'Regional Manager'].includes(u.role);
 
-  const [adminTab, setAdminTab] = useState<AdminTab>('requests');
-  const [vendorTab, setVendorTab] = useState<VendorTab>('open');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedQuot, setSelectedQuot] = useState<string | null>(null);
-  const [expandedSubmission, setExpandedSubmission] = useState<string | null>(null);
+  const [selectedPoId, setSelectedPoId] = useState<string>('');
+  const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [showFillModal, setShowFillModal] = useState(false);
+  const [draftItems, setDraftItems] = useState<VendorQuotationItem[]>([]);
+  const [expandedVq, setExpandedVq] = useState<string | null>(null);
+  const [adminPoFilter, setAdminPoFilter] = useState('');
+  const [adminVendorFilter, setAdminVendorFilter] = useState('');
 
-  // Vendor quotation interaction state
-  const [activeVendorQuot, setActiveVendorQuot] = useState<string | null>(null);
-  const [draftPrices, setDraftPrices] = useState<Record<string, number>>({});
-  const [draftRemarks, setDraftRemarks] = useState('');
+  const approvedDistributedPOs = useMemo(() =>
+    pos.filter(p =>
+      p.approvalStatus === 'approved' &&
+      p.status !== 'Lapsed' &&
+      Object.keys(p.allocations || {}).some(region =>
+        Object.keys(p.allocations[region] || {}).length > 0
+      )
+    ),
+    [pos]
+  );
 
-  // Create form
-  const [createForm, setCreateForm] = useState({
-    poId: '',
-    vendorIds: [] as string[],
-    dueDate: '',
-    remarks: '',
-    items: [] as QuotationItem[]
-  });
-
-  const vendors = users.filter(u => u.role === 'Vendor' && u.status === 'active');
-  const approvedPOs = pos.filter(p => p.approvalStatus === 'approved' && p.status !== 'Lapsed');
-
-  const vendorQuots = useMemo(() => {
+  const vendorRegions = useMemo((): string[] => {
     if (!isVendor) return [];
-    return quotations.filter(q => q.vendorIds.includes(u.id));
-  }, [quotations, isVendor, u.id]);
+    const zones = u.territory?.assignedZones || [];
+    return [...new Set(zones.map(z => z.region))];
+  }, [u, isVendor]);
 
-  const openVendorQuots = vendorQuots.filter(q => q.status === 'open' && !q.submissions[u.id]);
-  const submittedVendorQuots = vendorQuots.filter(q => q.submissions[u.id]);
+  const vendorEligiblePOs = useMemo(() => {
+    if (!isVendor) return [];
+    return approvedDistributedPOs.filter(po =>
+      vendorRegions.some(r => po.allocations[r] && Object.keys(po.allocations[r]).length > 0)
+    );
+  }, [approvedDistributedPOs, vendorRegions, isVendor]);
 
-  const handleCreateQuotation = () => {
-    const po = pos.find(p => p.id === createForm.poId);
-    if (!po || createForm.vendorIds.length === 0 || createForm.items.length === 0) return;
-
-    addQuotation({
-      poId: po.id,
-      poNumber: po.poNumber,
-      requestedById: u.id,
-      requestedByName: u.name,
-      requestedByRole: u.role,
-      createdAt: new Date().toISOString().split('T')[0],
-      dueDate: createForm.dueDate,
-      remarks: createForm.remarks,
-      status: 'open',
-      vendorIds: createForm.vendorIds,
-      items: createForm.items
-    });
-
-    setShowCreateModal(false);
-    setCreateForm({ poId: '', vendorIds: [], dueDate: '', remarks: '', items: [] });
-  };
-
-  const handleAddItem = () => {
-    setCreateForm(f => ({
-      ...f,
-      items: [...f.items, {
-        id: `qi-${Date.now()}`,
-        activity: '',
-        product: '',
-        crop: '',
-        region: '',
-        unit: 'per event',
-        estimatedQuantity: 0
-      }]
-    }));
-  };
-
-  const handleItemChange = (idx: number, field: keyof QuotationItem, value: any) => {
-    setCreateForm(f => ({
-      ...f,
-      items: f.items.map((it, i) => i === idx ? { ...it, [field]: value } : it)
-    }));
-  };
-
-  const handleRemoveItem = (idx: number) => {
-    setCreateForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
-  };
-
-  const handleVendorToggle = (vendorId: string) => {
-    setCreateForm(f => ({
-      ...f,
-      vendorIds: f.vendorIds.includes(vendorId)
-        ? f.vendorIds.filter(id => id !== vendorId)
-        : [...f.vendorIds, vendorId]
-    }));
-  };
-
-  const startQuoting = (quot: Quotation) => {
-    const existing = quot.submissions[u.id];
-    if (existing) {
-      const priceMap: Record<string, number> = {};
-      existing.quotedItems.forEach(qi => { priceMap[qi.itemId] = qi.quotedPricePerUnit; });
-      setDraftPrices(priceMap);
-      setDraftRemarks(existing.remarks || '');
-    } else {
-      setDraftPrices({});
-      setDraftRemarks('');
-    }
-    setActiveVendorQuot(quot.id);
-  };
-
-  const handleSaveDraft = (quot: Quotation) => {
-    const quotedItems = quot.items.map(item => ({
-      itemId: item.id,
-      activity: item.activity,
-      product: item.product,
-      crop: item.crop,
-      region: item.region,
-      quotedPricePerUnit: draftPrices[item.id] || 0,
-      remarks: ''
-    }));
-    const total = quotedItems.reduce((s, qi) => {
-      const item = quot.items.find(i => i.id === qi.itemId);
-      return s + (qi.quotedPricePerUnit * (item?.estimatedQuantity || 1));
-    }, 0);
-
-    saveDraftQuotation(quot.id, u.id, {
-      vendorId: u.id,
-      vendorName: u.territory?.tradeName || u.name,
-      quotedItems,
-      totalQuotedAmount: total,
-      remarks: draftRemarks
-    });
-    setActiveVendorQuot(null);
-  };
-
-  const handleSubmitQuote = (quot: Quotation) => {
-    const quotedItems = quot.items.map(item => ({
-      itemId: item.id,
-      activity: item.activity,
-      product: item.product,
-      crop: item.crop,
-      region: item.region,
-      quotedPricePerUnit: draftPrices[item.id] || 0,
-      remarks: ''
-    }));
-    const total = quotedItems.reduce((s, qi) => {
-      const item = quot.items.find(i => i.id === qi.itemId);
-      return s + (qi.quotedPricePerUnit * (item?.estimatedQuantity || 1));
-    }, 0);
-
-    submitQuotation(quot.id, u.id, {
-      vendorId: u.id,
-      vendorName: u.territory?.tradeName || u.name,
-      status: 'submitted',
-      quotedItems,
-      totalQuotedAmount: total,
-      remarks: draftRemarks
-    });
-    setActiveVendorQuot(null);
-  };
-
-  const exportResponses = (quot: Quotation) => {
-    const rows: any[] = [];
-    Object.values(quot.submissions).forEach(sub => {
-      sub.quotedItems.forEach(qi => {
-        rows.push({
-          'Vendor': sub.vendorName,
-          'Status': sub.status,
-          'Activity': qi.activity,
-          'Product': qi.product,
-          'Crop': qi.crop,
-          'Region': qi.region || '',
-          'Quoted Price/Unit': qi.quotedPricePerUnit,
-          'Total': sub.totalQuotedAmount,
-          'Submitted At': sub.submittedAt,
-          'Remarks': qi.remarks || ''
+  const getItemsFromAllocation = (po: typeof pos[0], region: string): VendorQuotationItem[] => {
+    const alloc = po.allocations[region] || {};
+    const items: VendorQuotationItem[] = [];
+    Object.entries(alloc).forEach(([product, crops]) => {
+      Object.entries(crops as Record<string, Record<string, number>>).forEach(([crop, activities]) => {
+        Object.entries(activities as Record<string, number>).forEach(([activity, amount]) => {
+          if (amount > 0) {
+            items.push({ product, crop, activity, allocatedAmount: amount, quotedRate: undefined, quantity: undefined, remarks: '' });
+          }
         });
       });
     });
-    exportToExcel(rows, `quotation-${quot.id}.xls`);
+    return items;
   };
 
-  // ─── VENDOR VIEW ───────────────────────────────────────────────────────────
+  const openFillModal = (po: typeof pos[0], region: string) => {
+    const existing = vendorQuotations.find(vq => vq.poId === po.id && vq.vendorId === u.id && vq.region === region);
+    const baseItems = getItemsFromAllocation(po, region);
+    if (existing && existing.items.length > 0) {
+      setDraftItems(baseItems.map(bi => {
+        const match = existing.items.find(ei => ei.product === bi.product && ei.crop === bi.crop && ei.activity === bi.activity);
+        return match ? { ...bi, quotedRate: match.quotedRate, quantity: match.quantity, remarks: match.remarks } : bi;
+      }));
+    } else {
+      setDraftItems(baseItems);
+    }
+    setSelectedPoId(po.id);
+    setSelectedRegion(region);
+    setShowFillModal(true);
+  };
+
+  const handleSaveDraft = () => {
+    const po = pos.find(p => p.id === selectedPoId);
+    if (!po) return;
+    upsertVendorQuotation(selectedPoId, po.poNumber, selectedRegion, draftItems, 'draft');
+    setShowFillModal(false);
+  };
+
+  const handleSubmit = () => {
+    const po = pos.find(p => p.id === selectedPoId);
+    if (!po) return;
+    upsertVendorQuotation(selectedPoId, po.poNumber, selectedRegion, draftItems, 'submitted');
+    setShowFillModal(false);
+  };
+
+  const adminFilteredQuotations = useMemo(() => {
+    let list = vendorQuotations;
+    if (adminPoFilter) list = list.filter(vq => vq.poId === adminPoFilter);
+    if (adminVendorFilter) list = list.filter(vq => vq.vendorId === adminVendorFilter);
+    return list;
+  }, [vendorQuotations, adminPoFilter, adminVendorFilter]);
+
+  const quotationsByPO = useMemo(() => {
+    const map: Record<string, VendorQuotation[]> = {};
+    adminFilteredQuotations.forEach(vq => {
+      if (!map[vq.poNumber]) map[vq.poNumber] = [];
+      map[vq.poNumber].push(vq);
+    });
+    return map;
+  }, [adminFilteredQuotations]);
+
+  const totalQuotedAmount = (vq: VendorQuotation) =>
+    vq.items.reduce((s, it) => s + ((it.quotedRate || 0) * (it.quantity || 1)), 0);
+
   if (isVendor) {
-    const displayQuots = vendorTab === 'open' ? openVendorQuots : submittedVendorQuots;
     return (
       <div className="space-y-6">
-        <div className="flex items-start justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <ClipboardList className="w-6 h-6 text-blue-600" />
-              Quotation Requests
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">Submit your price quotes for activities in issued Purchase Orders.</p>
-          </div>
-          <div className="flex gap-3">
-            <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2 text-center">
-              <p className="text-xs text-blue-500 font-bold uppercase">Open Requests</p>
-              <p className="text-xl font-black text-blue-700">{openVendorQuots.length}</p>
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-[#1B4F72] flex items-center justify-center">
+              <ClipboardList className="w-5 h-5 text-white" />
             </div>
-            <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-2 text-center">
-              <p className="text-xs text-green-500 font-bold uppercase">Submitted</p>
-              <p className="text-xl font-black text-green-700">{submittedVendorQuots.length}</p>
+            <div>
+              <h2 className="font-bold text-[#1A1D23] text-lg">My Quotations</h2>
+              <p className="text-xs text-[#6B7280]">Submit price quotations for distributed PO activities in your region — required before activities begin</p>
             </div>
           </div>
-        </div>
 
-        <div className="flex gap-1 border-b-2 border-slate-100">
-          {(['open', 'submitted'] as VendorTab[]).map(t => (
-            <button key={t} onClick={() => setVendorTab(t)}
-              className={cn("px-6 py-3 text-sm font-semibold transition-colors border-b-2 -mb-[2px]",
-                vendorTab === t ? "border-[#1B4F72] text-[#1B4F72]" : "border-transparent text-slate-500 hover:text-slate-700"
-              )}>
-              {t === 'open' ? 'Open Requests' : 'My Submissions'}
-            </button>
-          ))}
-        </div>
-
-        {displayQuots.length === 0 ? (
-          <Card className="p-16 text-center">
-            <ClipboardList className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-            <p className="text-lg font-bold text-slate-500">
-              {vendorTab === 'open' ? 'No open quotation requests' : 'No submitted quotations yet'}
-            </p>
-            <p className="text-sm text-slate-400 mt-1">
-              {vendorTab === 'open' ? 'You will be notified when a new quotation request is raised.' : 'Submit quotes to see them here.'}
-            </p>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {displayQuots.map(quot => {
-              const submission = quot.submissions[u.id];
-              const isActive = activeVendorQuot === quot.id;
-              return (
-                <Card key={quot.id} className={cn("p-0 overflow-hidden border-l-4 transition-colors",
-                  isActive ? "border-l-blue-500" : submission ? "border-l-green-500" : "border-l-amber-500"
-                )}>
-                  <div className="p-4 flex items-center justify-between gap-4 flex-wrap">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-800">PO: {quot.poNumber}</span>
-                        <Badge variant={quot.status === 'open' ? 'blue' : 'warning'} className="text-[10px]">{quot.status.toUpperCase()}</Badge>
-                        {submission && <Badge variant={submission.status === 'submitted' ? 'success' : 'warning'} className="text-[10px]">
-                          {submission.status === 'submitted' ? 'SUBMITTED' : 'DRAFT'}
-                        </Badge>}
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Requested by: {quot.requestedByName} · {quot.createdAt}
-                        {quot.dueDate && ` · Due: ${quot.dueDate}`}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-0.5">{quot.items.length} line items to quote</p>
-                    </div>
-                    <div className="flex gap-2">
-                      {submission?.status === 'submitted' ? (
-                        <Button size="sm" variant="secondary" onClick={() => setActiveVendorQuot(isActive ? null : quot.id)}>
-                          {isActive ? 'Close' : 'View My Quote'}
-                        </Button>
-                      ) : (
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => { startQuoting(quot); }}>
-                          {submission ? 'Edit Draft' : 'Submit Quote'}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {isActive && (
-                    <div className="border-t border-slate-100 bg-slate-50 p-6 space-y-4">
-                      {quot.remarks && (
-                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800">
-                          <strong>Remarks from requester:</strong> {quot.remarks}
+          {vendorEligiblePOs.length === 0 ? (
+            <div className="text-center py-16 text-[#9CA3AF]">
+              <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p className="font-semibold">No distributed POs in your region yet</p>
+              <p className="text-xs mt-1">Quotation requests will appear once the AIM distributes an approved PO to your region</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {vendorEligiblePOs.map(po => (
+                <div key={po.id}>
+                  {vendorRegions.filter(r => po.allocations[r] && Object.keys(po.allocations[r]).length > 0).map(region => {
+                    const existing = vendorQuotations.find(vq => vq.poId === po.id && vq.vendorId === u.id && vq.region === region);
+                    const isSubmitted = existing?.status === 'submitted';
+                    const isDraft = existing?.status === 'draft';
+                    const items = getItemsFromAllocation(po, region);
+                    const totalAlloc = items.reduce((s, i) => s + i.allocatedAmount, 0);
+                    return (
+                      <div key={region} className={cn(
+                        'border-2 rounded-xl p-5',
+                        isSubmitted ? 'border-green-200 bg-green-50' : isDraft ? 'border-amber-200 bg-amber-50' : 'border-[#DDE3ED] bg-white'
+                      )}>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-[#1B4F72] text-base">{po.poNumber}</span>
+                              <Badge variant="blue" className="text-[10px]">{region}</Badge>
+                              {isSubmitted && <Badge variant="success" className="text-[10px]">Submitted</Badge>}
+                              {isDraft && <Badge variant="warning" className="text-[10px]">Draft</Badge>}
+                              {!existing && <Badge variant="default" className="text-[10px]">Pending</Badge>}
+                            </div>
+                            <p className="text-xs text-[#6B7280] mt-1">{po.from} → {po.to}</p>
+                            <p className="text-xs text-[#6B7280]">
+                              {items.length} activity line{items.length !== 1 ? 's' : ''} · Total allocated: <strong>{formatCurrency(totalAlloc)}</strong>
+                            </p>
+                            {isSubmitted && existing?.submittedAt && (
+                              <p className="text-xs text-green-700 mt-1">Submitted on {existing.submittedAt} · Quoted: {formatCurrency(totalQuotedAmount(existing))}</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            {!isSubmitted && (
+                              <Button size="sm" onClick={() => openFillModal(po, region)}>
+                                {isDraft ? 'Continue Draft' : 'Fill Quotation'}
+                              </Button>
+                            )}
+                            {isSubmitted && (
+                              <Button size="sm" variant="outline" onClick={() => openFillModal(po, region)}>
+                                <Eye className="w-3.5 h-3.5 mr-1" /> View
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      )}
 
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-slate-100">
-                              <th className="text-left p-2 text-xs font-bold text-slate-600">#</th>
-                              <th className="text-left p-2 text-xs font-bold text-slate-600">Activity</th>
-                              <th className="text-left p-2 text-xs font-bold text-slate-600">Product</th>
-                              <th className="text-left p-2 text-xs font-bold text-slate-600">Crop</th>
-                              <th className="text-left p-2 text-xs font-bold text-slate-600">Region</th>
-                              <th className="text-left p-2 text-xs font-bold text-slate-600">Est. Qty</th>
-                              <th className="text-left p-2 text-xs font-bold text-slate-600">Unit</th>
-                              <th className="text-left p-2 text-xs font-bold text-slate-600 min-w-[140px]">Your Price / Unit (₹)</th>
-                              <th className="text-right p-2 text-xs font-bold text-slate-600">Subtotal</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {quot.items.map((item, idx) => {
-                              const price = draftPrices[item.id] || 0;
-                              const subtotal = price * (item.estimatedQuantity || 1);
-                              const disabled = submission?.status === 'submitted';
-                              return (
-                                <tr key={item.id} className="border-t border-slate-100 bg-white">
-                                  <td className="p-2 text-xs text-slate-400">{idx + 1}</td>
-                                  <td className="p-2 text-xs font-medium text-slate-700">{item.activity}</td>
-                                  <td className="p-2"><Badge variant="blue" className="text-[9px]">{item.product}</Badge></td>
-                                  <td className="p-2 text-xs text-slate-600">{item.crop}</td>
-                                  <td className="p-2 text-xs text-slate-500">{item.region || '—'}</td>
-                                  <td className="p-2 text-xs text-slate-600">{item.estimatedQuantity || '—'}</td>
-                                  <td className="p-2 text-xs text-slate-500">{item.unit || 'per event'}</td>
-                                  <td className="p-2">
-                                    {disabled ? (
-                                      <span className="font-mono font-bold text-sm text-slate-800">₹{price.toLocaleString()}</span>
-                                    ) : (
-                                      <input
-                                        type="number"
-                                        value={price || ''}
-                                        onChange={e => setDraftPrices(prev => ({ ...prev, [item.id]: Number(e.target.value) }))}
-                                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm font-mono focus:outline-none focus:border-blue-400"
-                                        placeholder="0"
-                                      />
-                                    )}
-                                  </td>
-                                  <td className="p-2 text-right font-bold text-sm text-slate-800">
-                                    ₹{subtotal.toLocaleString()}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                          <tfoot>
-                            <tr className="bg-slate-100 border-t-2 border-slate-300">
-                              <td colSpan={8} className="p-2 text-right font-black text-slate-700 text-sm">TOTAL QUOTED AMOUNT</td>
-                              <td className="p-2 text-right font-black text-[#1B4F72] text-base">
-                                ₹{Object.entries(draftPrices).reduce((s, [id, price]) => {
-                                  const item = quot.items.find(it => it.id === id);
-                                  return s + (price * (item?.estimatedQuantity || 1));
-                                }, 0).toLocaleString()}
-                              </td>
-                            </tr>
-                          </tfoot>
-                        </table>
+                        {existing && (
+                          <div className="mt-3 pt-3 border-t border-[#E5E7EB]">
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="text-[#6B7280]">
+                                    <th className="text-left py-1 pr-4">Product / Crop / Activity</th>
+                                    <th className="text-right py-1 pr-4">Allocated (₹)</th>
+                                    <th className="text-right py-1 pr-4">Rate / Unit</th>
+                                    <th className="text-right py-1">Quoted Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {existing.items.map((it, i) => (
+                                    <tr key={i} className="border-t border-[#F0F4F8]">
+                                      <td className="py-1 pr-4 font-medium">{it.product} · {it.crop} · {it.activity}</td>
+                                      <td className="py-1 pr-4 text-right text-[#6B7280]">{formatCurrency(it.allocatedAmount)}</td>
+                                      <td className="py-1 pr-4 text-right font-semibold text-[#1B4F72]">{it.quotedRate ? formatCurrency(it.quotedRate) : '—'}</td>
+                                      <td className="py-1 text-right font-bold">{it.quotedRate ? formatCurrency((it.quotedRate || 0) * (it.quantity || 1)) : '—'}</td>
+                                    </tr>
+                                  ))}
+                                  <tr className="border-t-2 border-[#DDE3ED] font-bold">
+                                    <td colSpan={3} className="py-1 pr-4 text-right">Total Quoted:</td>
+                                    <td className="py-1 text-right text-[#1B4F72]">{formatCurrency(totalQuotedAmount(existing))}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
                       </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
 
-                      {submission?.status !== 'submitted' && (
-                        <>
-                          <div className="space-y-1">
-                            <Label>Remarks (Optional)</Label>
-                            <textarea
-                              value={draftRemarks}
-                              onChange={e => setDraftRemarks(e.target.value)}
-                              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 min-h-[60px]"
-                              placeholder="Any notes or conditions..."
+        {showFillModal && (() => {
+          const po = pos.find(p => p.id === selectedPoId);
+          if (!po) return null;
+          const existing = vendorQuotations.find(vq => vq.poId === selectedPoId && vq.vendorId === u.id && vq.region === selectedRegion);
+          const isAlreadySubmitted = existing?.status === 'submitted';
+          return (
+            <Modal open={showFillModal} title={`Quotation — ${po.poNumber} (${selectedRegion})`} onClose={() => setShowFillModal(false)} width="max-w-3xl">
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                  Fill in your price per unit for each activity. This quotation is required for formality before activities commence.
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-[#F8FAFC] text-[#6B7280] text-xs">
+                        <Th>Product</Th>
+                        <Th>Crop</Th>
+                        <Th>Activity</Th>
+                        <Th>Allocated (₹)</Th>
+                        <Th>Rate / Unit (₹)</Th>
+                        <Th>Qty (Units)</Th>
+                        <Th>Total (₹)</Th>
+                        <Th>Remarks</Th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {draftItems.map((it, idx) => (
+                        <tr key={idx} className="border-t border-[#F0F4F8]">
+                          <Td className="font-medium text-xs">{it.product}</Td>
+                          <Td className="text-xs">{it.crop}</Td>
+                          <Td className="text-xs">{it.activity}</Td>
+                          <Td className="text-xs font-semibold text-[#1B4F72]">{formatCurrency(it.allocatedAmount)}</Td>
+                          <Td>
+                            <Input
+                              type="number" min="0" step="0.01"
+                              value={it.quotedRate ?? ''}
+                              disabled={isAlreadySubmitted}
+                              onChange={e => setDraftItems(prev => prev.map((d, i) => i === idx ? { ...d, quotedRate: parseFloat(e.target.value) || undefined } : d))}
+                              className="w-28 h-8 text-xs"
+                              placeholder="0"
                             />
-                          </div>
-                          <div className="flex gap-2 justify-end">
-                            <Button variant="outline" onClick={() => setActiveVendorQuot(null)}>Cancel</Button>
-                            <Button variant="secondary" onClick={() => handleSaveDraft(quot)}>Save as Draft</Button>
-                            <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleSubmitQuote(quot)}>
-                              <Send className="w-4 h-4 mr-2" />
-                              Submit Quotation
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                      {submission?.status === 'submitted' && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
-                          ✅ Your quotation was submitted on {submission.submittedAt}. It is now under review.
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                          </Td>
+                          <Td>
+                            <Input
+                              type="number" min="1"
+                              value={it.quantity ?? ''}
+                              disabled={isAlreadySubmitted}
+                              onChange={e => setDraftItems(prev => prev.map((d, i) => i === idx ? { ...d, quantity: parseInt(e.target.value) || undefined } : d))}
+                              className="w-20 h-8 text-xs"
+                              placeholder="1"
+                            />
+                          </Td>
+                          <Td className="font-bold text-xs text-[#1B4F72]">
+                            {it.quotedRate ? formatCurrency((it.quotedRate || 0) * (it.quantity || 1)) : '—'}
+                          </Td>
+                          <Td>
+                            <Input
+                              value={it.remarks ?? ''}
+                              disabled={isAlreadySubmitted}
+                              onChange={e => setDraftItems(prev => prev.map((d, i) => i === idx ? { ...d, remarks: e.target.value } : d))}
+                              className="w-32 h-8 text-xs"
+                              placeholder="Optional"
+                            />
+                          </Td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-[#DDE3ED] bg-[#F8FAFC] font-bold">
+                        <Td colSpan={4} className="text-right text-sm">Total Quoted Amount:</Td>
+                        <Td colSpan={4} className="text-[#1B4F72] text-sm">
+                          {formatCurrency(draftItems.reduce((s, it) => s + ((it.quotedRate || 0) * (it.quantity || 1)), 0))}
+                        </Td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                {!isAlreadySubmitted && (
+                  <div className="flex justify-end gap-3 pt-2">
+                    <Button variant="secondary" onClick={() => setShowFillModal(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={handleSaveDraft}>Save Draft</Button>
+                    <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700 text-white border-none">
+                      <Send className="w-4 h-4 mr-1.5" /> Submit Quotation
+                    </Button>
+                  </div>
+                )}
+                {isAlreadySubmitted && (
+                  <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
+                    <CheckCircle className="w-4 h-4" />
+                    Quotation submitted on {existing?.submittedAt}. No further edits allowed.
+                  </div>
+                )}
+              </div>
+            </Modal>
+          );
+        })()}
       </div>
     );
   }
 
-  // ─── ADMIN VIEW ────────────────────────────────────────────────────────────
-  const totalResponses = quotations.reduce((s, q) => s + Object.keys(q.submissions).length, 0);
-  const pendingResponses = quotations.filter(q => q.status === 'open' && q.vendorIds.some(vid => !q.submissions[vid])).length;
+  if (isAdmin) {
+    const allVendors = users.filter(u => u.role === 'Vendor' && u.status === 'active');
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Tag className="w-6 h-6 text-purple-600" />
-            Quotation Management
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Issue quotation requests to vendors for PO activities and review their pricing submissions.
-          </p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)} className="bg-[#1B4F72] hover:bg-[#153d5a] text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          New Quotation Request
-        </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-[#1B4F72]">
-          <p className="text-xs text-slate-500 font-bold uppercase">Total Requests</p>
-          <p className="text-2xl font-black text-slate-800">{quotations.length}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-amber-500">
-          <p className="text-xs text-slate-500 font-bold uppercase">Open</p>
-          <p className="text-2xl font-black text-amber-600">{quotations.filter(q => q.status === 'open').length}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-green-500">
-          <p className="text-xs text-slate-500 font-bold uppercase">Total Responses</p>
-          <p className="text-2xl font-black text-green-600">{totalResponses}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-red-500">
-          <p className="text-xs text-slate-500 font-bold uppercase">Awaiting Response</p>
-          <p className="text-2xl font-black text-red-600">{pendingResponses}</p>
-        </Card>
-      </div>
-
-      {/* Sub-tabs */}
-      <div className="flex gap-1 border-b-2 border-slate-100">
-        {(['requests', 'responses'] as AdminTab[]).map(t => (
-          <button key={t} onClick={() => setAdminTab(t)}
-            className={cn("px-6 py-3 text-sm font-semibold transition-colors border-b-2 -mb-[2px]",
-              adminTab === t ? "border-[#1B4F72] text-[#1B4F72]" : "border-transparent text-slate-500 hover:text-slate-700"
-            )}>
-            {t === 'requests' ? 'Quotation Requests' : 'Vendor Responses'}
-          </button>
-        ))}
-      </div>
-
-      {/* Requests Tab */}
-      {adminTab === 'requests' && (
-        <div className="space-y-4">
-          {quotations.length === 0 ? (
-            <Card className="p-16 text-center">
-              <ClipboardList className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-              <p className="text-lg font-bold text-slate-500">No quotation requests yet</p>
-              <p className="text-sm text-slate-400 mt-1">Click "New Quotation Request" to invite vendors to quote.</p>
-            </Card>
-          ) : (
-            <Card className="p-0 overflow-hidden">
-              <Table>
-                <thead>
-                  <tr><Th>PO Number</Th><Th>Vendors Invited</Th><Th>Line Items</Th><Th>Responses</Th><Th>Status</Th><Th>Due Date</Th><Th>Created By</Th><Th>Actions</Th></tr>
-                </thead>
-                <tbody>
-                  {quotations.map(quot => {
-                    const invited = quot.vendorIds.length;
-                    const responded = Object.keys(quot.submissions).length;
-                    return (
-                      <tr key={quot.id} className="hover:bg-slate-50">
-                        <Td className="font-bold text-[#1B4F72]">{quot.poNumber}</Td>
-                        <Td>
-                          <div className="flex items-center gap-1">
-                            <Users className="w-3 h-3 text-slate-400" />
-                            <span className="text-sm">{invited}</span>
-                          </div>
-                        </Td>
-                        <Td>{quot.items.length}</Td>
-                        <Td>
-                          <span className={cn("text-sm font-bold", responded === invited ? "text-green-600" : responded > 0 ? "text-amber-600" : "text-red-500")}>
-                            {responded}/{invited}
-                          </span>
-                        </Td>
-                        <Td>
-                          <Badge variant={quot.status === 'open' ? 'blue' : 'warning'} className="text-[10px] uppercase">{quot.status}</Badge>
-                        </Td>
-                        <Td className="text-xs text-slate-500">{quot.dueDate || '—'}</Td>
-                        <Td className="text-xs text-slate-500">{quot.requestedByName}</Td>
-                        <Td>
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="secondary" onClick={() => {
-                              setSelectedQuot(quot.id);
-                              setAdminTab('responses');
-                            }}>
-                              <Eye className="w-3 h-3 mr-1" />
-                              Responses
-                            </Button>
-                            {quot.status === 'open' && (
-                              <Button size="sm" variant="outline" onClick={() => updateQuotation(quot.id, { status: 'closed' })}>
-                                Close
-                              </Button>
-                            )}
-                            <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => deleteQuotation(quot.id)}>
-                              ✕
-                            </Button>
-                          </div>
-                        </Td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </Card>
-          )}
-        </div>
-      )}
-
-      {/* Responses Tab */}
-      {adminTab === 'responses' && (
-        <div className="space-y-4">
-          {/* Filter by quotation */}
-          <div className="flex items-center gap-4">
-            <Label>Filter by Quotation Request:</Label>
-            <Select value={selectedQuot || ''} onChange={e => setSelectedQuot(e.target.value || null)} className="w-72">
-              <option value="">All Responses</option>
-              {quotations.map(q => (
-                <option key={q.id} value={q.id}>PO: {q.poNumber} — {q.createdAt}</option>
-              ))}
-            </Select>
+    return (
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 className="font-bold text-[#1A1D23] text-xl flex items-center gap-2">
+                <ClipboardList className="w-5 h-5 text-[#1B4F72]" /> Vendor Quotation Review
+              </h2>
+              <p className="text-sm text-[#6B7280] mt-1">View all vendor quotations submitted for distributed PO activities</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => {
+                const rows = vendorQuotations.flatMap(vq =>
+                  vq.items.map(it => ({
+                    'PO Number': vq.poNumber,
+                    'Vendor': vq.vendorName,
+                    'Vendor Code': vq.vendorCode || '',
+                    'Region': vq.region,
+                    'Product': it.product,
+                    'Crop': it.crop,
+                    'Activity': it.activity,
+                    'Allocated (₹)': it.allocatedAmount,
+                    'Quoted Rate': it.quotedRate || '',
+                    'Quantity': it.quantity || 1,
+                    'Total Quoted (₹)': (it.quotedRate || 0) * (it.quantity || 1),
+                    'Status': vq.status,
+                    'Submitted At': vq.submittedAt || ''
+                  }))
+                );
+                exportToExcel(rows, `Quotations_${new Date().toISOString().split('T')[0]}`);
+              }}>Export Excel</Button>
+            </div>
           </div>
 
-          {(() => {
-            const filteredQuots = selectedQuot ? quotations.filter(q => q.id === selectedQuot) : quotations;
-            const allResponses = filteredQuots.flatMap(q =>
-              Object.values(q.submissions).map(sub => ({ quot: q, sub }))
-            );
-
-            if (allResponses.length === 0) {
-              return (
-                <Card className="p-12 text-center">
-                  <p className="text-slate-500 font-semibold">No vendor responses yet.</p>
-                  <p className="text-slate-400 text-sm mt-1">Vendors will appear here after submitting their quotations.</p>
-                </Card>
-              );
-            }
-
-            return (
-              <div className="space-y-4">
-                {filteredQuots.map(quot => {
-                  const subs = Object.values(quot.submissions);
-                  if (subs.length === 0) return null;
-                  return (
-                    <Card key={quot.id} className="p-0 overflow-hidden">
-                      <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                        <div>
-                          <span className="font-bold text-slate-700">PO: {quot.poNumber}</span>
-                          <span className="text-xs text-slate-400 ml-3">Due: {quot.dueDate || 'No deadline'}</span>
-                        </div>
-                        <Button size="sm" variant="outline" onClick={() => exportResponses(quot)}>
-                          📊 Export Excel
-                        </Button>
-                      </div>
-                      <div className="divide-y divide-slate-50">
-                        {subs.map(sub => {
-                          const isExpanded = expandedSubmission === `${quot.id}-${sub.vendorId}`;
-                          return (
-                            <div key={sub.vendorId} className="p-4">
-                              <div
-                                className="flex items-center justify-between cursor-pointer"
-                                onClick={() => setExpandedSubmission(isExpanded ? null : `${quot.id}-${sub.vendorId}`)}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-[#1B4F72] flex items-center justify-center text-white text-xs font-bold">
-                                    {sub.vendorName[0]}
-                                  </div>
-                                  <div>
-                                    <p className="font-semibold text-slate-800 text-sm">{sub.vendorName}</p>
-                                    <p className="text-xs text-slate-500">Submitted: {sub.submittedAt}</p>
-                                  </div>
-                                  <Badge variant={sub.status === 'submitted' ? 'success' : 'warning'} className="text-[9px] uppercase">{sub.status}</Badge>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <div className="text-right">
-                                    <p className="font-black text-[#1B4F72] text-sm">₹{sub.totalQuotedAmount.toLocaleString()}</p>
-                                    <p className="text-xs text-slate-400">Total Quote</p>
-                                  </div>
-                                  {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                                </div>
-                              </div>
-
-                              {isExpanded && (
-                                <div className="mt-4 overflow-x-auto">
-                                  <table className="w-full border-collapse text-xs">
-                                    <thead>
-                                      <tr className="bg-slate-50">
-                                        <th className="text-left p-2 font-bold text-slate-600">Activity</th>
-                                        <th className="text-left p-2 font-bold text-slate-600">Product</th>
-                                        <th className="text-left p-2 font-bold text-slate-600">Crop</th>
-                                        <th className="text-left p-2 font-bold text-slate-600">Region</th>
-                                        <th className="text-right p-2 font-bold text-slate-600">Quoted Price/Unit (₹)</th>
-                                        <th className="text-right p-2 font-bold text-slate-600">Est. Qty</th>
-                                        <th className="text-right p-2 font-bold text-slate-600">Subtotal (₹)</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {sub.quotedItems.map((qi, idx) => {
-                                        const item = quot.items.find(i => i.id === qi.itemId);
-                                        const subtotal = qi.quotedPricePerUnit * (item?.estimatedQuantity || 1);
-                                        return (
-                                          <tr key={idx} className="border-t border-slate-100">
-                                            <td className="p-2 font-medium text-slate-700">{qi.activity}</td>
-                                            <td className="p-2">
-                                              <Badge variant="blue" className="text-[9px]">{qi.product}</Badge>
-                                            </td>
-                                            <td className="p-2 text-slate-600">{qi.crop}</td>
-                                            <td className="p-2 text-slate-500">{qi.region || '—'}</td>
-                                            <td className="p-2 text-right font-mono font-bold text-slate-800">₹{qi.quotedPricePerUnit.toLocaleString()}</td>
-                                            <td className="p-2 text-right text-slate-600">{item?.estimatedQuantity || '—'}</td>
-                                            <td className="p-2 text-right font-bold text-[#1B4F72]">₹{subtotal.toLocaleString()}</td>
-                                          </tr>
-                                        );
-                                      })}
-                                    </tbody>
-                                    <tfoot>
-                                      <tr className="bg-slate-50 border-t-2 border-slate-200">
-                                        <td colSpan={6} className="p-2 text-right font-black text-slate-700">TOTAL</td>
-                                        <td className="p-2 text-right font-black text-[#1B4F72] text-base">₹{sub.totalQuotedAmount.toLocaleString()}</td>
-                                      </tr>
-                                    </tfoot>
-                                  </table>
-                                  {sub.remarks && (
-                                    <div className="mt-2 p-3 bg-slate-50 border border-slate-100 rounded text-xs text-slate-600">
-                                      <strong>Vendor Remarks:</strong> {sub.remarks}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            );
-          })()}
-        </div>
-      )}
-
-      {/* Create Quotation Modal */}
-      <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="New Quotation Request" width="max-w-4xl">
-        <div className="space-y-6">
-          {/* PO Selection */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label required>Select Purchase Order</Label>
-              <Select value={createForm.poId} onChange={e => setCreateForm(f => ({ ...f, poId: e.target.value }))}>
-                <option value="">Select PO...</option>
-                {approvedPOs.map(p => (
-                  <option key={p.id} value={p.id}>{p.poNumber} — ₹{(p.budget / 100000).toFixed(1)}L</option>
-                ))}
+          <div className="flex gap-3 mb-5">
+            <div className="flex-1">
+              <Label>Filter by PO</Label>
+              <Select value={adminPoFilter} onChange={e => setAdminPoFilter(e.target.value)}>
+                <option value="">All POs</option>
+                {approvedDistributedPOs.map(po => <option key={po.id} value={po.id}>{po.poNumber}</option>)}
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label>Due Date (Optional)</Label>
-              <Input type="date" value={createForm.dueDate} onChange={e => setCreateForm(f => ({ ...f, dueDate: e.target.value }))} />
+            <div className="flex-1">
+              <Label>Filter by Vendor</Label>
+              <Select value={adminVendorFilter} onChange={e => setAdminVendorFilter(e.target.value)}>
+                <option value="">All Vendors</option>
+                {allVendors.map(v => <option key={v.id} value={v.id}>{v.territory?.tradeName || v.name}</option>)}
+              </Select>
             </div>
           </div>
 
-          {/* Vendor Selection */}
-          <div className="space-y-2">
-            <Label required>Select Vendors to Invite</Label>
-            <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 min-h-[48px]">
-              {vendors.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">No active vendors found.</p>
-              ) : vendors.map(v => {
-                const selected = createForm.vendorIds.includes(v.id);
+          {Object.keys(quotationsByPO).length === 0 ? (
+            <div className="text-center py-16 text-[#9CA3AF]">
+              <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p className="font-semibold">No vendor quotations yet</p>
+              <p className="text-xs mt-1">Quotations will appear here once vendors submit them for distributed PO activities</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(quotationsByPO).map(([poNumber, vqs]) => {
+                const po = pos.find(p => p.poNumber === poNumber);
+                const submittedCount = vqs.filter(vq => vq.status === 'submitted').length;
+                const draftCount = vqs.filter(vq => vq.status === 'draft').length;
                 return (
-                  <button key={v.id} onClick={() => handleVendorToggle(v.id)}
-                    className={cn("px-3 py-1.5 rounded-full text-xs font-semibold border transition-all",
-                      selected ? "bg-[#1B4F72] text-white border-[#1B4F72]" : "bg-white text-slate-600 border-slate-300 hover:border-[#1B4F72]"
-                    )}>
-                    {v.territory?.tradeName || v.name}
-                  </button>
+                  <div key={poNumber} className="border border-[#DDE3ED] rounded-xl overflow-hidden">
+                    <div className="bg-gradient-to-r from-[#EBF3FA] to-[#F0F9FF] p-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-[#1B4F72] text-base">{poNumber}</h3>
+                          {po && <span className="text-xs text-[#6B7280]">{po.from} → {po.to}</span>}
+                        </div>
+                        <div className="flex gap-2 mt-1">
+                          <span className="text-xs text-[#6B7280]">{vqs.length} submission{vqs.length !== 1 ? 's' : ''}</span>
+                          {submittedCount > 0 && <Badge variant="success" className="text-[10px]">{submittedCount} submitted</Badge>}
+                          {draftCount > 0 && <Badge variant="warning" className="text-[10px]">{draftCount} draft</Badge>}
+                        </div>
+                      </div>
+                      {po && (
+                        <div className="text-right">
+                          <p className="text-xs text-[#6B7280]">PO Budget</p>
+                          <p className="font-bold text-[#1B4F72]">{formatCurrency(po.budget)}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="divide-y divide-[#F0F4F8]">
+                      {vqs.map(vq => {
+                        const isExpanded = expandedVq === vq.id;
+                        const totalQ = totalQuotedAmount(vq);
+                        return (
+                          <div key={vq.id}>
+                            <div
+                              className="flex flex-wrap items-center justify-between gap-3 p-4 cursor-pointer hover:bg-[#F8FAFC]"
+                              onClick={() => setExpandedVq(isExpanded ? null : vq.id)}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-[#1B4F72] flex items-center justify-center text-white text-xs font-bold">
+                                  {vq.vendorName.charAt(0)}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-[#1A1D23] text-sm">{vq.vendorName}</p>
+                                  <div className="flex gap-2 items-center mt-0.5">
+                                    {vq.vendorCode && <span className="text-[10px] text-[#9CA3AF] font-mono">{vq.vendorCode}</span>}
+                                    <Badge variant="blue" className="text-[10px]">{vq.region}</Badge>
+                                    <Badge variant={vq.status === 'submitted' ? 'success' : 'warning'} className="text-[10px] uppercase">{vq.status}</Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                  <p className="text-xs text-[#6B7280]">Total Quoted</p>
+                                  <p className="font-bold text-[#1B4F72]">{totalQ > 0 ? formatCurrency(totalQ) : '—'}</p>
+                                </div>
+                                {vq.status === 'submitted' && vq.submittedAt && (
+                                  <div className="text-right hidden md:block">
+                                    <p className="text-xs text-[#6B7280]">Submitted</p>
+                                    <p className="text-xs font-semibold">{vq.submittedAt}</p>
+                                  </div>
+                                )}
+                                {isExpanded ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />}
+                              </div>
+                            </div>
+
+                            {isExpanded && (
+                              <div className="bg-[#F8FAFC] px-4 pb-4">
+                                <Table>
+                                  <thead>
+                                    <tr>
+                                      <Th>Product</Th>
+                                      <Th>Crop</Th>
+                                      <Th>Activity</Th>
+                                      <Th>Allocated (₹)</Th>
+                                      <Th>Rate / Unit (₹)</Th>
+                                      <Th>Qty</Th>
+                                      <Th>Quoted Total (₹)</Th>
+                                      <Th>Remarks</Th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {vq.items.map((it, i) => (
+                                      <tr key={i} className="hover:bg-white">
+                                        <Td className="font-medium text-xs">{it.product}</Td>
+                                        <Td className="text-xs">{it.crop}</Td>
+                                        <Td className="text-xs">{it.activity}</Td>
+                                        <Td className="font-semibold text-xs text-[#1B4F72]">{formatCurrency(it.allocatedAmount)}</Td>
+                                        <Td className="text-xs">{it.quotedRate ? formatCurrency(it.quotedRate) : <span className="text-[#9CA3AF]">—</span>}</Td>
+                                        <Td className="text-xs">{it.quantity || 1}</Td>
+                                        <Td className="font-bold text-xs">{it.quotedRate ? formatCurrency((it.quotedRate || 0) * (it.quantity || 1)) : <span className="text-[#9CA3AF]">—</span>}</Td>
+                                        <Td className="text-xs text-[#6B7280]">{it.remarks || '—'}</Td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                  <tfoot>
+                                    <tr className="border-t-2 border-[#DDE3ED] font-bold bg-white">
+                                      <Td colSpan={6} className="text-right">Total:</Td>
+                                      <Td className="text-[#1B4F72]">{formatCurrency(totalQ)}</Td>
+                                      <Td />
+                                    </tr>
+                                  </tfoot>
+                                </Table>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
               })}
             </div>
-            {createForm.vendorIds.length > 0 && (
-              <p className="text-xs text-green-600 font-medium">{createForm.vendorIds.length} vendor(s) selected</p>
-            )}
-          </div>
+          )}
+        </Card>
+      </div>
+    );
+  }
 
-          {/* Line Items */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label required>Activity Line Items</Label>
-              <Button size="sm" variant="secondary" onClick={handleAddItem}>
-                <Plus className="w-3 h-3 mr-1" />
-                Add Line Item
-              </Button>
-            </div>
-
-            {createForm.items.length === 0 ? (
-              <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-lg">
-                <p className="text-sm text-slate-400">No items yet. Click "Add Line Item" to define activities.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto border border-slate-200 rounded-lg">
-                <table className="w-full">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="p-2 text-left text-xs font-bold text-slate-600">Activity</th>
-                      <th className="p-2 text-left text-xs font-bold text-slate-600">Product</th>
-                      <th className="p-2 text-left text-xs font-bold text-slate-600">Crop</th>
-                      <th className="p-2 text-left text-xs font-bold text-slate-600">Region</th>
-                      <th className="p-2 text-left text-xs font-bold text-slate-600">Est. Qty</th>
-                      <th className="p-2 text-left text-xs font-bold text-slate-600">Unit</th>
-                      <th className="p-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {createForm.items.map((item, idx) => (
-                      <tr key={item.id} className="border-t border-slate-100">
-                        <td className="p-1.5">
-                          <Select value={item.activity} onChange={e => handleItemChange(idx, 'activity', e.target.value)} className="h-8 text-xs">
-                            <option value="">Select...</option>
-                            {activities.map(a => <option key={a} value={a}>{a}</option>)}
-                          </Select>
-                        </td>
-                        <td className="p-1.5">
-                          <Select value={item.product} onChange={e => handleItemChange(idx, 'product', e.target.value)} className="h-8 text-xs">
-                            <option value="">Select...</option>
-                            {products.map(p => <option key={p} value={p}>{p}</option>)}
-                          </Select>
-                        </td>
-                        <td className="p-1.5">
-                          <Select value={item.crop} onChange={e => handleItemChange(idx, 'crop', e.target.value)} className="h-8 text-xs">
-                            <option value="">Select...</option>
-                            {crops.map(c => <option key={c} value={c}>{c}</option>)}
-                          </Select>
-                        </td>
-                        <td className="p-1.5">
-                          <Input value={item.region || ''} onChange={e => handleItemChange(idx, 'region', e.target.value)} className="h-8 text-xs" placeholder="Region" />
-                        </td>
-                        <td className="p-1.5">
-                          <Input type="number" value={item.estimatedQuantity || ''} onChange={e => handleItemChange(idx, 'estimatedQuantity', Number(e.target.value))} className="h-8 text-xs w-20" placeholder="Qty" />
-                        </td>
-                        <td className="p-1.5">
-                          <Input value={item.unit || ''} onChange={e => handleItemChange(idx, 'unit', e.target.value)} className="h-8 text-xs w-24" placeholder="per event" />
-                        </td>
-                        <td className="p-1.5">
-                          <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700 h-7 w-7 p-0" onClick={() => handleRemoveItem(idx)}>✕</Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Remarks */}
-          <div className="space-y-1">
-            <Label>Remarks / Instructions for Vendors</Label>
-            <textarea
-              value={createForm.remarks}
-              onChange={e => setCreateForm(f => ({ ...f, remarks: e.target.value }))}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B4F72] min-h-[60px]"
-              placeholder="Instructions, scope, or notes for vendors..."
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
-            <Button
-              className="bg-[#1B4F72] hover:bg-[#153d5a] text-white"
-              onClick={handleCreateQuotation}
-              disabled={!createForm.poId || createForm.vendorIds.length === 0 || createForm.items.length === 0}
-            >
-              <Send className="w-4 h-4 mr-2" />
-              Send Quotation Request
-            </Button>
-          </div>
-        </div>
-      </Modal>
+  return (
+    <div className="flex items-center justify-center h-64 text-[#9CA3AF]">
+      <p>You do not have access to the Quotation tab.</p>
     </div>
   );
 }

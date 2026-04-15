@@ -99,7 +99,7 @@ export default function Dashboard() {
   const canSeeFinance = ['Owner', 'Vendor'].includes(u.role);
   const canSeeVendors = !['All India Manager', 'Regional Manager', 'Zonal Manager', 'Area Manager'].includes(u.role);
   const canSeeBudgetRequest = ['Area Manager', 'Zonal Manager', 'Regional Manager', 'All India Manager', 'Owner', 'Finance Administrator'].includes(u.role);
-  const canSeeQuotation = ['Owner', 'All India Manager', 'Finance Administrator', 'Vendor'].includes(u.role);
+  const canSeeQuotation = ['Owner', 'All India Manager', 'Finance Administrator', 'Regional Manager', 'Vendor'].includes(u.role);
 
   interface Tab { id: TabId; label: string; badge?: number | null }
   const tabs: Tab[] = [

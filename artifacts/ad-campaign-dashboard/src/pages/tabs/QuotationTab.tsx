@@ -2,9 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Card, CardTitle, Button, Input, Label, Table, Th, Td, Badge, Modal, Select, cn } from '../../components/ui';
 import { VendorQuotation, VendorQuotationItem } from '../../types';
-import { exportToExcel } from '../../lib/utils';
+import { exportToExcel, exportQuotationComparisonPDF } from '../../lib/utils';
 import { formatCurrency } from '../../lib/mock-data';
-import { FileText, Send, ChevronDown, ChevronUp, ClipboardList, CheckCircle, Clock, Eye } from 'lucide-react';
+import { FileText, Send, ChevronDown, ChevronUp, ClipboardList, CheckCircle, Eye, Printer } from 'lucide-react';
 
 export default function QuotationTab() {
   const { currentUser, pos, users, vendorQuotations, upsertVendorQuotation, deleteVendorQuotation } = useAppContext();
@@ -393,12 +393,28 @@ export default function QuotationTab() {
                           {draftCount > 0 && <Badge variant="warning" className="text-[10px]">{draftCount} draft</Badge>}
                         </div>
                       </div>
-                      {po && (
-                        <div className="text-right">
-                          <p className="text-xs text-[#6B7280]">PO Budget</p>
-                          <p className="font-bold text-[#1B4F72]">{formatCurrency(po.budget)}</p>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {po && (
+                          <div className="text-right">
+                            <p className="text-xs text-[#6B7280]">PO Budget</p>
+                            <p className="font-bold text-[#1B4F72]">{formatCurrency(po.budget)}</p>
+                          </div>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-[#1B4F72] text-[#1B4F72] hover:bg-[#1B4F72] hover:text-white"
+                          onClick={() => exportQuotationComparisonPDF({
+                            poNumber,
+                            poFrom: po?.from,
+                            poTo: po?.to,
+                            poBudget: po?.budget,
+                            quotations: vqs
+                          })}
+                        >
+                          <Printer className="w-3.5 h-3.5 mr-1.5" /> Comparison PDF
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="divide-y divide-[#F0F4F8]">

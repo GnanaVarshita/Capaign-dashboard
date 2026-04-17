@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AppUser {
+  id        String   @id
+  loginId   String   @unique
+  password  String?
+  name      String
+  role      String
+  status    String
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model CampaignEntry {
+  id        String   @id
+  userId    String
+  vendorId  String
+  po        String
+  status    String
+  amount    Float
+  date      String
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("entries")
+}
+
+model PurchaseOrder {
+  id             String   @id
+  poNumber       String   @unique
+  status         String
+  approvalStatus String
+  data           Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("purchase_orders")
+}
+
+model Bill {
+  id          String   @id
+  vendorId    String
+  status      String
+  invoiceNumber String?
+  data        Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("bills")
+}
+
+model ServiceReceiver {
+  id        String   @id
+  vendorId  String
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("service_receivers")
+}
+
+model VendorProfile {
+  vendorId  String   @id
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("vendor_profiles")
+}
+
+model ConfigItem {
+  id        String   @id @default(uuid())
+  type      String
+  name      String
+  createdAt DateTime @default(now())
+
+  @@unique([type, name])
+  @@map("config_items")
+}
+
+model Region {
+  name      String   @id
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("regions")
+}
+
+model BudgetRequestGroup {
+  id        String   @id
+  status    String
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("budget_request_groups")
+}
+
+model BudgetRequest {
+  id             String   @id
+  requestGroupId String?
+  status         String
+  data           Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("budget_requests")
+}

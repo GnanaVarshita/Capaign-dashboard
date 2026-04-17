@@ -4,9 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// Default to 5173 for local development (Vite standard port)
+// Default to the Replit artifact port for local development
 // Can be overridden with PORT environment variable
-const rawPort = process.env.PORT || "5173";
+const rawPort = process.env.PORT || "20289";
 
 const port = Number(rawPort);
 

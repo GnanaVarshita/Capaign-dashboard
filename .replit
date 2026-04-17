@@ -7,28 +7,6 @@ id = "artifacts/api-server"
 id = "artifacts/mockup-sandbox"
 
 [workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=5173 pnpm --filter @workspace/ad-campaign-dashboard run dev"
-waitForPort = 5173
 
 [agent]
 stack = "PNPM_WORKSPACE"

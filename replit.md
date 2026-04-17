@@ -109,7 +109,8 @@ Backend API built with Hono framework, targeting Cloudflare Workers for free hos
 
 React + Vite frontend. Full-featured Advertising Campaign Dashboard.
 
-- **Port**: `20289` (reads `PORT` env var)
+- **Port**: `5173` in Replit development (reads `PORT` env var; Vite falls back to `20289` when no `PORT` is provided)
+- **Preview**: Registered as the root web artifact at `/`
 - **Auth**: `src/hooks/useAuth.ts` — JWT login via API, falls back to localStorage mock
 - **Persistence**: All state in `localStorage` under key `ad_campaign_db` (fallback when no API)
 - **Stack**: React 18, TypeScript, Tailwind CSS, Recharts, lucide-react, clsx, tailwind-merge

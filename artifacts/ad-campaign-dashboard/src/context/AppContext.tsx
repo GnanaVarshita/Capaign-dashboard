@@ -57,7 +57,7 @@ interface AppContextType {
   // Bills
   bills: Bill[];
   setBills: React.Dispatch<React.SetStateAction<Bill[]>>;
-  addBill: (bill: Omit<Bill, 'id'>) => void;
+  addBill: (bill: Omit<Bill, 'id'>) => Promise<string>;
   updateBill: (id: string, updates: Partial<Bill>) => void;
   generateInvoiceNumber: () => string;
 
@@ -161,13 +161,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // ---------- Real-time: reload all domain data from localStorage ----------
   const reloadAll = useCallback(() => {
+    userHook.fetchUsers();
     entryHook.fetchEntries();
     poHook.fetchPOs();
     billHook.fetchBills();
+    vendorHook.fetchVendorData();
     budgetHook.fetchBudgetRequests();
     configHook.fetchConfig();
     quotationHook.fetchQuotations();
-  }, [entryHook, poHook, billHook, budgetHook, configHook, quotationHook]);
+  }, [userHook, entryHook, poHook, billHook, vendorHook, budgetHook, configHook, quotationHook]);
 
   // Listen for changes from other browser tabs
   useEffect(() => {
@@ -223,7 +225,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const rejectPO  = useCallback((id: string, r?: string) => { poHook.rejectPO(id, r); }, [poHook]);
   const lapsePO   = useCallback((id: string) => { poHook.lapsePO(id); }, [poHook]);
 
-  const addBill    = useCallback((d: Omit<Bill, 'id'>) => { billHook.addBill(d); }, [billHook]);
+  const addBill    = useCallback((d: Omit<Bill, 'id'>) => billHook.addBill(d), [billHook]);
   const updateBill = useCallback((id: string, u: Partial<Bill>) => { billHook.updateBill(id, u); }, [billHook]);
 
   const addUser    = useCallback((d: Omit<User, 'id'>) => { userHook.addUser(d); toast('User added!'); }, [userHook, toast]);

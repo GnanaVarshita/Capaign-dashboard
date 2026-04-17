@@ -107,40 +107,57 @@ export default function BillingTab() {
   const totalAmt = visBillings.reduce((s, b) => s + (b.activityAmount || b.totalAmount || 0), 0);
   const pendingAmt = visBillings.filter(b => b.status === 'submitted').reduce((s, b) => s + (b.totalAmount || 0), 0);
   const paidAmt = visBillings.filter(b => b.status === 'paid').reduce((s, b) => s + (b.totalAmount || 0), 0);
-  const handleSubmitBill = () => {
-    if (!editingBill) return;
-    const selEntries = entries.filter(e => editingBill.entryIds.includes(e.id));
+  const vendorProfile = vendorProfiles[u.id];
+  const vendorTradeName = vendorProfile?.tradeName || u.territory?.tradeName || u.name;
+  const vendorCode = vendorProfile?.vendorCode || u.territory?.vendorCode;
+  const handleSubmitBill = async (sourceBill = previewBill || editingBill) => {
+    if (!sourceBill) return;
+    const selEntries = entries.filter(e => sourceBill.entryIds.includes(e.id));
     const activityAmount = selEntries.reduce((s, e) => s + e.amount, 0);
-    const taxable = activityAmount + Number(editingBill.serviceCharge);
-    const gstAmt = Math.round(taxable * (editingBill.gstRate / 100));
+    const serviceChargeAmt = Number(sourceBill.serviceChargeAmt ?? sourceBill.serviceCharge ?? 0);
+    const taxable = activityAmount + serviceChargeAmt;
+    const gstAmt = Math.round(taxable * (sourceBill.gstRate / 100));
     const totalAmount = taxable + gstAmt;
 
-    const receiver = serviceReceivers.find(r => r.id === editingBill.serviceReceiverId);
+    const receiver = serviceReceivers.find(r => r.id === sourceBill.serviceReceiverId);
 
-    const newBillId = addBill({
+    const newBillId = await addBill({
       vendorId: u.id,
-      vendorName: u.territory?.tradeName || u.name,
-      vendorCode: u.territory?.vendorCode,
-      entryIds: editingBill.entryIds,
+      vendorName: vendorTradeName,
+      vendorCode,
+      entryIds: sourceBill.entryIds,
       activityAmount,
-      serviceChargeAmt: Number(editingBill.serviceCharge),
-      gstRate: editingBill.gstRate,
+      serviceChargeAmt,
+      gstRate: sourceBill.gstRate,
       totalAmount,
       status: 'submitted',
       createdAt: new Date().toISOString().split('T')[0],
-      date: new Date().toISOString().split('T')[0],
+      date: sourceBill.date || new Date().toISOString().split('T')[0],
       submittedAt: new Date().toISOString().split('T')[0],
-      invoiceNumber: editingBill.invoiceNumber,
-      remarks: editingBill.remarks,
-      serviceReceiverId: editingBill.serviceReceiverId,
-      receiverDetails: receiver ? { ...receiver } : undefined
+      invoiceNumber: sourceBill.invoiceNumber,
+      remarks: sourceBill.remarks,
+      serviceReceiverId: sourceBill.serviceReceiverId,
+      receiverDetails: receiver ? { ...receiver } : undefined,
+      spTradeName: vendorProfile?.tradeName || vendorTradeName,
+      spVendorCode: vendorCode,
+      spGST: vendorProfile?.gst,
+      spPAN: vendorProfile?.pan || u.pan,
+      spAddress: vendorProfile?.address,
+      spPhone: vendorProfile?.phone || u.phone,
+      spEmail: vendorProfile?.email || u.email,
+      bankDetails: vendorProfile ? {
+        accountName: vendorProfile.tradeName || vendorTradeName,
+        accountNo: vendorProfile.accountNo,
+        ifsc: vendorProfile.ifsc,
+        bankName: vendorProfile.bankName
+      } : undefined
     });
 
-    // Set the newly created bill as active
     setActiveBillId(newBillId);
     setEditingBill(null);
     setPendingBillData(null);
     setShowInvoicePreview(false);
+    setPreviewBill(null);
   };
 
   const handlePreviewInvoice = () => {
@@ -157,7 +174,22 @@ export default function BillingTab() {
       activityAmount,
       taxable,
       gstAmt,
-      totalAmount
+      totalAmount,
+      serviceChargeAmt: Number(editingBill.serviceCharge || 0),
+      receiverDetails: serviceReceivers.find(r => r.id === editingBill.serviceReceiverId),
+      spTradeName: vendorProfile?.tradeName || vendorTradeName,
+      spVendorCode: vendorCode,
+      spGST: vendorProfile?.gst,
+      spPAN: vendorProfile?.pan || u.pan,
+      spAddress: vendorProfile?.address,
+      spPhone: vendorProfile?.phone || u.phone,
+      spEmail: vendorProfile?.email || u.email,
+      bankDetails: vendorProfile ? {
+        accountName: vendorProfile.tradeName || vendorTradeName,
+        accountNo: vendorProfile.accountNo,
+        ifsc: vendorProfile.ifsc,
+        bankName: vendorProfile.bankName
+      } : undefined
     });
     setShowInvoicePreview(true);
   };
@@ -293,9 +325,10 @@ export default function BillingTab() {
 
           {/* Invoice Preview Modal */}
           {showInvoicePreview && previewBill && (
-            <Modal open={true} onClose={() => { setShowInvoicePreview(false); setEditInvoiceMode(false); }} title={`Preview ${editInvoiceMode ? '(Editing Mode)' : ''}`}>
-              <div className="bg-white p-8 rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
+            <Modal open={true} onClose={() => { setShowInvoicePreview(false); setEditInvoiceMode(false); }} title={`Invoice Preview ${editInvoiceMode ? '(Editing Mode)' : ''}`} width="max-w-6xl">
+              <div className="bg-white rounded-lg">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-sm text-slate-500">Review this invoice exactly as it will be created before saving or submitting.</p>
                   <Button variant="outline" onClick={() => { setShowInvoicePreview(false); setEditInvoiceMode(false); }}>✕ Close</Button>
                 </div>
 
@@ -317,10 +350,11 @@ export default function BillingTab() {
                   <div className="grid grid-cols-2 gap-6 mb-6 pb-4 border-b">
                     <div>
                       <p className="font-semibold mb-2">FROM (Service Provider):</p>
-                      <p className="font-bold">{u.territory?.tradeName || u.name}</p>
-                      <p className="text-sm">Code: {u.territory?.vendorCode || 'N/A'}</p>
-                      <p className="text-sm">GST: {u.territory?.gst || 'N/A'}</p>
-                      <p className="text-sm">{u.territory?.address || u.phone || ''}</p>
+                      <p className="font-bold">{previewBill.spTradeName || vendorTradeName}</p>
+                      <p className="text-sm">Code: {previewBill.spVendorCode || 'N/A'}</p>
+                      <p className="text-sm">GST: {previewBill.spGST || 'N/A'}</p>
+                      <p className="text-sm">PAN: {previewBill.spPAN || 'N/A'}</p>
+                      <p className="text-sm whitespace-pre-wrap">{previewBill.spAddress || previewBill.spPhone || ''}</p>
                     </div>
                     <div>
                       <p className="font-semibold mb-2">TO (Service Receiver):</p>
@@ -349,6 +383,9 @@ export default function BillingTab() {
                         <tr className="bg-slate-200">
                           <th className="border border-slate-300 p-2 text-left font-semibold">S.L.</th>
                           <th className="border border-slate-300 p-2 text-left font-semibold">Particulars</th>
+                          <th className="border border-slate-300 p-2 text-left font-semibold">Date</th>
+                          <th className="border border-slate-300 p-2 text-left font-semibold">Area</th>
+                          <th className="border border-slate-300 p-2 text-left font-semibold">Product</th>
                           <th className="border border-slate-300 p-2 text-right font-semibold">Amount</th>
                         </tr>
                       </thead>
@@ -357,19 +394,22 @@ export default function BillingTab() {
                           <tr key={entry.id}>
                             <td className="border border-slate-300 p-2 text-center">{idx + 1}</td>
                             <td className="border border-slate-300 p-2">{entry.activity || 'Service'}</td>
+                            <td className="border border-slate-300 p-2">{entry.date || '—'}</td>
+                            <td className="border border-slate-300 p-2">{entry.area || '—'}</td>
+                            <td className="border border-slate-300 p-2">{entry.product || '—'}</td>
                             <td className="border border-slate-300 p-2 text-right">{formatCurrency(entry.amount)}</td>
                           </tr>
                         ))}
                         <tr className="bg-slate-100">
-                          <td colSpan={2} className="border border-slate-300 p-2 font-semibold text-right">Activity Amount:</td>
+                          <td colSpan={5} className="border border-slate-300 p-2 font-semibold text-right">Activity Amount:</td>
                           <td className="border border-slate-300 p-2 text-right font-semibold">{formatCurrency(previewBill.activityAmount)}</td>
                         </tr>
                         <tr>
-                          <td colSpan={2} className="border border-slate-300 p-2 font-semibold text-right">Service Charges:</td>
+                          <td colSpan={5} className="border border-slate-300 p-2 font-semibold text-right">Service Charges:</td>
                           <td className="border border-slate-300 p-2 text-right font-semibold">{formatCurrency(Number(previewBill.serviceCharge || 0))}</td>
                         </tr>
                         <tr className="bg-blue-50">
-                          <td colSpan={2} className="border border-slate-300 p-2 font-semibold text-right">Taxable Value:</td>
+                          <td colSpan={5} className="border border-slate-300 p-2 font-semibold text-right">Taxable Value:</td>
                           <td className="border border-slate-300 p-2 text-right font-semibold">{formatCurrency(previewBill.taxable)}</td>
                         </tr>
                       </tbody>
@@ -399,6 +439,20 @@ export default function BillingTab() {
                     </div>
                     <p>Taxable: {formatCurrency(previewBill.taxable)} {previewBill.gstRate}% = {formatCurrency(previewBill.gstAmt)}</p>
                     <p className="mt-2 p-2 bg-green-100 rounded font-bold">Grand Total: {formatCurrency(previewBill.totalAmount)}</p>
+                  </div>
+
+                  <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-green-50 border border-green-200 rounded">
+                      <p className="font-semibold mb-2 text-green-800">Bank Details:</p>
+                      <p className="text-sm">Account Name: {previewBill.bankDetails?.accountName || previewBill.spTradeName || vendorTradeName}</p>
+                      <p className="text-sm">Account No: {previewBill.bankDetails?.accountNo || '—'}</p>
+                      <p className="text-sm">IFSC: {previewBill.bankDetails?.ifsc || '—'}</p>
+                      <p className="text-sm">Bank: {previewBill.bankDetails?.bankName || '—'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded">
+                      <p className="font-semibold mb-2">Amount in Words:</p>
+                      <p className="text-sm italic">₹ {numberToWords(Math.floor(previewBill.totalAmount))} Only</p>
+                    </div>
                   </div>
 
                   {/* Remarks */}
@@ -440,18 +494,18 @@ export default function BillingTab() {
                         gstRate: previewBill.gstRate
                       });
                       // Create bill with draft status
-                      const selEntries = entries.filter(e => editingBill.entryIds.includes(e.id));
+                      const selEntries = entries.filter(e => previewBill.entryIds.includes(e.id));
                       const activityAmount = selEntries.reduce((s, e) => s + e.amount, 0);
                       const taxable = activityAmount + Number(previewBill.taxable - previewBill.activityAmount);
                       const gstAmt = Math.round(taxable * (previewBill.gstRate / 100));
                       const totalAmount = taxable + gstAmt;
-                      const receiver = serviceReceivers.find(r => r.id === editingBill.serviceReceiverId);
+                      const receiver = serviceReceivers.find(r => r.id === previewBill.serviceReceiverId);
                       
                       addBill({
                         vendorId: u.id,
-                        vendorName: u.territory?.tradeName || u.name,
-                        vendorCode: u.territory?.vendorCode,
-                        entryIds: editingBill.entryIds,
+                        vendorName: previewBill.spTradeName || vendorTradeName,
+                        vendorCode: previewBill.spVendorCode || vendorCode,
+                        entryIds: previewBill.entryIds,
                         activityAmount,
                         serviceChargeAmt: Number(previewBill.taxable - previewBill.activityAmount),
                         gstRate: previewBill.gstRate,
@@ -461,9 +515,17 @@ export default function BillingTab() {
                         date: previewBill.date || new Date().toISOString().split('T')[0],
                         invoiceNumber: previewBill.invoiceNumber,
                         remarks: editingBill.remarks,
-                        serviceReceiverId: editingBill.serviceReceiverId,
-                        receiverDetails: receiver ? { ...receiver } : undefined
-                      });
+                        serviceReceiverId: previewBill.serviceReceiverId,
+                        receiverDetails: receiver ? { ...receiver } : undefined,
+                        spTradeName: previewBill.spTradeName,
+                        spVendorCode: previewBill.spVendorCode,
+                        spGST: previewBill.spGST,
+                        spPAN: previewBill.spPAN,
+                        spAddress: previewBill.spAddress,
+                        spPhone: previewBill.spPhone,
+                        spEmail: previewBill.spEmail,
+                        bankDetails: previewBill.bankDetails
+                      }).then(id => setActiveBillId(id));
                       setEditingBill(null);
                       setPendingBillData(null);
                       setShowInvoicePreview(false);
@@ -475,7 +537,7 @@ export default function BillingTab() {
                   </Button>
                   <Button 
                     onClick={() => {
-                      handleSubmitBill();
+                      handleSubmitBill(previewBill);
                       setShowInvoicePreview(false);
                       setEditInvoiceMode(false);
                     }}

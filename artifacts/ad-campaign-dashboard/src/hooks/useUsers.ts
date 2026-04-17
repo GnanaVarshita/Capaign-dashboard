@@ -17,11 +17,14 @@ export function useUsers() {
   const [users, setUsers] = useState<User[]>(loadFromStorage);
 
   const fetchUsers = useCallback(async () => {
-    if (!API_URL) return;
-    try {
-      const data = await api.get('/api/users');
-      setUsers(data);
-    } catch {}
+    if (API_URL) {
+      try {
+        const data = await api.get('/api/users');
+        setUsers(data);
+        return;
+      } catch {}
+    }
+    setUsers(loadFromStorage());
   }, []);
 
   const addUser = useCallback(async (userData: Omit<User, 'id'>) => {

@@ -24,15 +24,20 @@ export function useVendors(currentUser: User | null) {
   const [vendorProfiles, setVendorProfiles]     = useState<Record<string, VendorProfile>>(stored.vendorProfiles);
 
   const fetchVendorData = useCallback(async () => {
-    if (!API_URL) return;
-    try {
-      const [receivers, profiles] = await Promise.all([
-        api.get('/api/service-receivers'),
-        currentUser ? api.get(`/api/vendor-profiles`) : Promise.resolve({}),
-      ]);
-      setServiceReceivers(receivers);
-      setVendorProfiles(profiles);
-    } catch {}
+    if (API_URL) {
+      try {
+        const [receivers, profiles] = await Promise.all([
+          api.get('/api/service-receivers'),
+          currentUser ? api.get(`/api/vendor-profiles`) : Promise.resolve({}),
+        ]);
+        setServiceReceivers(receivers);
+        setVendorProfiles(profiles);
+        return;
+      } catch {}
+    }
+    const stored = loadFromStorage();
+    setServiceReceivers(stored.serviceReceivers);
+    setVendorProfiles(stored.vendorProfiles);
   }, [currentUser]);
 
   // --- Service Receivers ---

@@ -10,15 +10,15 @@ name = "react-vite"
 version = "1.0.0"
 
 [[services]]
-localPort = 5173
+localPort = 5000
 name = "web"
 paths = ["/"]
 
 [services.development]
-run = "pnpm --filter @workspace/ad-campaign-dashboard run dev"
+run = "PORT=5000 pnpm --filter @workspace/ad-campaign-dashboard run dev"
 
 [services.env]
-PORT = "5173"
+PORT = "5000"
 BASE_PATH = "/"
 
 [services.production]

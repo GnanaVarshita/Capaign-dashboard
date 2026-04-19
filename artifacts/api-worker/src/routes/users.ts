@@ -1,25 +1,32 @@
-import { Hono } from "hono";
-import { getUser, requireRoles } from "../middleware/authMiddleware";
-import { uid, safeUser, GLOBAL_ROLES } from "../helpers";
-import { store } from "../store";
+import { Hono } from 'hono';
+import { getUser, requireRoles } from '../middleware/authMiddleware';
+import { uid, safeUser, GLOBAL_ROLES } from '../helpers';
+import { hashPassword } from '../auth/password';
+import { getDb, schema } from '../db/index';
+import { eq } from 'drizzle-orm';
+import type { Bindings } from '../types';
 
-const usersRouter = new Hono();
+const usersRouter = new Hono<{ Bindings: Bindings }>();
 
-usersRouter.get("/", (c) => {
+usersRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  if (GLOBAL_ROLES.includes(jwtUser.role))
-    return c.json(store.users.map(safeUser));
+  const db = getDb(c.env?.DATABASE_URL);
+  const allUsers = await db.select().from(schema.users);
 
-  const caller = store.users.find((u) => u.id === jwtUser.id);
-  let users: any[] = [];
-  if (jwtUser.role === "Regional Manager") {
-    users = store.users.filter(
+  if (GLOBAL_ROLES.includes(jwtUser.role))
+    return c.json(allUsers.map(safeUser));
+
+  const caller = allUsers.find((u) => u.id === jwtUser.id);
+  let users: typeof allUsers = [];
+
+  if (jwtUser.role === 'Regional Manager') {
+    users = allUsers.filter(
       (u) =>
         u.territory?.region === caller?.territory?.region ||
         u.territory?.assignedRMIds?.includes(caller?.id),
     );
-  } else if (jwtUser.role === "Zonal Manager") {
-    users = store.users.filter(
+  } else if (jwtUser.role === 'Zonal Manager') {
+    users = allUsers.filter(
       (u) =>
         (u.territory?.zone === caller?.territory?.zone &&
           u.territory?.region === caller?.territory?.region) ||
@@ -28,36 +35,98 @@ usersRouter.get("/", (c) => {
         ),
     );
   } else {
-    users = store.users.filter((u) => u.id === jwtUser.id);
+    users = allUsers.filter((u) => u.id === jwtUser.id);
   }
+
   return c.json(users.map(safeUser));
 });
 
-usersRouter.get("/:id", (c) => {
-  const user = store.users.find((u) => u.id === c.req.param("id"));
-  if (!user) return c.json({ error: "User not found" }, 404);
+usersRouter.get('/:id', async (c) => {
+  const db = getDb(c.env?.DATABASE_URL);
+  const [user] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.id, c.req.param('id')));
+  if (!user) return c.json({ error: 'User not found' }, 404);
   return c.json(safeUser(user));
 });
 
-usersRouter.post("/", requireRoles("Owner"), async (c) => {
+usersRouter.post('/', requireRoles('Owner'), async (c) => {
   const data = await c.req.json();
-  const newUser = { ...data, id: uid("u"), status: data.status || "active" };
-  store.users.push(newUser);
+  const db = getDb(c.env?.DATABASE_URL);
+  const id = uid('u');
+  const hashedPassword = data.password
+    ? await hashPassword(data.password)
+    : await hashPassword('Welcome@123');
+
+  const newUser = {
+    id,
+    name: data.name,
+    loginId: data.loginId?.toLowerCase() || id,
+    password: hashedPassword,
+    role: data.role || 'Area Manager',
+    status: data.status || 'active',
+    phone: data.phone || null,
+    email: data.email || null,
+    aadhaar: data.aadhaar || null,
+    pan: data.pan || null,
+    territory: data.territory || {},
+    perms: data.perms || {
+      view: true,
+      enter: false,
+      edit: false,
+      approve: false,
+      manage: false,
+    },
+    tabPerms: data.tabPerms || null,
+  };
+
+  await db.insert(schema.users).values(newUser);
   return c.json(safeUser(newUser), 201);
 });
 
-usersRouter.put("/:id", requireRoles("Owner"), async (c) => {
-  const idx = store.users.findIndex((u) => u.id === c.req.param("id"));
-  if (idx === -1) return c.json({ error: "User not found" }, 404);
+usersRouter.put('/:id', requireRoles('Owner'), async (c) => {
+  const db = getDb(c.env?.DATABASE_URL);
+  const id = c.req.param('id');
+  const [existing] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.id, id));
+  if (!existing) return c.json({ error: 'User not found' }, 404);
+
   const updates = await c.req.json();
-  store.users[idx] = { ...store.users[idx], ...updates };
-  return c.json(safeUser(store.users[idx]));
+
+  const toUpdate: Record<string, any> = { ...updates };
+  delete toUpdate.id;
+  delete toUpdate.createdAt;
+
+  if (updates.password) {
+    toUpdate.password = await hashPassword(updates.password);
+  } else {
+    delete toUpdate.password;
+  }
+  if (updates.loginId) {
+    toUpdate.loginId = updates.loginId.toLowerCase();
+  }
+
+  const [updated] = await db
+    .update(schema.users)
+    .set(toUpdate)
+    .where(eq(schema.users.id, id))
+    .returning();
+
+  return c.json(safeUser(updated));
 });
 
-usersRouter.delete("/:id", requireRoles("Owner"), (c) => {
-  const idx = store.users.findIndex((u) => u.id === c.req.param("id"));
-  if (idx === -1) return c.json({ error: "User not found" }, 404);
-  store.users.splice(idx, 1);
+usersRouter.delete('/:id', requireRoles('Owner'), async (c) => {
+  const db = getDb(c.env?.DATABASE_URL);
+  const id = c.req.param('id');
+  const [existing] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.id, id));
+  if (!existing) return c.json({ error: 'User not found' }, 404);
+  await db.delete(schema.users).where(eq(schema.users.id, id));
   return c.json({ success: true });
 });
 

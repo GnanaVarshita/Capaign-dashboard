@@ -7,6 +7,28 @@ id = "artifacts/api-server"
 id = "artifacts/mockup-sandbox"
 
 [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend API"
+
+[[workflows.workflow]]
+name = "Backend API"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter api-worker run dev"
+waitForPort = 8000
 
 [agent]
 stack = "PNPM_WORKSPACE"

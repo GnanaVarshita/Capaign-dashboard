@@ -1,143 +1,229 @@
-import { Hono } from "hono";
-import { getUser, requireRoles } from "../middleware/authMiddleware";
-import { uid, today, GLOBAL_ROLES, APPROVER_ROLES } from "../helpers";
-import { store } from "../store";
+import { Hono } from 'hono';
+import { getUser, requireRoles } from '../middleware/authMiddleware';
+import { uid, today, GLOBAL_ROLES, APPROVER_ROLES } from '../helpers';
+import { getDb, schema } from '../db/index';
+import { eq, and } from 'drizzle-orm';
+import type { Bindings } from '../types';
 
-const budgetRouter = new Hono();
+const budgetRouter = new Hono<{ Bindings: Bindings }>();
 
-// Budget Request Groups
-budgetRouter.get("/groups", (c) => {
+budgetRouter.get('/groups', async (c) => {
   const jwtUser = getUser(c);
+  const db = getDb(c.env?.DATABASE_URL);
+  const allGroups = await db.select().from(schema.budgetRequestGroups);
   const groups =
-    jwtUser.role === "Area Manager" || jwtUser.role === "Vendor"
-      ? store.budgetRequestGroups.filter((g) => g.status === "active")
-      : store.budgetRequestGroups;
+    jwtUser.role === 'Area Manager' || jwtUser.role === 'Vendor'
+      ? allGroups.filter((g) => g.status === 'active')
+      : allGroups;
   return c.json(groups);
 });
 
 budgetRouter.post(
-  "/groups",
-  requireRoles("Owner", "All India Manager"),
+  '/groups',
+  requireRoles('Owner', 'All India Manager'),
   async (c) => {
     const jwtUser = getUser(c);
-    const caller = store.users.find((u) => u.id === jwtUser.id);
     const data = await c.req.json();
-    const requestNumber = `BR-${new Date().getFullYear()}-${String(store.budgetRequestGroups.length + 1).padStart(3, "0")}`;
+    const db = getDb(c.env?.DATABASE_URL);
+
+    const [caller] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.id, jwtUser.id));
+
+    const allGroups = await db.select().from(schema.budgetRequestGroups);
+    const requestNumber = `BR-${new Date().getFullYear()}-${String(allGroups.length + 1).padStart(3, '0')}`;
+    const id = uid('brg');
+
     const group = {
-      ...data,
-      id: uid("brg"),
+      id,
       requestNumber,
       aimId: jwtUser.id,
-      aimName: caller?.name || "",
+      aimName: caller?.name || '',
       createdAt: today(),
-      status: "active",
+      status: 'active' as const,
+      description: data.description || null,
+      targetDate: data.targetDate || null,
+      selectedRegions: data.selectedRegions || null,
     };
-    store.budgetRequestGroups.unshift(group);
+
+    await db.insert(schema.budgetRequestGroups).values(group);
     return c.json(group, 201);
   },
 );
 
 budgetRouter.put(
-  "/groups/:id/close",
-  requireRoles("Owner", "All India Manager"),
-  (c) => {
-    const idx = store.budgetRequestGroups.findIndex(
-      (g) => g.id === c.req.param("id"),
-    );
-    if (idx === -1) return c.json({ error: "Group not found" }, 404);
-    store.budgetRequestGroups[idx] = {
-      ...store.budgetRequestGroups[idx],
-      status: "closed",
-    };
-    return c.json(store.budgetRequestGroups[idx]);
+  '/groups/:id/close',
+  requireRoles('Owner', 'All India Manager'),
+  async (c) => {
+    const groupId = c.req.param('id');
+    const db = getDb(c.env?.DATABASE_URL);
+
+    const [existing] = await db
+      .select()
+      .from(schema.budgetRequestGroups)
+      .where(eq(schema.budgetRequestGroups.id, groupId));
+    if (!existing) return c.json({ error: 'Group not found' }, 404);
+
+    const [updated] = await db
+      .update(schema.budgetRequestGroups)
+      .set({ status: 'closed' })
+      .where(eq(schema.budgetRequestGroups.id, groupId))
+      .returning();
+
+    return c.json(updated);
   },
 );
 
-// Budget Requests
-budgetRouter.get("/", (c) => {
+budgetRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const caller = store.users.find((u) => u.id === jwtUser.id);
-  if (GLOBAL_ROLES.includes(jwtUser.role)) return c.json(store.budgetRequests);
-  let requests = store.budgetRequests;
-  if (jwtUser.role === "Area Manager")
+  const db = getDb(c.env?.DATABASE_URL);
+  const [allRequests, allUsers] = await Promise.all([
+    db.select().from(schema.budgetRequests),
+    db.select().from(schema.users),
+  ]);
+
+  if (GLOBAL_ROLES.includes(jwtUser.role)) return c.json(allRequests);
+
+  const caller = allUsers.find((u) => u.id === jwtUser.id);
+  let requests = allRequests;
+
+  if (jwtUser.role === 'Area Manager') {
     requests = requests.filter((r) => r.areaManagerId === jwtUser.id);
-  else if (jwtUser.role === "Zonal Manager")
+  } else if (jwtUser.role === 'Zonal Manager') {
     requests = requests.filter(
       (r) =>
         r.zone === caller?.territory?.zone &&
         r.region === caller?.territory?.region,
     );
-  else if (jwtUser.role === "Regional Manager")
+  } else if (jwtUser.role === 'Regional Manager') {
     requests = requests.filter((r) => r.region === caller?.territory?.region);
+  }
+
   return c.json(requests);
 });
 
-budgetRouter.post("/", requireRoles("Area Manager", "Owner"), async (c) => {
+budgetRouter.post('/', requireRoles('Area Manager', 'Owner'), async (c) => {
   const jwtUser = getUser(c);
-  const caller = store.users.find((u) => u.id === jwtUser.id);
   const data = await c.req.json();
+  const db = getDb(c.env?.DATABASE_URL);
+
+  const [caller] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.id, jwtUser.id));
+
+  const id = uid('br');
   const request = {
-    ...data,
-    id: uid("br"),
-    status: "submitted",
-    createdAt: today(),
+    id,
+    requestGroupId: data.requestGroupId || null,
+    requestNumber: data.requestNumber || null,
     areaManagerId: data.areaManagerId || jwtUser.id,
-    areaManagerName: data.areaManagerName || caller?.name,
+    areaManagerName: data.areaManagerName || caller?.name || '',
+    area: data.area || '',
+    zone: data.zone || '',
+    region: data.region || '',
+    mdoName: data.mdoName || '',
+    crop: data.crop || null,
+    product: data.product || '',
+    activity: data.activity || '',
+    estimatedSales: Number(data.estimatedSales) || 0,
+    activityBudgets: data.activityBudgets || {},
+    budgetRequired: Number(data.budgetRequired) || 0,
+    status: 'submitted' as const,
+    createdAt: today(),
+    submissionCount: Number(data.submissionCount) || 0,
+    zmId: null,
+    zmName: null,
+    zmApprovedAt: null,
+    rmId: null,
+    rmName: null,
+    rmApprovedAt: null,
+    aimId: null,
+    aimName: null,
+    aimApprovedAt: null,
+    remarks: data.remarks || null,
   };
-  store.budgetRequests.unshift(request);
+
+  await db.insert(schema.budgetRequests).values(request);
   return c.json(request, 201);
 });
 
-budgetRouter.put("/:id/approve", requireRoles(...APPROVER_ROLES), async (c) => {
+budgetRouter.put('/:id/approve', requireRoles(...APPROVER_ROLES), async (c) => {
   const jwtUser = getUser(c);
-  const caller = store.users.find((u) => u.id === jwtUser.id);
-  const idx = store.budgetRequests.findIndex((r) => r.id === c.req.param("id"));
-  if (idx === -1) return c.json({ error: "Budget request not found" }, 404);
-  const req = store.budgetRequests[idx];
+  const reqId = c.req.param('id');
+  const db = getDb(c.env?.DATABASE_URL);
+
+  const [req] = await db
+    .select()
+    .from(schema.budgetRequests)
+    .where(eq(schema.budgetRequests.id, reqId));
+  if (!req) return c.json({ error: 'Budget request not found' }, 404);
+
+  const [caller] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.id, jwtUser.id));
+
   let update: Record<string, any> = {};
-  if (jwtUser.role === "Zonal Manager" && req.status === "submitted") {
+  if (jwtUser.role === 'Zonal Manager' && req.status === 'submitted') {
     update = {
-      status: "zm-approved",
+      status: 'zm-approved',
       zmId: jwtUser.id,
-      zmName: caller?.name,
+      zmName: caller?.name || '',
       zmApprovedAt: today(),
     };
-  } else if (
-    jwtUser.role === "Regional Manager" &&
-    req.status === "zm-approved"
-  ) {
+  } else if (jwtUser.role === 'Regional Manager' && req.status === 'zm-approved') {
     update = {
-      status: "rm-approved",
+      status: 'rm-approved',
       rmId: jwtUser.id,
-      rmName: caller?.name,
+      rmName: caller?.name || '',
       rmApprovedAt: today(),
     };
-  } else if (
-    GLOBAL_ROLES.includes(jwtUser.role) &&
-    req.status === "rm-approved"
-  ) {
+  } else if (GLOBAL_ROLES.includes(jwtUser.role) && req.status === 'rm-approved') {
     update = {
-      status: "aim-approved",
+      status: 'aim-approved',
       aimId: jwtUser.id,
-      aimName: caller?.name,
+      aimName: caller?.name || '',
       aimApprovedAt: today(),
     };
   } else {
     return c.json(
-      { error: "Cannot approve: incorrect role or request status sequence" },
+      { error: 'Cannot approve: incorrect role or request status sequence' },
       400,
     );
   }
-  store.budgetRequests[idx] = { ...req, ...update };
-  return c.json(store.budgetRequests[idx]);
+
+  const [updated] = await db
+    .update(schema.budgetRequests)
+    .set(update)
+    .where(eq(schema.budgetRequests.id, reqId))
+    .returning();
+
+  return c.json(updated);
 });
 
-budgetRouter.put("/:id", async (c) => {
-  const idx = store.budgetRequests.findIndex((r) => r.id === c.req.param("id"));
-  if (idx === -1) return c.json({ error: "Budget request not found" }, 404);
+budgetRouter.put('/:id', async (c) => {
+  const reqId = c.req.param('id');
+  const db = getDb(c.env?.DATABASE_URL);
+
+  const [existing] = await db
+    .select()
+    .from(schema.budgetRequests)
+    .where(eq(schema.budgetRequests.id, reqId));
+  if (!existing) return c.json({ error: 'Budget request not found' }, 404);
+
   const updates = await c.req.json();
-  store.budgetRequests[idx] = { ...store.budgetRequests[idx], ...updates };
-  return c.json(store.budgetRequests[idx]);
+  const toUpdate: Record<string, any> = { ...updates };
+  delete toUpdate.id;
+
+  const [updated] = await db
+    .update(schema.budgetRequests)
+    .set(toUpdate)
+    .where(eq(schema.budgetRequests.id, reqId))
+    .returning();
+
+  return c.json(updated);
 });
 
 export default budgetRouter;

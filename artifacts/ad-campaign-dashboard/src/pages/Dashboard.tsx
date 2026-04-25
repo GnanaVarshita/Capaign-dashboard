@@ -33,7 +33,7 @@ import HierarchyTab from './tabs/HierarchyTab';
 import ActivitiesTab from './tabs/ActivitiesTab';
 import VendorSectionTab from './tabs/VendorSectionTab';
 import BillingTab from './tabs/BillingTab';
-import BillingTab_test from './tabs/BillingTab_test';
+
 import ActivitySheetTab from './tabs/ActivitySheetTab';
 import ApprovalsTab from './tabs/ApprovalsTab';
 import POApprovalsTab from './tabs/POApprovalsTab';
@@ -44,7 +44,7 @@ import QuickViewTab from './tabs/QuickViewTab';
 import TransactionMasterTab from './tabs/TransactionMasterTab';
 import FinanceTab from './tabs/FinanceTab';
 import BudgetRequestTab from './tabs/BudgetRequestTab';
-import BudgetRequestTab_test from './tabs/BudgetRequestTab_test';
+
 import SettingsTab from './tabs/SettingsTab';
 import QuotationTab from './tabs/QuotationTab';
 
@@ -145,9 +145,9 @@ export default function Dashboard() {
       case 'transactions':    return <TransactionMasterTab />;
       case 'settings':        return <SettingsTab />;
       case 'finance':         return <FinanceTab />;
-      case 'billing-test':    return <BillingTab_test />;
+
       case 'budget-request':  return <BudgetRequestTab />;
-      case 'budget-request-test': return <BudgetRequestTab_test />;
+
       case 'quotation':       return <QuotationTab />;
       default:                return <OverviewTab />;
     }

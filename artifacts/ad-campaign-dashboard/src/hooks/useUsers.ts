@@ -17,46 +17,46 @@ export function useUsers() {
   const [users, setUsers] = useState<User[]>(loadFromStorage);
 
   const fetchUsers = useCallback(async () => {
-    if (API_URL) {
-      try {
-        const data = await api.get('/api/users');
-        setUsers(data);
-        return;
-      } catch {}
+    try {
+      const data = await api.get('/api/users');
+      setUsers(data);
+      return;
+    } catch (err) {
+      console.warn('API fetchUsers failed, using mock data:', err);
     }
     setUsers(loadFromStorage());
   }, []);
 
   const addUser = useCallback(async (userData: Omit<User, 'id'>) => {
-    if (API_URL) {
-      try {
-        const created = await api.post('/api/users', userData);
-        setUsers(prev => [...prev, created]);
-        return;
-      } catch {}
+    try {
+      const created = await api.post('/api/users', userData);
+      setUsers(prev => [...prev, created]);
+      return;
+    } catch (err) {
+      console.warn('API addUser failed, using mock data:', err);
     }
     const user: User = { ...userData, id: `u-${Date.now()}` };
     setUsers(prev => [...prev, user]);
   }, []);
 
   const updateUser = useCallback(async (id: string, updates: Partial<User>) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/users/${id}`, updates);
-        setUsers(prev => prev.map(u => u.id === id ? updated : u));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/users/${id}`, updates);
+      setUsers(prev => prev.map(u => u.id === id ? updated : u));
+      return;
+    } catch (err) {
+      console.warn('API updateUser failed, using mock data:', err);
     }
     setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
   }, []);
 
   const deleteUser = useCallback(async (id: string) => {
-    if (API_URL) {
-      try {
-        await api.delete(`/api/users/${id}`);
-        setUsers(prev => prev.filter(u => u.id !== id));
-        return;
-      } catch {}
+    try {
+      await api.delete(`/api/users/${id}`);
+      setUsers(prev => prev.filter(u => u.id !== id));
+      return;
+    } catch (err) {
+      console.warn('API deleteUser failed, using mock data:', err);
     }
     setUsers(prev => prev.filter(u => u.id !== id));
   }, []);

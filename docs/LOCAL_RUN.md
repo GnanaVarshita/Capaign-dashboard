@@ -15,7 +15,7 @@ If you already have Node.js and pnpm installed:
 pnpm install
 
 # 2. Start backend (Terminal 1)
-pnpm -F @workspace/api-server run dev
+pnpm -F @workspace/api-worker run dev
 
 # 3. Start frontend (Terminal 2)
 pnpm -F @workspace/ad-campaign-dashboard run dev

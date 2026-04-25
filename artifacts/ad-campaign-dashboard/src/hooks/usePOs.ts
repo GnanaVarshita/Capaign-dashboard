@@ -42,46 +42,46 @@ export function usePOs(currentUser: User | null) {
   }, [currentUser, pos]);
 
   const fetchPOs = useCallback(async () => {
-    if (API_URL) {
-      try {
-        const data = await api.get('/api/pos');
-        setPOs(data);
-        return;
-      } catch {}
+    try {
+      const data = await api.get('/api/pos');
+      setPOs(data);
+      return;
+    } catch (err) {
+      console.warn('API fetchPOs failed, using mock data:', err);
     }
     setPOs(loadFromStorage());
   }, []);
 
   const addPO = useCallback(async (poData: Omit<PO, 'id'>) => {
-    if (API_URL) {
-      try {
-        const created = await api.post('/api/pos', poData);
-        setPOs(prev => [created, ...prev]);
-        return;
-      } catch {}
+    try {
+      const created = await api.post('/api/pos', poData);
+      setPOs(prev => [created, ...prev]);
+      return;
+    } catch (err) {
+      console.warn('API addPO failed, using mock data:', err);
     }
     const po: PO = { ...poData, id: `po-${Date.now()}` };
     setPOs(prev => [po, ...prev]);
   }, []);
 
   const updatePO = useCallback(async (id: string, updates: Partial<PO>) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/pos/${id}`, updates);
-        setPOs(prev => prev.map(p => p.id === id ? updated : p));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/pos/${id}`, updates);
+      setPOs(prev => prev.map(p => p.id === id ? updated : p));
+      return;
+    } catch (err) {
+      console.warn('API updatePO failed, using mock data:', err);
     }
     setPOs(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
   }, []);
 
   const approvePO = useCallback(async (id: string, approvedBy: string) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/pos/${id}/approve`, {});
-        setPOs(prev => prev.map(p => p.id === id ? updated : p));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/pos/${id}/approve`, {});
+      setPOs(prev => prev.map(p => p.id === id ? updated : p));
+      return;
+    } catch (err) {
+      console.warn('API approvePO failed, using mock data:', err);
     }
     setPOs(prev => prev.map(p => p.id === id ? {
       ...p, approvalStatus: 'approved', approvedBy, approvedAt: new Date().toISOString().split('T')[0], status: 'Active'
@@ -89,23 +89,23 @@ export function usePOs(currentUser: User | null) {
   }, []);
 
   const rejectPO = useCallback(async (id: string, reason = '') => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/pos/${id}/reject`, { reason });
-        setPOs(prev => prev.map(p => p.id === id ? updated : p));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/pos/${id}/reject`, { reason });
+      setPOs(prev => prev.map(p => p.id === id ? updated : p));
+      return;
+    } catch (err) {
+      console.warn('API rejectPO failed, using mock data:', err);
     }
     setPOs(prev => prev.map(p => p.id === id ? { ...p, approvalStatus: 'rejected', rejectionReason: reason, status: 'Draft' } : p));
   }, []);
 
   const lapsePO = useCallback(async (id: string) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/pos/${id}/lapse`, {});
-        setPOs(prev => prev.map(p => p.id === id ? updated : p));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/pos/${id}/lapse`, {});
+      setPOs(prev => prev.map(p => p.id === id ? updated : p));
+      return;
+    } catch (err) {
+      console.warn('API lapsePO failed, using mock data:', err);
     }
     setPOs(prev => prev.map(p => p.id === id ? { ...p, status: 'Lapsed' } : p));
   }, []);

@@ -10,19 +10,15 @@ function loadFromStorage(): VendorQuotation[] {
   return [];
 }
 
-const API_URL = import.meta.env.VITE_API_URL as string | undefined;
-
 export function useQuotations(currentUser: User | null) {
   const [vendorQuotations, setVendorQuotations] = useState<VendorQuotation[]>(loadFromStorage);
 
   const fetchQuotations = useCallback(async () => {
-    if (API_URL) {
-      try {
-        const data = await api.get('/api/quotations');
-        setVendorQuotations(data);
-        return;
-      } catch {}
-    }
+    try {
+      const data = await api.get('/api/quotations');
+      setVendorQuotations(data);
+      return;
+    } catch {}
     setVendorQuotations(loadFromStorage());
   }, []);
 
@@ -39,28 +35,26 @@ export function useQuotations(currentUser: User | null) {
     // First find if existing
     const existing = vendorQuotations.find(q => q.poId === poId && q.vendorId === currentUser.id && q.region === region);
 
-    if (API_URL) {
-      try {
-        if (existing) {
-          const updates = { items, status, submittedAt: status === 'submitted' ? now : existing.submittedAt };
-          const updated = await api.put(`/api/quotations/${existing.id}`, updates);
-          setVendorQuotations(prev => prev.map(q => q.id === existing.id ? updated : q));
-          return;
-        } else {
-          const newQ = {
-            poId, poNumber,
-            vendorId: currentUser.id,
-            vendorName: currentUser.name,
-            vendorCode: currentUser.territory?.vendorCode,
-            region, items, status,
-            submittedAt: status === 'submitted' ? now : undefined,
-          };
-          const created = await api.post('/api/quotations', newQ);
-          setVendorQuotations(prev => [created, ...prev]);
-          return;
-        }
-      } catch {}
-    }
+    try {
+      if (existing) {
+        const updates = { items, status, submittedAt: status === 'submitted' ? now : existing.submittedAt };
+        const updated = await api.put(`/api/quotations/${existing.id}`, updates);
+        setVendorQuotations(prev => prev.map(q => q.id === existing.id ? updated : q));
+        return;
+      } else {
+        const newQ = {
+          poId, poNumber,
+          vendorId: currentUser.id,
+          vendorName: currentUser.name,
+          vendorCode: currentUser.territory?.vendorCode,
+          region, items, status,
+          submittedAt: status === 'submitted' ? now : undefined,
+        };
+        const created = await api.post('/api/quotations', newQ);
+        setVendorQuotations(prev => [created, ...prev]);
+        return;
+      }
+    } catch {}
 
     setVendorQuotations(prev => {
       const existingInPrev = prev.find(q => q.poId === poId && q.vendorId === currentUser.id && q.region === region);
@@ -86,13 +80,11 @@ export function useQuotations(currentUser: User | null) {
   }, [currentUser, vendorQuotations]);
 
   const deleteVendorQuotation = useCallback(async (id: string) => {
-    if (API_URL) {
-      try {
-        await api.delete(`/api/quotations/${id}`);
-        setVendorQuotations(prev => prev.filter(q => q.id !== id));
-        return;
-      } catch {}
-    }
+    try {
+      await api.delete(`/api/quotations/${id}`);
+      setVendorQuotations(prev => prev.filter(q => q.id !== id));
+      return;
+    } catch {}
     setVendorQuotations(prev => prev.filter(q => q.id !== id));
   }, []);
 

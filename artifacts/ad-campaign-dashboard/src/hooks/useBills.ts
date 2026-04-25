@@ -22,23 +22,23 @@ export function useBills(currentUser: User | null) {
   }, [bills]);
 
   const fetchBills = useCallback(async () => {
-    if (API_URL) {
-      try {
-        const data = await api.get('/api/bills');
-        setBills(data);
-        return;
-      } catch {}
+    try {
+      const data = await api.get('/api/bills');
+      setBills(data);
+      return;
+    } catch (err) {
+      console.warn('API fetchBills failed, using mock data:', err);
     }
     setBills(loadFromStorage());
   }, []);
 
   const addBill = useCallback(async (billData: Omit<Bill, 'id'>): Promise<string> => {
-    if (API_URL) {
-      try {
-        const created = await api.post('/api/bills', billData);
-        setBills(prev => [created, ...prev]);
-        return created.id;
-      } catch {}
+    try {
+      const created = await api.post('/api/bills', billData);
+      setBills(prev => [created, ...prev]);
+      return created.id;
+    } catch (err) {
+      console.warn('API addBill failed, using mock data:', err);
     }
     const bill: Bill = { ...billData, id: `bill-${Date.now()}` };
     setBills(prev => [bill, ...prev]);
@@ -46,23 +46,23 @@ export function useBills(currentUser: User | null) {
   }, []);
 
   const updateBill = useCallback(async (id: string, updates: Partial<Bill>) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/bills/${id}`, updates);
-        setBills(prev => prev.map(b => b.id === id ? updated : b));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/bills/${id}`, updates);
+      setBills(prev => prev.map(b => b.id === id ? updated : b));
+      return;
+    } catch (err) {
+      console.warn('API updateBill failed, using mock data:', err);
     }
     setBills(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
   }, []);
 
   const submitBill = useCallback(async (id: string) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/bills/${id}/submit`, {});
-        setBills(prev => prev.map(b => b.id === id ? updated : b));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/bills/${id}/submit`, {});
+      setBills(prev => prev.map(b => b.id === id ? updated : b));
+      return;
+    } catch (err) {
+      console.warn('API submitBill failed, using mock data:', err);
     }
     setBills(prev => prev.map(b => b.id === id
       ? { ...b, status: 'submitted', submittedAt: new Date().toISOString().split('T')[0] }
@@ -71,12 +71,12 @@ export function useBills(currentUser: User | null) {
   }, []);
 
   const markBillPaid = useCallback(async (id: string, paymentId: string, paymentDate: string) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/bills/${id}/pay`, { paymentId, paymentDate });
-        setBills(prev => prev.map(b => b.id === id ? updated : b));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/bills/${id}/pay`, { paymentId, paymentDate });
+      setBills(prev => prev.map(b => b.id === id ? updated : b));
+      return;
+    } catch (err) {
+      console.warn('API markBillPaid failed, using mock data:', err);
     }
     setBills(prev => prev.map(b => b.id === id
       ? { ...b, status: 'paid', paymentId, paymentDate, paidAt: paymentDate }

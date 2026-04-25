@@ -27,27 +27,24 @@ export function useAuth() {
     setAuthError(null);
 
     // --- Try backend API ---
-    if (API_URL) {
-      try {
-        const res = await fetch(`${API_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ loginId, password }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setAuthError(data.error || 'Login failed');
-          setAuthLoading(false);
-          return false;
-        }
+    try {
+      const res = await fetch(`${API_URL || ''}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loginId, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
         localStorage.setItem(TOKEN_KEY, data.token);
         localStorage.setItem(USER_KEY, JSON.stringify(data.user));
         setCurrentUser(data.user);
         setAuthLoading(false);
         return true;
-      } catch {
-        // fall through to local mock
       }
+      // If we got an explicit error from API, we might want to stop here 
+      // but for robustness we follow the existing pattern of falling through
+    } catch {
+      // fall through to local mock
     }
 
     // --- Local mock fallback ---

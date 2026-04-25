@@ -211,3 +211,17 @@ export const vendorProfiles = pgTable('vendor_profiles', {
   ifsc: text('ifsc'),
   pan: text('pan'),
 });
+
+export const vendorQuotations = pgTable('vendor_quotations', {
+  id: text('id').primaryKey(),
+  poId: text('po_id').notNull(),
+  poNumber: text('po_number').notNull(),
+  vendorId: text('vendor_id').notNull(),
+  vendorName: text('vendor_name').notNull(),
+  vendorCode: text('vendor_code'),
+  region: text('region').notNull(),
+  items: jsonb('items').$type<any>().default([]).notNull(),
+  status: text('status').default('draft').notNull(),
+  submittedAt: text('submitted_at'),
+  createdAt: text('created_at').notNull(),
+});

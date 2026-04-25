@@ -16,6 +16,7 @@ import configRouter from './routes/config';
 import regionsRouter from './routes/regions';
 import vendorRouter from './routes/vendorProfiles';
 import receiverRouter from './routes/serviceReceivers';
+import quotationsRouter from './routes/quotations';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -59,6 +60,7 @@ app.route('/api/config', configRouter);
 app.route('/api/regions', regionsRouter);
 app.route('/api/vendor-profiles', vendorRouter);
 app.route('/api/service-receivers', receiverRouter);
+app.route('/api/quotations', quotationsRouter);
 
 // 404 fallback
 app.notFound((c) => c.json({ error: 'Not found' }, 404));

@@ -4,24 +4,34 @@ import * as schema from './schema';
 
 const { Pool } = pg;
 
-// Neon connection URL — hardcoded so Replit's injected DATABASE_URL doesn't interfere.
-// When deploying to Cloudflare Workers, the workers version (neon-http driver) is used instead.
-const NEON_URL = process.env.DATABASE_URL || 'postgresql://gnana:postgres@localhost:5432/api_worker';
+// Default local connection URL
+const LOCAL_URL = 'postgresql://gnana:postgres@localhost:5432/api_worker';
 
 let _pool: pg.Pool | null = null;
 
-function getPool(databaseUrl?: string): pg.Pool {
-  // Prefer explicitly passed URL, then NEON_URL (never use process.env which Replit overrides).
-  const url = databaseUrl || NEON_URL;
+/**
+ * Creates or retrieves a connection pool.
+ * @param databaseUrl The connection string (can be a Hyperdrive connection string)
+ */
+function getPool(databaseUrl: string): pg.Pool {
   if (!_pool) {
-    console.log('[db] Creating pool for host:', url.split('@')[1]?.split('/')[0]);
-    _pool = new Pool({ connectionString: url, ssl: url.includes('localhost') ? false : { rejectUnauthorized: false } });
+    console.log('[db] Creating pool');
+    _pool = new Pool({ 
+      connectionString: databaseUrl, 
+      ssl: databaseUrl.includes('localhost') ? false : { rejectUnauthorized: false } 
+    });
   }
   return _pool;
 }
 
+/**
+ * Returns a Drizzle DB instance.
+ * @param databaseUrl The connection string to use.
+ */
 export function getDb(databaseUrl?: string) {
-  const pool = getPool(databaseUrl);
+  // Use provided URL, or fall back to local default
+  const url = databaseUrl || LOCAL_URL;
+  const pool = getPool(url);
   return drizzle(pool, { schema });
 }
 

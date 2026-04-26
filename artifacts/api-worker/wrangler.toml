@@ -9,4 +9,8 @@ ip = "0.0.0.0"
 
 [vars]
 JWT_SECRET = "ad-campaign-jwt-secret-2026"
-DATABASE_URL = "postgresql://neondb_owner:npg_zA2Hf3LRiTDQ@ep-wild-butterfly-am3ofjd5.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL = "postgresql://neondb_owner:npg_3s7tWGCHelIp@ep-gentle-hill-aoir9brh.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "ecae7212a6414f7caf9f97977caf5376"

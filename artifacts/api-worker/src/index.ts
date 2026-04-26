@@ -41,7 +41,7 @@ app.use('/api/*', authMiddleware);
 
 app.get('/api/me', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const [user] = await db
     .select()
     .from(schema.users)

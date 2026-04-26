@@ -7,7 +7,7 @@ import type { Bindings } from '../types';
 const configRouter = new Hono<{ Bindings: Bindings }>();
 
 configRouter.get('/', async (c) => {
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const [productRows, cropRows, activityRows] = await Promise.all([
     db.select().from(schema.products),
     db.select().from(schema.crops),
@@ -24,7 +24,7 @@ configRouter.get('/', async (c) => {
 configRouter.post('/products', requireRoles('Owner', 'All India Manager'), async (c) => {
   const { name } = await c.req.json();
   if (!name) return c.json({ error: 'name is required' }, 400);
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   await db.insert(schema.products).values({ name }).onConflictDoNothing();
   return c.json({ name }, 201);
 });
@@ -33,7 +33,7 @@ configRouter.put('/products/:name', requireRoles('Owner', 'All India Manager'), 
   const oldName = decodeURIComponent(c.req.param('name'));
   const { name: newName } = await c.req.json();
   if (!newName) return c.json({ error: 'name is required' }, 400);
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   await db.delete(schema.products).where(eq(schema.products.name, oldName));
   await db.insert(schema.products).values({ name: newName }).onConflictDoNothing();
   return c.json({ name: newName });
@@ -41,7 +41,7 @@ configRouter.put('/products/:name', requireRoles('Owner', 'All India Manager'), 
 
 configRouter.delete('/products/:name', requireRoles('Owner', 'All India Manager'), async (c) => {
   const name = decodeURIComponent(c.req.param('name'));
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   await db.delete(schema.products).where(eq(schema.products.name, name));
   return c.json({ success: true });
 });
@@ -50,7 +50,7 @@ configRouter.delete('/products/:name', requireRoles('Owner', 'All India Manager'
 configRouter.post('/activities', requireRoles('Owner', 'All India Manager'), async (c) => {
   const { name } = await c.req.json();
   if (!name) return c.json({ error: 'name is required' }, 400);
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   await db.insert(schema.activities).values({ name }).onConflictDoNothing();
   return c.json({ name }, 201);
 });
@@ -59,7 +59,7 @@ configRouter.put('/activities/:name', requireRoles('Owner', 'All India Manager')
   const oldName = decodeURIComponent(c.req.param('name'));
   const { name: newName } = await c.req.json();
   if (!newName) return c.json({ error: 'name is required' }, 400);
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   await db.delete(schema.activities).where(eq(schema.activities.name, oldName));
   await db.insert(schema.activities).values({ name: newName }).onConflictDoNothing();
   return c.json({ name: newName });
@@ -67,7 +67,7 @@ configRouter.put('/activities/:name', requireRoles('Owner', 'All India Manager')
 
 configRouter.delete('/activities/:name', requireRoles('Owner', 'All India Manager'), async (c) => {
   const name = decodeURIComponent(c.req.param('name'));
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   await db.delete(schema.activities).where(eq(schema.activities.name, name));
   return c.json({ success: true });
 });
@@ -76,14 +76,14 @@ configRouter.delete('/activities/:name', requireRoles('Owner', 'All India Manage
 configRouter.post('/crops', requireRoles('Owner', 'All India Manager'), async (c) => {
   const { name } = await c.req.json();
   if (!name) return c.json({ error: 'name is required' }, 400);
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   await db.insert(schema.crops).values({ name }).onConflictDoNothing();
   return c.json({ name }, 201);
 });
 
 configRouter.delete('/crops/:name', requireRoles('Owner', 'All India Manager'), async (c) => {
   const name = decodeURIComponent(c.req.param('name'));
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   await db.delete(schema.crops).where(eq(schema.crops.name, name));
   return c.json({ success: true });
 });

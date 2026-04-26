@@ -7,14 +7,14 @@ import type { Bindings } from '../types';
 const regionsRouter = new Hono<{ Bindings: Bindings }>();
 
 regionsRouter.get('/', async (c) => {
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const regions = await db.select().from(schema.regions);
   return c.json(regions);
 });
 
 regionsRouter.post('/', requireRoles('Owner'), async (c) => {
   const data = await c.req.json();
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const region = {
     name: data.name,
     manager: data.manager || '',
@@ -28,7 +28,7 @@ regionsRouter.post('/', requireRoles('Owner'), async (c) => {
 
 regionsRouter.put('/:name', requireRoles('Owner'), async (c) => {
   const name = decodeURIComponent(c.req.param('name'));
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
   const [existing] = await db
     .select()
@@ -51,7 +51,7 @@ regionsRouter.put('/:name', requireRoles('Owner'), async (c) => {
 
 regionsRouter.delete('/:name', requireRoles('Owner'), async (c) => {
   const name = decodeURIComponent(c.req.param('name'));
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   await db.delete(schema.regions).where(eq(schema.regions.name, name));
   return c.json({ success: true });
 });

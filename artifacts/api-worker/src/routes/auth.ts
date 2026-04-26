@@ -19,7 +19,7 @@ authRouter.post('/login', async (c) => {
   if (!loginId || !password)
     return c.json({ error: 'loginId and password are required' }, 400);
 
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const [user] = await db
     .select()
     .from(schema.users)

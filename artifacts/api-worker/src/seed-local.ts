@@ -3,7 +3,7 @@ const { Pool } = pg;
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from './db/schema';
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://gnana:postgres@localhost:5432/api_worker';
+const DATABASE_URL = process.env.DATABASE_URL || '';
 
 const pool = new Pool({ connectionString: DATABASE_URL });
 const db = drizzle(pool, { schema });

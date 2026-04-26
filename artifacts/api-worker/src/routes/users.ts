@@ -10,7 +10,7 @@ const usersRouter = new Hono<{ Bindings: Bindings }>();
 
 usersRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const allUsers = await db.select().from(schema.users);
 
   if (GLOBAL_ROLES.includes(jwtUser.role))
@@ -42,7 +42,7 @@ usersRouter.get('/', async (c) => {
 });
 
 usersRouter.get('/:id', async (c) => {
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const [user] = await db
     .select()
     .from(schema.users)
@@ -53,7 +53,7 @@ usersRouter.get('/:id', async (c) => {
 
 usersRouter.post('/', requireRoles('Owner'), async (c) => {
   const data = await c.req.json();
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const id = uid('u');
   const hashedPassword = data.password
     ? await hashPassword(data.password)
@@ -86,7 +86,7 @@ usersRouter.post('/', requireRoles('Owner'), async (c) => {
 });
 
 usersRouter.put('/:id', requireRoles('Owner'), async (c) => {
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const id = c.req.param('id');
   const [existing] = await db
     .select()
@@ -119,7 +119,7 @@ usersRouter.put('/:id', requireRoles('Owner'), async (c) => {
 });
 
 usersRouter.delete('/:id', requireRoles('Owner'), async (c) => {
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const id = c.req.param('id');
   const [existing] = await db
     .select()

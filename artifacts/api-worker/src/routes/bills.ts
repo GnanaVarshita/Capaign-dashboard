@@ -9,7 +9,7 @@ const billsRouter = new Hono<{ Bindings: Bindings }>();
 
 billsRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const allBills = await db.select().from(schema.bills);
   const bills =
     jwtUser.role === 'Vendor'
@@ -19,7 +19,7 @@ billsRouter.get('/', async (c) => {
 });
 
 billsRouter.get('/:id', async (c) => {
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const [bill] = await db
     .select()
     .from(schema.bills)
@@ -34,7 +34,7 @@ billsRouter.post(
   async (c) => {
     const jwtUser = getUser(c);
     const data = await c.req.json();
-    const db = getDb(c.env?.DATABASE_URL);
+    const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
     const [caller] = await db
       .select()
@@ -101,7 +101,7 @@ billsRouter.post(
 billsRouter.put('/:id', async (c) => {
   const jwtUser = getUser(c);
   const billId = c.req.param('id');
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
   const [bill] = await db
     .select()
@@ -132,7 +132,7 @@ billsRouter.put('/:id', async (c) => {
 billsRouter.put('/:id/submit', requireRoles('Vendor', 'Owner'), async (c) => {
   const jwtUser = getUser(c);
   const billId = c.req.param('id');
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
   const [bill] = await db
     .select()
@@ -157,7 +157,7 @@ billsRouter.put(
   requireRoles('Owner', 'Finance Administrator', 'All India Manager'),
   async (c) => {
     const billId = c.req.param('id');
-    const db = getDb(c.env?.DATABASE_URL);
+    const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
     const [bill] = await db
       .select()
@@ -189,7 +189,7 @@ billsRouter.put(
 billsRouter.put('/:id/request-modification', requireRoles('Vendor'), async (c) => {
   const jwtUser = getUser(c);
   const billId = c.req.param('id');
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
   const [bill] = await db
     .select()
@@ -213,7 +213,7 @@ billsRouter.put(
   async (c) => {
     const jwtUser = getUser(c);
     const billId = c.req.param('id');
-    const db = getDb(c.env?.DATABASE_URL);
+    const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
     const [bill] = await db
       .select()

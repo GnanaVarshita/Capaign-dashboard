@@ -9,7 +9,7 @@ const receiverRouter = new Hono<{ Bindings: Bindings }>();
 
 receiverRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
   const allReceivers = await db.select().from(schema.serviceReceivers);
   const receivers =
     jwtUser.role === 'Vendor'
@@ -21,7 +21,7 @@ receiverRouter.get('/', async (c) => {
 receiverRouter.post('/', requireRoles('Vendor', 'Owner'), async (c) => {
   const jwtUser = getUser(c);
   const data = await c.req.json();
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
   const receiver = {
     id: uid('sr'),
@@ -42,7 +42,7 @@ receiverRouter.post('/', requireRoles('Vendor', 'Owner'), async (c) => {
 receiverRouter.put('/:id', async (c) => {
   const jwtUser = getUser(c);
   const receiverId = c.req.param('id');
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
   const [sr] = await db
     .select()
@@ -71,7 +71,7 @@ receiverRouter.put('/:id', async (c) => {
 receiverRouter.delete('/:id', async (c) => {
   const jwtUser = getUser(c);
   const receiverId = c.req.param('id');
-  const db = getDb(c.env?.DATABASE_URL);
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
 
   const [sr] = await db
     .select()

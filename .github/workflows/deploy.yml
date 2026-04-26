@@ -39,7 +39,7 @@ jobs:
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
           NODE_ENV: production
-          VITE_API_URL: https://api.example.com # You should update this to your actual API URL
+          VITE_API_URL: https://ad-campaign-api.gnanavarshitagv.workers.dev
         run: pnpm --filter @workspace/ad-campaign-dashboard build
 
       - name: Create 404.html for SPA support

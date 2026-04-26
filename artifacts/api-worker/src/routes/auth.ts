@@ -1,31 +1,44 @@
-import { Hono } from "hono";
-import { signToken } from "../auth/jwt";
-import { safeUser } from "../helpers";
-import { store } from "../store";
+import { Hono } from 'hono';
+import { signToken } from '../auth/jwt';
+import { verifyPassword } from '../auth/password';
+import { safeUser } from '../helpers';
+import { getDb, schema } from '../db/index';
+import { eq } from 'drizzle-orm';
+import type { Bindings } from '../types';
 
-const authRouter = new Hono();
+const DEFAULT_SECRET = 'ad-campaign-jwt-secret-2026';
+const authRouter = new Hono<{ Bindings: Bindings }>();
 
-authRouter.post("/login", async (c) => {
+authRouter.post('/login', async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const { loginId, password } = body as { loginId?: string; password?: string };
+  const { loginId, password } = body as {
+    loginId?: string;
+    password?: string;
+  };
 
   if (!loginId || !password)
-    return c.json({ error: "loginId and password are required" }, 400);
+    return c.json({ error: 'loginId and password are required' }, 400);
 
-  const user = store.users.find(
-    (u) =>
-      u.loginId.toLowerCase() === loginId.toLowerCase() &&
-      u.password === password &&
-      u.status === "active",
+  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const [user] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.loginId, loginId.toLowerCase()));
+
+  if (!user || user.status !== 'active')
+    return c.json({ error: 'Invalid credentials or account inactive' }, 401);
+
+  const valid = await verifyPassword(password, user.password);
+  if (!valid)
+    return c.json({ error: 'Invalid credentials or account inactive' }, 401);
+
+  const secret = c.env.JWT_SECRET || DEFAULT_SECRET;
+  const token = await signToken(
+    { id: user.id, role: user.role, loginId: user.loginId },
+    24,
+    secret,
   );
-  if (!user)
-    return c.json({ error: "Invalid credentials or account inactive" }, 401);
 
-  const token = await signToken({
-    id: user.id,
-    role: user.role,
-    loginId: user.loginId,
-  });
   return c.json({ token, user: safeUser(user) });
 });
 

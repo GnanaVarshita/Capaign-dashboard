@@ -1,38 +1,51 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
-const getHeaders = () => {
+const getHeaders = (): Record<string, string> => {
   const token = localStorage.getItem('auth_token');
   return {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
 
+async function handleResponse(res: Response) {
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      message = data.error || data.message || message;
+    } catch {
+      message = (await res.text()) || message;
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
 export const api = {
   async get(endpoint: string) {
-    const res = await fetch(`${API_URL}${endpoint}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    const res = await fetch(`${API_URL}${endpoint}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
   },
 
-  async post(endpoint: string, data: any) {
+  async post(endpoint: string, data: unknown) {
     const res = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return handleResponse(res);
   },
 
-  async put(endpoint: string, data: any) {
+  async put(endpoint: string, data: unknown) {
     const res = await fetch(`${API_URL}${endpoint}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return handleResponse(res);
   },
 
   async delete(endpoint: string) {
@@ -40,7 +53,6 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return handleResponse(res);
   },
 };

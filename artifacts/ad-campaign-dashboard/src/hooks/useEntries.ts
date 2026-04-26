@@ -73,12 +73,12 @@ export function useEntries(currentUser: User | null) {
   }, [currentUser, entries]);
 
   const fetchEntries = useCallback(async () => {
-    if (API_URL) {
-      try {
-        const data = await api.get('/api/entries');
-        setEntries(data);
-        return;
-      } catch {}
+    try {
+      const data = await api.get('/api/entries');
+      setEntries(data);
+      return;
+    } catch (err) {
+      console.warn('API fetchEntries failed, using mock data:', err);
     }
     setEntries(loadFromStorage());
   }, []);
@@ -88,24 +88,24 @@ export function useEntries(currentUser: User | null) {
       ...entryData, id: `e-${Date.now()}`, status: 'pending', decidedBy: '', decidedAt: ''
     };
 
-    if (API_URL) {
-      try {
-        const created = await api.post('/api/entries', entryData);
-        setEntries(prev => [created, ...prev]);
-        return created;
-      } catch {}
+    try {
+      const created = await api.post('/api/entries', entryData);
+      setEntries(prev => [created, ...prev]);
+      return created;
+    } catch (err) {
+      console.warn('API addEntry failed, using mock data:', err);
     }
     setEntries(prev => [optimistic, ...prev]);
     return optimistic;
   }, []);
 
   const updateEntry = useCallback(async (id: string, updates: Partial<Entry>, editedByName: string) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/entries/${id}`, { ...updates, editedBy: editedByName });
-        setEntries(prev => prev.map(e => e.id === id ? updated : e));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/entries/${id}`, { ...updates, editedBy: editedByName });
+      setEntries(prev => prev.map(e => e.id === id ? updated : e));
+      return;
+    } catch (err) {
+      console.warn('API updateEntry failed, using mock data:', err);
     }
     setEntries(prev => prev.map(e => e.id === id ? { ...e, ...updates, editedBy: editedByName } : e));
   }, []);
@@ -116,12 +116,12 @@ export function useEntries(currentUser: User | null) {
     decidedBy: string,
     decidedByDesignation?: string
   ) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/entries/${id}/status`, { status, remarks: '' });
-        setEntries(prev => prev.map(e => e.id === id ? updated : e));
-        return;
-      } catch {}
+    try {
+      const updated = await api.put(`/api/entries/${id}/status`, { status, remarks: '' });
+      setEntries(prev => prev.map(e => e.id === id ? updated : e));
+      return;
+    } catch (err) {
+      console.warn('API updateEntryStatus failed, using mock data:', err);
     }
     setEntries(prev => prev.map(e => e.id === id ? {
       ...e, status, decidedBy, decidedByDesignation, decidedAt: new Date().toISOString().split('T')[0]
@@ -129,12 +129,12 @@ export function useEntries(currentUser: User | null) {
   }, []);
 
   const deleteEntry = useCallback(async (id: string) => {
-    if (API_URL) {
-      try {
-        await api.delete(`/api/entries/${id}`);
-        setEntries(prev => prev.filter(e => e.id !== id));
-        return;
-      } catch {}
+    try {
+      await api.delete(`/api/entries/${id}`);
+      setEntries(prev => prev.filter(e => e.id !== id));
+      return;
+    } catch (err) {
+      console.warn('API deleteEntry failed, using mock data:', err);
     }
     setEntries(prev => prev.filter(e => e.id !== id));
   }, []);

@@ -16,25 +16,22 @@ function loadFromStorage() {
   return { serviceReceivers: [] as ServiceReceiver[], vendorProfiles: {} as Record<string, VendorProfile> };
 }
 
-const API_URL = import.meta.env.VITE_API_URL as string | undefined;
-
 export function useVendors(currentUser: User | null) {
   const stored = loadFromStorage();
   const [serviceReceivers, setServiceReceivers] = useState<ServiceReceiver[]>(stored.serviceReceivers);
   const [vendorProfiles, setVendorProfiles]     = useState<Record<string, VendorProfile>>(stored.vendorProfiles);
 
   const fetchVendorData = useCallback(async () => {
-    if (API_URL) {
-      try {
-        const [receivers, profiles] = await Promise.all([
-          api.get('/api/service-receivers'),
-          currentUser ? api.get(`/api/vendor-profiles`) : Promise.resolve({}),
-        ]);
-        setServiceReceivers(receivers);
-        setVendorProfiles(profiles);
-        return;
-      } catch {}
-    }
+    try {
+      const [receivers, profiles] = await Promise.all([
+        api.get('/api/service-receivers'),
+        currentUser ? api.get(`/api/vendor-profiles`) : Promise.resolve({}),
+      ]);
+      setServiceReceivers(receivers);
+      setVendorProfiles(profiles);
+      return;
+    } catch {}
+
     const stored = loadFromStorage();
     setServiceReceivers(stored.serviceReceivers);
     setVendorProfiles(stored.vendorProfiles);
@@ -42,36 +39,33 @@ export function useVendors(currentUser: User | null) {
 
   // --- Service Receivers ---
   const addServiceReceiver = useCallback(async (receiverData: Omit<ServiceReceiver, 'id'>) => {
-    if (API_URL) {
-      try {
-        const created = await api.post('/api/service-receivers', receiverData);
-        setServiceReceivers(prev => [...prev, created]);
-        return;
-      } catch {}
-    }
+    try {
+      const created = await api.post('/api/service-receivers', receiverData);
+      setServiceReceivers(prev => [...prev, created]);
+      return;
+    } catch {}
+
     const receiver: ServiceReceiver = { ...receiverData, id: `sr-${Date.now()}` };
     setServiceReceivers(prev => [...prev, receiver]);
   }, []);
 
   const updateServiceReceiver = useCallback(async (id: string, updates: Partial<ServiceReceiver>) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/service-receivers/${id}`, updates);
-        setServiceReceivers(prev => prev.map(r => r.id === id ? updated : r));
-        return;
-      } catch {}
-    }
+    try {
+      const updated = await api.put(`/api/service-receivers/${id}`, updates);
+      setServiceReceivers(prev => prev.map(r => r.id === id ? updated : r));
+      return;
+    } catch {}
+
     setServiceReceivers(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
   }, []);
 
   const deleteServiceReceiver = useCallback(async (id: string) => {
-    if (API_URL) {
-      try {
-        await api.delete(`/api/service-receivers/${id}`);
-        setServiceReceivers(prev => prev.filter(r => r.id !== id));
-        return;
-      } catch {}
-    }
+    try {
+      await api.delete(`/api/service-receivers/${id}`);
+      setServiceReceivers(prev => prev.filter(r => r.id !== id));
+      return;
+    } catch {}
+
     setServiceReceivers(prev => prev.filter(r => r.id !== id));
   }, []);
 
@@ -81,13 +75,12 @@ export function useVendors(currentUser: User | null) {
 
   // --- Vendor Profiles ---
   const updateVendorProfile = useCallback(async (vendorId: string, updates: Partial<VendorProfile>) => {
-    if (API_URL) {
-      try {
-        const updated = await api.put(`/api/vendor-profiles/${vendorId}`, updates);
-        setVendorProfiles(prev => ({ ...prev, [vendorId]: updated }));
-        return;
-      } catch {}
-    }
+    try {
+      const updated = await api.put(`/api/vendor-profiles/${vendorId}`, updates);
+      setVendorProfiles(prev => ({ ...prev, [vendorId]: updated }));
+      return;
+    } catch {}
+
     setVendorProfiles(prev => ({
       ...prev,
       [vendorId]: {

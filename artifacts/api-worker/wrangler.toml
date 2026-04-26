@@ -1,12 +1,16 @@
 name = "ad-campaign-api"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8000
+ip = "0.0.0.0"
 
 [vars]
 JWT_SECRET = "ad-campaign-jwt-secret-2026"
+DATABASE_URL = "postgresql://neondb_owner:npg_3s7tWGCHelIp@ep-gentle-hill-aoir9brh.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
 
-# Uncomment when connecting to Neon DB:
-# [[hyperdrive]]
-# binding = "DB"
-# id = "<your-hyperdrive-id>"
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "ecae7212a6414f7caf9f97977caf5376"

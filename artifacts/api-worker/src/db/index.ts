@@ -11,28 +11,36 @@ let _pool: pg.Pool | null = null;
 
 /**
  * Creates or retrieves a connection pool.
- * @param databaseUrl The connection string (can be a Hyperdrive connection string)
  */
 function getPool(databaseUrl: string): pg.Pool {
+  const isHyperdrive = databaseUrl.includes('hyperdrive');
+  
   if (!_pool) {
-    console.log('[db] Creating pool');
+    console.log('[db] Creating new pool. Hyperdrive:', isHyperdrive);
     _pool = new Pool({ 
-      connectionString: databaseUrl, 
-      ssl: databaseUrl.includes('localhost') ? false : { rejectUnauthorized: false } 
+      connectionString: databaseUrl,
+      // Hyperdrive handles SSL to the origin; the Worker-to-Hyperdrive connection should be plain
+      ssl: (databaseUrl.includes('localhost') || isHyperdrive) ? false : { rejectUnauthorized: false },
+      max: 1 // Hyperdrive works best with small pool sizes per worker
+    });
+
+    _pool.on('error', (err) => {
+      console.error('Unexpected error on idle client', err);
+      _pool = null; // Reset pool on error so it can be recreated
     });
   }
   return _pool;
 }
 
-/**
- * Returns a Drizzle DB instance.
- * @param databaseUrl The connection string to use.
- */
 export function getDb(databaseUrl?: string) {
-  // Use provided URL, or fall back to local default
   const url = databaseUrl || LOCAL_URL;
-  const pool = getPool(url);
-  return drizzle(pool, { schema });
+  try {
+    const pool = getPool(url);
+    return drizzle(pool, { schema });
+  } catch (err) {
+    console.error('[db] Failed to initialize Drizzle:', err);
+    throw err;
+  }
 }
 
 export type DB = ReturnType<typeof getDb>;

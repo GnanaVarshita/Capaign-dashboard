@@ -1,5 +1,7 @@
 export type Bindings = {
   DATABASE_URL: string;
   JWT_SECRET: string;
-  HYPERDRIVE: Hyperdrive;
+  HYPERDRIVE: {
+    connectionString: string;
+  };
 };

@@ -14,7 +14,7 @@ function mapPO(po: typeof schema.pos.$inferSelect) {
 
 posRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const [allPos, allUsers, allEntries] = await Promise.all([
     db.select().from(schema.pos),
     db.select().from(schema.users),
@@ -27,7 +27,7 @@ posRouter.get('/', async (c) => {
 
 posRouter.get('/:id', async (c) => {
   const idOrNum = c.req.param('id');
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const [po] = await db
     .select()
     .from(schema.pos)
@@ -41,7 +41,7 @@ posRouter.get('/:id', async (c) => {
 posRouter.post('/', requireRoles('Owner', 'All India Manager'), async (c) => {
   const jwtUser = getUser(c);
   const data = await c.req.json();
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [caller] = await db
     .select()
@@ -74,7 +74,7 @@ posRouter.post('/', requireRoles('Owner', 'All India Manager'), async (c) => {
 
 posRouter.put('/:id', requireRoles('Owner', 'All India Manager'), async (c) => {
   const id = c.req.param('id');
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [existing] = await db
     .select()
@@ -103,7 +103,7 @@ posRouter.put(
   async (c) => {
     const jwtUser = getUser(c);
     const id = c.req.param('id');
-    const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+    const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
     const [existing] = await db
       .select()
@@ -136,7 +136,7 @@ posRouter.put(
   requireRoles('Owner', 'All India Manager'),
   async (c) => {
     const id = c.req.param('id');
-    const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+    const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
     const [existing] = await db
       .select()
@@ -162,7 +162,7 @@ posRouter.put(
 
 posRouter.put('/:id/lapse', requireRoles('Owner'), async (c) => {
   const id = c.req.param('id');
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [existing] = await db
     .select()

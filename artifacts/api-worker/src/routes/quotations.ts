@@ -7,14 +7,14 @@ const router = new Hono<{ Bindings: Bindings }>();
 
 // GET /api/quotations
 router.get('/', async (c) => {
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const quotations = await db.select().from(schema.vendorQuotations).orderBy(desc(schema.vendorQuotations.createdAt));
   return c.json(quotations);
 });
 
 // POST /api/quotations
 router.post('/', async (c) => {
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const body = await c.req.json();
   const [created] = await db.insert(schema.vendorQuotations).values({
     ...body,
@@ -26,7 +26,7 @@ router.post('/', async (c) => {
 
 // PUT /api/quotations/:id
 router.put('/:id', async (c) => {
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const id = c.req.param('id');
   const body = await c.req.json();
 
@@ -42,7 +42,7 @@ router.put('/:id', async (c) => {
 
 // DELETE /api/quotations/:id
 router.delete('/:id', async (c) => {
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const id = c.req.param('id');
   await db.delete(schema.vendorQuotations).where(eq(schema.vendorQuotations.id, id));
   return c.json({ success: true });

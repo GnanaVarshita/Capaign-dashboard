@@ -9,7 +9,7 @@ const budgetRouter = new Hono<{ Bindings: Bindings }>();
 
 budgetRouter.get('/groups', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const allGroups = await db.select().from(schema.budgetRequestGroups);
   const groups =
     jwtUser.role === 'Area Manager' || jwtUser.role === 'Vendor'
@@ -24,7 +24,7 @@ budgetRouter.post(
   async (c) => {
     const jwtUser = getUser(c);
     const data = await c.req.json();
-    const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+    const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
     const [caller] = await db
       .select()
@@ -57,7 +57,7 @@ budgetRouter.put(
   requireRoles('Owner', 'All India Manager'),
   async (c) => {
     const groupId = c.req.param('id');
-    const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+    const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
     const [existing] = await db
       .select()
@@ -77,7 +77,7 @@ budgetRouter.put(
 
 budgetRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const [allRequests, allUsers] = await Promise.all([
     db.select().from(schema.budgetRequests),
     db.select().from(schema.users),
@@ -106,7 +106,7 @@ budgetRouter.get('/', async (c) => {
 budgetRouter.post('/', requireRoles('Area Manager', 'Owner'), async (c) => {
   const jwtUser = getUser(c);
   const data = await c.req.json();
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [caller] = await db
     .select()
@@ -152,7 +152,7 @@ budgetRouter.post('/', requireRoles('Area Manager', 'Owner'), async (c) => {
 budgetRouter.put('/:id/approve', requireRoles(...APPROVER_ROLES), async (c) => {
   const jwtUser = getUser(c);
   const reqId = c.req.param('id');
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [req] = await db
     .select()
@@ -205,7 +205,7 @@ budgetRouter.put('/:id/approve', requireRoles(...APPROVER_ROLES), async (c) => {
 
 budgetRouter.put('/:id', async (c) => {
   const reqId = c.req.param('id');
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [existing] = await db
     .select()

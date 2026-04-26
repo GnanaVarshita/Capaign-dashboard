@@ -8,7 +8,7 @@ const vendorRouter = new Hono<{ Bindings: Bindings }>();
 
 vendorRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   if (jwtUser.role === 'Vendor') {
     const [profile] = await db
@@ -30,7 +30,7 @@ vendorRouter.get('/:vendorId', async (c) => {
   if (jwtUser.role === 'Vendor' && jwtUser.id !== vid)
     return c.json({ error: 'Forbidden' }, 403);
 
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const [profile] = await db
     .select()
     .from(schema.vendorProfiles)
@@ -47,7 +47,7 @@ vendorRouter.put('/:vendorId', async (c) => {
     return c.json({ error: 'Forbidden' }, 403);
 
   const updates = await c.req.json();
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [existing] = await db
     .select()

@@ -1,46 +1,19 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
 
-const { Pool } = pg;
-
-// Default local connection URL
+// Default local connection URL (for local dev only)
 const LOCAL_URL = 'postgresql://gnana:postgres@localhost:5432/api_worker';
 
-let _pool: pg.Pool | null = null;
-
-/**
- * Creates or retrieves a connection pool.
- */
-function getPool(databaseUrl: string): pg.Pool {
-  const isHyperdrive = databaseUrl.includes('hyperdrive');
-  
-  if (!_pool) {
-    console.log('[db] Creating new pool. Hyperdrive:', isHyperdrive);
-    _pool = new Pool({ 
-      connectionString: databaseUrl,
-      // Hyperdrive handles SSL to the origin; the Worker-to-Hyperdrive connection should be plain
-      ssl: (databaseUrl.includes('localhost') || isHyperdrive) ? false : { rejectUnauthorized: false },
-      max: 1 // Hyperdrive works best with small pool sizes per worker
-    });
-
-    _pool.on('error', (err) => {
-      console.error('Unexpected error on idle client', err);
-      _pool = null; // Reset pool on error so it can be recreated
-    });
-  }
-  return _pool;
-}
-
 export function getDb(databaseUrl?: string) {
+  // Use Hyperdrive if available, otherwise use the direct URL
   const url = databaseUrl || LOCAL_URL;
-  try {
-    const pool = getPool(url);
-    return drizzle(pool, { schema });
-  } catch (err) {
-    console.error('[db] Failed to initialize Drizzle:', err);
-    throw err;
-  }
+  
+  // Create the Neon HTTP client
+  // Note: Hyperdrive currently works best with TCP (node-postgres), 
+  // but if that is hanging, we use the Neon HTTP driver directly for stability.
+  const client = neon(url);
+  return drizzle(client, { schema });
 }
 
 export type DB = ReturnType<typeof getDb>;

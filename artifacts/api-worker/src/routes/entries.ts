@@ -9,7 +9,7 @@ const entriesRouter = new Hono<{ Bindings: Bindings }>();
 
 entriesRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const [allEntries, allUsers] = await Promise.all([
     db.select().from(schema.entries),
     db.select().from(schema.users),
@@ -21,7 +21,7 @@ entriesRouter.get('/', async (c) => {
 
 entriesRouter.get('/pending', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const [allEntries, allUsers] = await Promise.all([
     db.select().from(schema.entries),
     db.select().from(schema.users),
@@ -33,7 +33,7 @@ entriesRouter.get('/pending', async (c) => {
 
 entriesRouter.get('/mine', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const myEntries = await db
     .select()
     .from(schema.entries)
@@ -47,7 +47,7 @@ entriesRouter.post(
   async (c) => {
     const jwtUser = getUser(c);
     const data = await c.req.json();
-    const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+    const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
     const id = uid('e');
     const entry = {
       id,
@@ -92,7 +92,7 @@ entriesRouter.post(
 entriesRouter.put('/:id', async (c) => {
   const jwtUser = getUser(c);
   const entryId = c.req.param('id');
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [entry] = await db
     .select()
@@ -122,7 +122,7 @@ entriesRouter.put('/:id', async (c) => {
 entriesRouter.put('/:id/status', requireRoles(...APPROVER_ROLES), async (c) => {
   const jwtUser = getUser(c);
   const entryId = c.req.param('id');
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [entry] = await db
     .select()
@@ -160,7 +160,7 @@ entriesRouter.put('/:id/status', requireRoles(...APPROVER_ROLES), async (c) => {
 entriesRouter.delete('/:id', async (c) => {
   const jwtUser = getUser(c);
   const entryId = c.req.param('id');
-  const db = getDb(c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
 
   const [entry] = await db
     .select()

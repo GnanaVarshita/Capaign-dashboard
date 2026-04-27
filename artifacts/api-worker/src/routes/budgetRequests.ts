@@ -6,8 +6,9 @@ import { eq, and } from 'drizzle-orm';
 import type { Bindings } from '../types';
 
 const budgetRouter = new Hono<{ Bindings: Bindings }>();
+const groupRouter = new Hono<{ Bindings: Bindings }>();
 
-budgetRouter.get('/groups', async (c) => {
+groupRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
   const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
   const allGroups = await db.select().from(schema.budgetRequestGroups);
@@ -18,8 +19,8 @@ budgetRouter.get('/groups', async (c) => {
   return c.json(groups);
 });
 
-budgetRouter.post(
-  '/groups',
+groupRouter.post(
+  '/',
   requireRoles('Owner', 'All India Manager'),
   async (c) => {
     const jwtUser = getUser(c);
@@ -52,8 +53,8 @@ budgetRouter.post(
   },
 );
 
-budgetRouter.put(
-  '/groups/:id/close',
+groupRouter.put(
+  '/:id/close',
   requireRoles('Owner', 'All India Manager'),
   async (c) => {
     const groupId = c.req.param('id');
@@ -226,4 +227,5 @@ budgetRouter.put('/:id', async (c) => {
   return c.json(updated);
 });
 
+export { budgetRouter, groupRouter };
 export default budgetRouter;

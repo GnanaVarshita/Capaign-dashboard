@@ -1,25 +1,71 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Entry, User } from '../types';
-import { INITIAL_ENTRIES } from '../lib/mock-data';
 import { api } from '../lib/api';
 
-function loadFromStorage(): Entry[] {
-  try {
-    const raw = localStorage.getItem('ad_campaign_db');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return parsed.entries ?? INITIAL_ENTRIES;
-    }
-  } catch {}
-  return INITIAL_ENTRIES;
-}
-
-const API_URL = import.meta.env.VITE_API_URL as string | undefined;
+const ENTRIES_QUERY_KEY = ['entries'];
 
 export function useEntries(currentUser: User | null) {
-  const [entries, setEntries] = useState<Entry[]>(loadFromStorage);
+  const queryClient = useQueryClient();
 
-  // Scope entries client-side (mirrors backend scoping when API is unavailable)
+  const { data: entries = [], refetch: fetchEntries } = useQuery<Entry[]>({
+    queryKey: ENTRIES_QUERY_KEY,
+    queryFn: () => api.get('/api/entries'),
+    enabled: !!currentUser,
+  });
+
+  const addEntryMutation = useMutation({
+    mutationFn: (entryData: Omit<Entry, 'id' | 'status' | 'decidedBy' | 'decidedAt'>) => 
+      api.post('/api/entries', entryData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ENTRIES_QUERY_KEY });
+    },
+  });
+
+  const updateEntryMutation = useMutation({
+    mutationFn: ({ id, updates, editedBy }: { id: string; updates: Partial<Entry>; editedBy: string }) => 
+      api.put(`/api/entries/${id}`, { ...updates, editedBy }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ENTRIES_QUERY_KEY });
+    },
+  });
+
+  const updateEntryStatusMutation = useMutation({
+    mutationFn: ({ id, status, remarks }: { id: string; status: 'approved' | 'rejected'; remarks?: string }) => 
+      api.put(`/api/entries/${id}/status`, { status, remarks: remarks || '' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ENTRIES_QUERY_KEY });
+    },
+  });
+
+  const deleteEntryMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/entries/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ENTRIES_QUERY_KEY });
+    },
+  });
+
+  const addEntry = useCallback(async (entryData: Omit<Entry, 'id' | 'status' | 'decidedBy' | 'decidedAt'>) => {
+    return await addEntryMutation.mutateAsync(entryData);
+  }, [addEntryMutation]);
+
+  const updateEntry = useCallback(async (id: string, updates: Partial<Entry>, editedByName: string) => {
+    await updateEntryMutation.mutateAsync({ id, updates, editedBy: editedByName });
+  }, [updateEntryMutation]);
+
+  const updateEntryStatus = useCallback(async (
+    id: string,
+    status: 'approved' | 'rejected',
+    decidedBy: string,
+    decidedByDesignation?: string
+  ) => {
+    await updateEntryStatusMutation.mutateAsync({ id, status });
+  }, [updateEntryStatusMutation]);
+
+  const deleteEntry = useCallback(async (id: string) => {
+    await deleteEntryMutation.mutateAsync(id);
+  }, [deleteEntryMutation]);
+
   const getScopedEntries = useCallback((allUsers: User[]): Entry[] => {
     if (!currentUser) return [];
     const userMap = Object.fromEntries(allUsers.map(u => [u.id, u]));
@@ -72,78 +118,7 @@ export function useEntries(currentUser: User | null) {
     return [];
   }, [currentUser, entries]);
 
-  const fetchEntries = useCallback(async () => {
-    try {
-      const data = await api.get('/api/entries');
-      setEntries(data);
-      return;
-    } catch (err) {
-      console.warn('API fetchEntries failed, using mock data:', err);
-    }
-    setEntries(loadFromStorage());
-  }, []);
-
-  const addEntry = useCallback(async (entryData: Omit<Entry, 'id' | 'status' | 'decidedBy' | 'decidedAt'>) => {
-    const optimistic: Entry = {
-      ...entryData, id: `e-${Date.now()}`, status: 'pending', decidedBy: '', decidedAt: ''
-    };
-
-    try {
-      const created = await api.post('/api/entries', entryData);
-      setEntries(prev => [created, ...prev]);
-      return created;
-    } catch (err) {
-      console.warn('API addEntry failed, using mock data:', err);
-    }
-    setEntries(prev => [optimistic, ...prev]);
-    return optimistic;
-  }, []);
-
-  const updateEntry = useCallback(async (id: string, updates: Partial<Entry>, editedByName: string) => {
-    try {
-      const updated = await api.put(`/api/entries/${id}`, { ...updates, editedBy: editedByName });
-      setEntries(prev => prev.map(e => e.id === id ? updated : e));
-      return;
-    } catch (err) {
-      console.warn('API updateEntry failed, using mock data:', err);
-    }
-    setEntries(prev => prev.map(e => e.id === id ? { ...e, ...updates, editedBy: editedByName } : e));
-  }, []);
-
-  const updateEntryStatus = useCallback(async (
-    id: string,
-    status: 'approved' | 'rejected',
-    decidedBy: string,
-    decidedByDesignation?: string
-  ) => {
-    try {
-      const updated = await api.put(`/api/entries/${id}/status`, { status, remarks: '' });
-      setEntries(prev => prev.map(e => e.id === id ? updated : e));
-      return;
-    } catch (err) {
-      console.warn('API updateEntryStatus failed, using mock data:', err);
-    }
-    setEntries(prev => prev.map(e => e.id === id ? {
-      ...e, status, decidedBy, decidedByDesignation, decidedAt: new Date().toISOString().split('T')[0]
-    } : e));
-  }, []);
-
-  const deleteEntry = useCallback(async (id: string) => {
-    try {
-      await api.delete(`/api/entries/${id}`);
-      setEntries(prev => prev.filter(e => e.id !== id));
-      return;
-    } catch (err) {
-      console.warn('API deleteEntry failed, using mock data:', err);
-    }
-    setEntries(prev => prev.filter(e => e.id !== id));
-  }, []);
-
-  const calcLiveSpent = useCallback((filters: {
-    po?: string; region?: string; zone?: string; area?: string;
-    areaManagerId?: string; product?: string; activity?: string;
-    vendorId?: string; crop?: string; dateFrom?: string; dateTo?: string;
-  }, allUsers: User[]) => {
+  const calcLiveSpent = useCallback((filters: any, allUsers: User[]) => {
     return entries.filter(e => {
       if (e.status !== 'approved') return false;
       if (filters.po && e.po !== filters.po) return false;
@@ -166,10 +141,7 @@ export function useEntries(currentUser: User | null) {
     }).reduce((s, e) => s + e.amount, 0);
   }, [entries]);
 
-  const calcPendingSpent = useCallback((filters: {
-    po?: string; region?: string; zone?: string; area?: string;
-    product?: string; activity?: string; vendorId?: string;
-  }, allUsers: User[]) => {
+  const calcPendingSpent = useCallback((filters: any, allUsers: User[]) => {
     return entries.filter(e => {
       if (e.status !== 'pending') return false;
       if (filters.po && e.po !== filters.po) return false;
@@ -190,7 +162,7 @@ export function useEntries(currentUser: User | null) {
   }, [entries]);
 
   return {
-    entries, setEntries,
+    entries, 
     fetchEntries,
     addEntry, updateEntry, updateEntryStatus, deleteEntry,
     getScopedEntries, getMyEntries, getVisiblePendingEntries,

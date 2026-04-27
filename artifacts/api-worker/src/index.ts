@@ -26,6 +26,7 @@ app.use(
     origin: '*',
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400,
   }),
 );
 

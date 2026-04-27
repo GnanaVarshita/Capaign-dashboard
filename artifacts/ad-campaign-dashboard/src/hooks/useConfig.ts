@@ -1,112 +1,87 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Region } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_CROPS, INITIAL_ACTIVITIES, INITIAL_REGIONS } from '../lib/mock-data';
 import { api } from '../lib/api';
 
-function loadFromStorage() {
-  try {
-    const raw = localStorage.getItem('ad_campaign_db');
-    if (raw) {
-      const d = JSON.parse(raw);
-      return {
-        products:   d.products   ?? INITIAL_PRODUCTS,
-        crops:      d.crops      ?? INITIAL_CROPS,
-        activities: d.activities ?? INITIAL_ACTIVITIES,
-        regions:    d.regions    ?? INITIAL_REGIONS,
-      };
-    }
-  } catch {}
-  return { products: INITIAL_PRODUCTS, crops: INITIAL_CROPS, activities: INITIAL_ACTIVITIES, regions: INITIAL_REGIONS };
-}
+const CONFIG_QUERY_KEY = ['config'];
+const REGIONS_QUERY_KEY = ['regions'];
 
 export function useConfig() {
-  const stored = loadFromStorage();
-  const [products, setProducts]     = useState<string[]>(stored.products);
-  const [crops, setCrops]           = useState<string[]>(stored.crops);
-  const [activities, setActivities] = useState<string[]>(stored.activities);
-  const [regions, setRegions]       = useState<Region[]>(stored.regions);
+  const queryClient = useQueryClient();
 
-  const fetchConfig = useCallback(async () => {
-    try {
-      const data = await api.get('/api/config');
-      if (data.products)   setProducts(data.products);
-      if (data.activities) setActivities(data.activities);
-      if (data.crops)      setCrops(data.crops);
-      const regionData = await api.get('/api/regions');
-      setRegions(regionData);
-      return;
-    } catch {}
+  const { data: config = { products: [], crops: [], activities: [] } } = useQuery({
+    queryKey: CONFIG_QUERY_KEY,
+    queryFn: () => api.get('/api/config'),
+  });
 
-    const fresh = loadFromStorage();
-    setProducts(fresh.products);
-    setCrops(fresh.crops);
-    setActivities(fresh.activities);
-    setRegions(fresh.regions);
-  }, []);
+  const { data: regions = [] } = useQuery<Region[]>({
+    queryKey: REGIONS_QUERY_KEY,
+    queryFn: () => api.get('/api/regions'),
+  });
 
-  // --- Products ---
-  const addProduct = useCallback(async (name: string) => {
-    if (products.includes(name)) return;
-    try { await api.post('/api/config/products', { name }); } catch {}
-    setProducts(prev => [...prev, name]);
-  }, [products]);
+  const products = config.products || [];
+  const crops = config.crops || [];
+  const activities = config.activities || [];
 
-  const updateProduct = useCallback(async (oldName: string, newName: string) => {
-    try { await api.put(`/api/config/products/${encodeURIComponent(oldName)}`, { name: newName }); } catch {}
-    setProducts(prev => prev.map(p => p === oldName ? newName : p));
-  }, []);
+  const fetchConfig = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: REGIONS_QUERY_KEY });
+  }, [queryClient]);
 
-  const deleteProduct = useCallback(async (name: string) => {
-    try { await api.delete(`/api/config/products/${encodeURIComponent(name)}`); } catch {}
-    setProducts(prev => prev.filter(p => p !== name));
-  }, []);
+  // --- Mutations ---
+  const addProductMutation = useMutation({
+    mutationFn: (name: string) => api.post('/api/config/products', { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
+  });
 
-  // --- Activities ---
-  const addActivity = useCallback(async (name: string) => {
-    if (activities.includes(name)) return;
-    try { await api.post('/api/config/activities', { name }); } catch {}
-    setActivities(prev => [...prev, name]);
-  }, [activities]);
+  const updateProductMutation = useMutation({
+    mutationFn: ({ oldName, newName }: { oldName: string; newName: string }) => 
+      api.put(`/api/config/products/${encodeURIComponent(oldName)}`, { name: newName }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
+  });
 
-  const updateActivity = useCallback(async (oldName: string, newName: string) => {
-    try { await api.put(`/api/config/activities/${encodeURIComponent(oldName)}`, { name: newName }); } catch {}
-    setActivities(prev => prev.map(a => a === oldName ? newName : a));
-  }, []);
+  const deleteProductMutation = useMutation({
+    mutationFn: (name: string) => api.delete(`/api/config/products/${encodeURIComponent(name)}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
+  });
 
-  const deleteActivity = useCallback(async (name: string) => {
-    try { await api.delete(`/api/config/activities/${encodeURIComponent(name)}`); } catch {}
-    setActivities(prev => prev.filter(a => a !== name));
-  }, []);
+  const addActivityMutation = useMutation({
+    mutationFn: (name: string) => api.post('/api/config/activities', { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
+  });
 
-  // --- Crops ---
-  const addCrop = useCallback(async (name: string) => {
-    if (crops.includes(name)) return;
-    try { await api.post('/api/config/crops', { name }); } catch {}
-    setCrops(prev => [...prev, name]);
-  }, [crops]);
+  const updateActivityMutation = useMutation({
+    mutationFn: ({ oldName, newName }: { oldName: string; newName: string }) => 
+      api.put(`/api/config/activities/${encodeURIComponent(oldName)}`, { name: newName }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
+  });
 
-  const deleteCrop = useCallback(async (name: string) => {
-    try { await api.delete(`/api/config/crops/${encodeURIComponent(name)}`); } catch {}
-    setCrops(prev => prev.filter(c => c !== name));
-  }, []);
+  const deleteActivityMutation = useMutation({
+    mutationFn: (name: string) => api.delete(`/api/config/activities/${encodeURIComponent(name)}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
+  });
 
-  // --- Regions ---
-  const addRegion = useCallback(async (region: Region) => {
-    try { await api.post('/api/regions', region); } catch {}
-    setRegions(prev => [...prev, region]);
-  }, []);
+  const addRegionMutation = useMutation({
+    mutationFn: (region: Region) => api.post('/api/regions', region),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: REGIONS_QUERY_KEY }),
+  });
 
-  const updateRegion = useCallback(async (name: string, updates: Partial<Region>) => {
-    try { await api.put(`/api/regions/${encodeURIComponent(name)}`, updates); } catch {}
-    setRegions(prev => prev.map(r => r.name === name ? { ...r, ...updates } : r));
-  }, []);
+  const updateRegionMutation = useMutation({
+    mutationFn: ({ name, updates }: { name: string; updates: Partial<Region> }) => 
+      api.put(`/api/regions/${encodeURIComponent(name)}`, updates),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: REGIONS_QUERY_KEY }),
+  });
 
   return {
-    products, setProducts, crops, setCrops, activities, setActivities, regions, setRegions,
+    products, crops, activities, regions,
     fetchConfig,
-    addProduct, updateProduct, deleteProduct,
-    addActivity, updateActivity, deleteActivity,
-    addCrop, deleteCrop,
-    addRegion, updateRegion,
+    addProduct: (name: string) => addProductMutation.mutateAsync(name),
+    updateProduct: (oldName: string, newName: string) => updateProductMutation.mutateAsync({ oldName, newName }),
+    deleteProduct: (name: string) => deleteProductMutation.mutateAsync(name),
+    addActivity: (name: string) => addActivityMutation.mutateAsync(name),
+    updateActivity: (oldName: string, newName: string) => updateActivityMutation.mutateAsync({ oldName, newName }),
+    deleteActivity: (name: string) => deleteActivityMutation.mutateAsync(name),
+    addRegion: (region: Region) => addRegionMutation.mutateAsync(region),
+    updateRegion: (name: string, updates: Partial<Region>) => updateRegionMutation.mutateAsync({ name, updates }),
   };
 }

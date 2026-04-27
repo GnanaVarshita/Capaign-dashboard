@@ -1,11 +1,18 @@
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
-const getHeaders = (): Record<string, string> => {
+const getHeaders = (method: string = 'GET'): Record<string, string> => {
   const token = localStorage.getItem('auth_token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+  const headers: Record<string, string> = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  if (method !== 'GET' && method !== 'DELETE') {
+    headers['Content-Type'] = 'application/json';
+  }
+  
+  return headers;
 };
 
 async function handleResponse(res: Response) {
@@ -25,7 +32,8 @@ async function handleResponse(res: Response) {
 export const api = {
   async get(endpoint: string) {
     const res = await fetch(`${API_URL}${endpoint}`, {
-      headers: getHeaders(),
+      method: 'GET',
+      headers: getHeaders('GET'),
     });
     return handleResponse(res);
   },
@@ -33,7 +41,7 @@ export const api = {
   async post(endpoint: string, data: unknown) {
     const res = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getHeaders('POST'),
       body: JSON.stringify(data),
     });
     return handleResponse(res);
@@ -42,7 +50,7 @@ export const api = {
   async put(endpoint: string, data: unknown) {
     const res = await fetch(`${API_URL}${endpoint}`, {
       method: 'PUT',
-      headers: getHeaders(),
+      headers: getHeaders('PUT'),
       body: JSON.stringify(data),
     });
     return handleResponse(res);
@@ -51,7 +59,7 @@ export const api = {
   async delete(endpoint: string) {
     const res = await fetch(`${API_URL}${endpoint}`, {
       method: 'DELETE',
-      headers: getHeaders(),
+      headers: getHeaders('DELETE'),
     });
     return handleResponse(res);
   },

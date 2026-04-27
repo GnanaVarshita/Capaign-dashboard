@@ -1,20 +1,75 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PO, User, Entry } from '../types';
-import { INITIAL_POS } from '../lib/mock-data';
 import { api } from '../lib/api';
 
-function loadFromStorage(): PO[] {
-  try {
-    const raw = localStorage.getItem('ad_campaign_db');
-    if (raw) return JSON.parse(raw).pos ?? INITIAL_POS;
-  } catch {}
-  return INITIAL_POS;
-}
-
-const API_URL = import.meta.env.VITE_API_URL as string | undefined;
+const POS_QUERY_KEY = ['pos'];
 
 export function usePOs(currentUser: User | null) {
-  const [pos, setPOs] = useState<PO[]>(loadFromStorage);
+  const queryClient = useQueryClient();
+
+  const { data: pos = [], refetch: fetchPOs } = useQuery<PO[]>({
+    queryKey: POS_QUERY_KEY,
+    queryFn: () => api.get('/api/pos'),
+    enabled: !!currentUser,
+  });
+
+  const addPOMutation = useMutation({
+    mutationFn: (poData: Omit<PO, 'id'>) => api.post('/api/pos', poData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: POS_QUERY_KEY });
+    },
+  });
+
+  const updatePOMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<PO> }) => 
+      api.put(`/api/pos/${id}`, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: POS_QUERY_KEY });
+    },
+  });
+
+  const approvePOMutation = useMutation({
+    mutationFn: (id: string) => api.put(`/api/pos/${id}/approve`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: POS_QUERY_KEY });
+    },
+  });
+
+  const rejectPOMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => 
+      api.put(`/api/pos/${id}/reject`, { reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: POS_QUERY_KEY });
+    },
+  });
+
+  const lapsePOMutation = useMutation({
+    mutationFn: (id: string) => api.put(`/api/pos/${id}/lapse`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: POS_QUERY_KEY });
+    },
+  });
+
+  const addPO = useCallback(async (poData: Omit<PO, 'id'>) => {
+    await addPOMutation.mutateAsync(poData);
+  }, [addPOMutation]);
+
+  const updatePO = useCallback(async (id: string, updates: Partial<PO>) => {
+    await updatePOMutation.mutateAsync({ id, updates });
+  }, [updatePOMutation]);
+
+  const approvePO = useCallback(async (id: string, approvedBy: string) => {
+    await approvePOMutation.mutateAsync(id);
+  }, [approvePOMutation]);
+
+  const rejectPO = useCallback(async (id: string, reason = '') => {
+    await rejectPOMutation.mutateAsync({ id, reason });
+  }, [rejectPOMutation]);
+
+  const lapsePO = useCallback(async (id: string) => {
+    await lapsePOMutation.mutateAsync(id);
+  }, [lapsePOMutation]);
 
   const getVisiblePOs = useCallback((entries: Entry[]): PO[] => {
     if (!currentUser) return [];
@@ -41,74 +96,5 @@ export function usePOs(currentUser: User | null) {
     });
   }, [currentUser, pos]);
 
-  const fetchPOs = useCallback(async () => {
-    try {
-      const data = await api.get('/api/pos');
-      setPOs(data);
-      return;
-    } catch (err) {
-      console.warn('API fetchPOs failed, using mock data:', err);
-    }
-    setPOs(loadFromStorage());
-  }, []);
-
-  const addPO = useCallback(async (poData: Omit<PO, 'id'>) => {
-    try {
-      const created = await api.post('/api/pos', poData);
-      setPOs(prev => [created, ...prev]);
-      return;
-    } catch (err) {
-      console.warn('API addPO failed, using mock data:', err);
-    }
-    const po: PO = { ...poData, id: `po-${Date.now()}` };
-    setPOs(prev => [po, ...prev]);
-  }, []);
-
-  const updatePO = useCallback(async (id: string, updates: Partial<PO>) => {
-    try {
-      const updated = await api.put(`/api/pos/${id}`, updates);
-      setPOs(prev => prev.map(p => p.id === id ? updated : p));
-      return;
-    } catch (err) {
-      console.warn('API updatePO failed, using mock data:', err);
-    }
-    setPOs(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  }, []);
-
-  const approvePO = useCallback(async (id: string, approvedBy: string) => {
-    try {
-      const updated = await api.put(`/api/pos/${id}/approve`, {});
-      setPOs(prev => prev.map(p => p.id === id ? updated : p));
-      return;
-    } catch (err) {
-      console.warn('API approvePO failed, using mock data:', err);
-    }
-    setPOs(prev => prev.map(p => p.id === id ? {
-      ...p, approvalStatus: 'approved', approvedBy, approvedAt: new Date().toISOString().split('T')[0], status: 'Active'
-    } : p));
-  }, []);
-
-  const rejectPO = useCallback(async (id: string, reason = '') => {
-    try {
-      const updated = await api.put(`/api/pos/${id}/reject`, { reason });
-      setPOs(prev => prev.map(p => p.id === id ? updated : p));
-      return;
-    } catch (err) {
-      console.warn('API rejectPO failed, using mock data:', err);
-    }
-    setPOs(prev => prev.map(p => p.id === id ? { ...p, approvalStatus: 'rejected', rejectionReason: reason, status: 'Draft' } : p));
-  }, []);
-
-  const lapsePO = useCallback(async (id: string) => {
-    try {
-      const updated = await api.put(`/api/pos/${id}/lapse`, {});
-      setPOs(prev => prev.map(p => p.id === id ? updated : p));
-      return;
-    } catch (err) {
-      console.warn('API lapsePO failed, using mock data:', err);
-    }
-    setPOs(prev => prev.map(p => p.id === id ? { ...p, status: 'Lapsed' } : p));
-  }, []);
-
-  return { pos, setPOs, fetchPOs, addPO, updatePO, approvePO, rejectPO, lapsePO, getVisiblePOs };
+  return { pos, fetchPOs, addPO, updatePO, approvePO, rejectPO, lapsePO, getVisiblePOs };
 }

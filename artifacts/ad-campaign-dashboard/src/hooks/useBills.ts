@@ -1,19 +1,18 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bill, User } from '../types';
 import { api } from '../lib/api';
 
-function loadFromStorage(): Bill[] {
-  try {
-    const raw = localStorage.getItem('ad_campaign_db');
-    if (raw) return JSON.parse(raw).bills ?? [];
-  } catch {}
-  return [];
-}
-
-const API_URL = import.meta.env.VITE_API_URL as string | undefined;
+const BILLS_QUERY_KEY = ['bills'];
 
 export function useBills(currentUser: User | null) {
-  const [bills, setBills] = useState<Bill[]>(loadFromStorage);
+  const queryClient = useQueryClient();
+
+  const { data: bills = [], refetch: fetchBills } = useQuery<Bill[]>({
+    queryKey: BILLS_QUERY_KEY,
+    queryFn: () => api.get('/api/bills'),
+    enabled: !!currentUser,
+  });
 
   const generateInvoiceNumber = useCallback((): string => {
     const year = new Date().getFullYear();
@@ -21,68 +20,52 @@ export function useBills(currentUser: User | null) {
     return `INV/${year}/${String(count).padStart(3, '0')}`;
   }, [bills]);
 
-  const fetchBills = useCallback(async () => {
-    try {
-      const data = await api.get('/api/bills');
-      setBills(data);
-      return;
-    } catch (err) {
-      console.warn('API fetchBills failed, using mock data:', err);
-    }
-    setBills(loadFromStorage());
-  }, []);
+  const addBillMutation = useMutation({
+    mutationFn: (billData: Omit<Bill, 'id'>) => api.post('/api/bills', billData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BILLS_QUERY_KEY });
+    },
+  });
+
+  const updateBillMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Bill> }) => 
+      api.put(`/api/bills/${id}`, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BILLS_QUERY_KEY });
+    },
+  });
+
+  const submitBillMutation = useMutation({
+    mutationFn: (id: string) => api.put(`/api/bills/${id}/submit`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BILLS_QUERY_KEY });
+    },
+  });
+
+  const markBillPaidMutation = useMutation({
+    mutationFn: ({ id, paymentId, paymentDate }: { id: string; paymentId: string; paymentDate: string }) => 
+      api.put(`/api/bills/${id}/pay`, { paymentId, paymentDate }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BILLS_QUERY_KEY });
+    },
+  });
 
   const addBill = useCallback(async (billData: Omit<Bill, 'id'>): Promise<string> => {
-    try {
-      const created = await api.post('/api/bills', billData);
-      setBills(prev => [created, ...prev]);
-      return created.id;
-    } catch (err) {
-      console.warn('API addBill failed, using mock data:', err);
-    }
-    const bill: Bill = { ...billData, id: `bill-${Date.now()}` };
-    setBills(prev => [bill, ...prev]);
-    return bill.id;
-  }, []);
+    const result = await addBillMutation.mutateAsync(billData);
+    return result.id;
+  }, [addBillMutation]);
 
   const updateBill = useCallback(async (id: string, updates: Partial<Bill>) => {
-    try {
-      const updated = await api.put(`/api/bills/${id}`, updates);
-      setBills(prev => prev.map(b => b.id === id ? updated : b));
-      return;
-    } catch (err) {
-      console.warn('API updateBill failed, using mock data:', err);
-    }
-    setBills(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
-  }, []);
+    await updateBillMutation.mutateAsync({ id, updates });
+  }, [updateBillMutation]);
 
   const submitBill = useCallback(async (id: string) => {
-    try {
-      const updated = await api.put(`/api/bills/${id}/submit`, {});
-      setBills(prev => prev.map(b => b.id === id ? updated : b));
-      return;
-    } catch (err) {
-      console.warn('API submitBill failed, using mock data:', err);
-    }
-    setBills(prev => prev.map(b => b.id === id
-      ? { ...b, status: 'submitted', submittedAt: new Date().toISOString().split('T')[0] }
-      : b
-    ));
-  }, []);
+    await submitBillMutation.mutateAsync(id);
+  }, [submitBillMutation]);
 
   const markBillPaid = useCallback(async (id: string, paymentId: string, paymentDate: string) => {
-    try {
-      const updated = await api.put(`/api/bills/${id}/pay`, { paymentId, paymentDate });
-      setBills(prev => prev.map(b => b.id === id ? updated : b));
-      return;
-    } catch (err) {
-      console.warn('API markBillPaid failed, using mock data:', err);
-    }
-    setBills(prev => prev.map(b => b.id === id
-      ? { ...b, status: 'paid', paymentId, paymentDate, paidAt: paymentDate }
-      : b
-    ));
-  }, []);
+    await markBillPaidMutation.mutateAsync({ id, paymentId, paymentDate });
+  }, [markBillPaidMutation]);
 
   const getVendorBills = useCallback((vendorId: string): Bill[] => {
     return bills.filter(b => b.vendorId === vendorId);
@@ -96,7 +79,7 @@ export function useBills(currentUser: User | null) {
   }, [currentUser, bills]);
 
   return {
-    bills, setBills,
+    bills,
     fetchBills, addBill, updateBill, submitBill, markBillPaid,
     generateInvoiceNumber, getVendorBills, getScopedBills,
   };

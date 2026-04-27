@@ -1,109 +1,57 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { VendorQuotation, VendorQuotationItem, User } from '../types';
 import { api } from '../lib/api';
 
-function loadFromStorage(): VendorQuotation[] {
-  try {
-    const raw = localStorage.getItem('ad_campaign_db');
-    if (raw) return JSON.parse(raw).vendorQuotations ?? [];
-  } catch {}
-  return [];
-}
+const QUOTATIONS_QUERY_KEY = ['quotations'];
 
 export function useQuotations(currentUser: User | null) {
-  const [vendorQuotations, setVendorQuotations] = useState<VendorQuotation[]>(loadFromStorage);
+  const queryClient = useQueryClient();
 
-  const fetchQuotations = useCallback(async () => {
-    try {
-      const data = await api.get('/api/quotations');
-      setVendorQuotations(data);
-      return;
-    } catch {}
-    setVendorQuotations(loadFromStorage());
-  }, []);
+  const { data: vendorQuotations = [] } = useQuery<VendorQuotation[]>({
+    queryKey: QUOTATIONS_QUERY_KEY,
+    queryFn: () => api.get('/api/quotations'),
+    enabled: !!currentUser,
+  });
 
-  const upsertVendorQuotation = useCallback(async (
-    poId: string,
-    poNumber: string,
-    region: string,
-    items: VendorQuotationItem[],
-    status: 'draft' | 'submitted'
-  ) => {
-    if (!currentUser) return;
-    const now = new Date().toISOString().split('T')[0];
+  const fetchQuotations = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUOTATIONS_QUERY_KEY });
+  }, [queryClient]);
 
-    // First find if existing
-    const existing = vendorQuotations.find(q => q.poId === poId && q.vendorId === currentUser.id && q.region === region);
-
-    try {
+  const upsertMutation = useMutation({
+    mutationFn: (data: any) => {
+      const existing = vendorQuotations.find(q => q.poId === data.poId && q.vendorId === currentUser?.id && q.region === data.region);
       if (existing) {
-        const updates = { items, status, submittedAt: status === 'submitted' ? now : existing.submittedAt };
-        const updated = await api.put(`/api/quotations/${existing.id}`, updates);
-        setVendorQuotations(prev => prev.map(q => q.id === existing.id ? updated : q));
-        return;
-      } else {
-        const newQ = {
-          poId, poNumber,
-          vendorId: currentUser.id,
-          vendorName: currentUser.name,
-          vendorCode: currentUser.territory?.vendorCode,
-          region, items, status,
-          submittedAt: status === 'submitted' ? now : undefined,
-        };
-        const created = await api.post('/api/quotations', newQ);
-        setVendorQuotations(prev => [created, ...prev]);
-        return;
+        return api.put(`/api/quotations/${existing.id}`, data);
       }
-    } catch {}
+      return api.post('/api/quotations', data);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUOTATIONS_QUERY_KEY }),
+  });
 
-    setVendorQuotations(prev => {
-      const existingInPrev = prev.find(q => q.poId === poId && q.vendorId === currentUser.id && q.region === region);
-      if (existingInPrev) {
-        return prev.map(q =>
-          q.id === existingInPrev.id
-            ? { ...q, items, status, submittedAt: status === 'submitted' ? now : q.submittedAt }
-            : q
-        );
-      }
-      const newQ: VendorQuotation = {
-        id: `vq-${Date.now()}`,
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/quotations/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUOTATIONS_QUERY_KEY }),
+  });
+
+  return {
+    vendorQuotations,
+    fetchQuotations,
+    upsertVendorQuotation: (poId: string, poNumber: string, region: string, items: VendorQuotationItem[], status: 'draft' | 'submitted') => {
+      if (!currentUser) return;
+      return upsertMutation.mutateAsync({
         poId, poNumber,
         vendorId: currentUser.id,
         vendorName: currentUser.name,
         vendorCode: currentUser.territory?.vendorCode,
-        region, items, status,
-        submittedAt: status === 'submitted' ? now : undefined,
-        createdAt: now
-      };
-      return [newQ, ...prev];
-    });
-  }, [currentUser, vendorQuotations]);
-
-  const deleteVendorQuotation = useCallback(async (id: string) => {
-    try {
-      await api.delete(`/api/quotations/${id}`);
-      setVendorQuotations(prev => prev.filter(q => q.id !== id));
-      return;
-    } catch {}
-    setVendorQuotations(prev => prev.filter(q => q.id !== id));
-  }, []);
-
-  const getVendorQuotations = useCallback((): VendorQuotation[] => {
-    if (!currentUser || currentUser.role !== 'Vendor') return [];
-    return vendorQuotations.filter(q => q.vendorId === currentUser.id);
-  }, [vendorQuotations, currentUser]);
-
-  const getAdminQuotations = useCallback((): VendorQuotation[] => {
-    return vendorQuotations;
-  }, [vendorQuotations]);
-
-  return {
-    vendorQuotations,
-    setVendorQuotations,
-    fetchQuotations,
-    upsertVendorQuotation,
-    deleteVendorQuotation,
-    getVendorQuotations,
-    getAdminQuotations,
+        region, items, status
+      });
+    },
+    deleteVendorQuotation: (id: string) => deleteMutation.mutateAsync(id),
+    getVendorQuotations: () => {
+      if (!currentUser || currentUser.role !== 'Vendor') return [];
+      return vendorQuotations.filter(q => q.vendorId === currentUser.id);
+    },
+    getAdminQuotations: () => vendorQuotations,
   };
 }

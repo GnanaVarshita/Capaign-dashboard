@@ -1,65 +1,51 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '../types';
-import { INITIAL_USERS } from '../lib/mock-data';
 import { api } from '../lib/api';
 
-function loadFromStorage(): User[] {
-  try {
-    const raw = localStorage.getItem('ad_campaign_db');
-    if (raw) return JSON.parse(raw).users ?? INITIAL_USERS;
-  } catch {}
-  return INITIAL_USERS;
-}
-
-const API_URL = import.meta.env.VITE_API_URL as string | undefined;
+const USERS_QUERY_KEY = ['users'];
 
 export function useUsers() {
-  const [users, setUsers] = useState<User[]>(loadFromStorage);
+  const queryClient = useQueryClient();
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      const data = await api.get('/api/users');
-      setUsers(data);
-      return;
-    } catch (err) {
-      console.warn('API fetchUsers failed, using mock data:', err);
-    }
-    setUsers(loadFromStorage());
-  }, []);
+  const { data: users = [], refetch: fetchUsers } = useQuery<User[]>({
+    queryKey: USERS_QUERY_KEY,
+    queryFn: () => api.get('/api/users'),
+  });
+
+  const addUserMutation = useMutation({
+    mutationFn: (userData: Omit<User, 'id'>) => api.post('/api/users', userData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<User> }) => 
+      api.put(`/api/users/${id}`, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/users/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+    },
+  });
 
   const addUser = useCallback(async (userData: Omit<User, 'id'>) => {
-    try {
-      const created = await api.post('/api/users', userData);
-      setUsers(prev => [...prev, created]);
-      return;
-    } catch (err) {
-      console.warn('API addUser failed, using mock data:', err);
-    }
-    const user: User = { ...userData, id: `u-${Date.now()}` };
-    setUsers(prev => [...prev, user]);
-  }, []);
+    await addUserMutation.mutateAsync(userData);
+  }, [addUserMutation]);
 
   const updateUser = useCallback(async (id: string, updates: Partial<User>) => {
-    try {
-      const updated = await api.put(`/api/users/${id}`, updates);
-      setUsers(prev => prev.map(u => u.id === id ? updated : u));
-      return;
-    } catch (err) {
-      console.warn('API updateUser failed, using mock data:', err);
-    }
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
-  }, []);
+    await updateUserMutation.mutateAsync({ id, updates });
+  }, [updateUserMutation]);
 
   const deleteUser = useCallback(async (id: string) => {
-    try {
-      await api.delete(`/api/users/${id}`);
-      setUsers(prev => prev.filter(u => u.id !== id));
-      return;
-    } catch (err) {
-      console.warn('API deleteUser failed, using mock data:', err);
-    }
-    setUsers(prev => prev.filter(u => u.id !== id));
-  }, []);
+    await deleteUserMutation.mutateAsync(id);
+  }, [deleteUserMutation]);
 
   const getUserById = useCallback((id: string): User | undefined => {
     return users.find(u => u.id === id);
@@ -78,7 +64,7 @@ export function useUsers() {
   }, [users]);
 
   return {
-    users, setUsers,
+    users, 
     fetchUsers, addUser, updateUser, deleteUser,
     getUserById, getVendors, getUsersByRegion, getUsersByZone,
   };

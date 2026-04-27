@@ -1,19 +1,22 @@
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import * as schema from './schema';
 
 // Default local connection URL (for local dev only)
 const LOCAL_URL = 'postgresql://gnana:postgres@localhost:5432/api_worker';
 
+let pool: Pool | null = null;
+
 export function getDb(databaseUrl?: string) {
-  // Use Hyperdrive if available, otherwise use the direct URL
   const url = databaseUrl || LOCAL_URL;
   
-  // Create the Neon HTTP client
-  // Note: Hyperdrive currently works best with TCP (node-postgres), 
-  // but if that is hanging, we use the Neon HTTP driver directly for stability.
-  const client = neon(url);
-  return drizzle(client, { schema });
+  if (!pool) {
+    pool = new Pool({
+      connectionString: url,
+    });
+  }
+  
+  return drizzle(pool, { schema });
 }
 
 export type DB = ReturnType<typeof getDb>;

@@ -93,8 +93,8 @@ billsRouter.post(
       modificationApprovedAt: null,
     };
 
-    await db.insert(schema.bills).values(bill);
-    return c.json(bill, 201);
+    const [inserted] = await db.insert(schema.bills).values(bill).returning();
+    return c.json(inserted, 201);
   },
 );
 

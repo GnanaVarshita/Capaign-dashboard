@@ -84,8 +84,8 @@ entriesRouter.post(
       photoUploadedBy: data.photoUploadedBy || null,
       photoUploadedAt: data.photoUploadedAt || null,
     };
-    await db.insert(schema.entries).values(entry);
-    return c.json(entry, 201);
+    const [inserted] = await db.insert(schema.entries).values(entry).returning();
+    return c.json(inserted, 201);
   },
 );
 

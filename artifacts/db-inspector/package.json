@@ -1,0 +1,20 @@
+{
+  "name": "db-inspector",
+  "version": "1.0.0",
+  "description": "Tool to pull and inspect data from the database",
+  "main": "src/index.ts",
+  "scripts": {
+    "pull": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "catalog:",
+    "pg": "^8.11.3",
+    "dotenv": "^16.4.5",
+    "@neondatabase/serverless": "^0.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/pg": "^8.11.2",
+    "tsx": "catalog:"
+  }
+}

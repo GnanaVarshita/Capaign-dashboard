@@ -48,8 +48,8 @@ groupRouter.post(
       selectedRegions: data.selectedRegions || null,
     };
 
-    await db.insert(schema.budgetRequestGroups).values(group);
-    return c.json(group, 201);
+    const [inserted] = await db.insert(schema.budgetRequestGroups).values(group).returning();
+    return c.json(inserted, 201);
   },
 );
 
@@ -146,8 +146,8 @@ budgetRouter.post('/', requireRoles('Area Manager', 'Owner'), async (c) => {
     remarks: data.remarks || null,
   };
 
-  await db.insert(schema.budgetRequests).values(request);
-  return c.json(request, 201);
+  const [inserted] = await db.insert(schema.budgetRequests).values(request).returning();
+  return c.json(inserted, 201);
 });
 
 budgetRouter.put('/:id/approve', requireRoles(...APPROVER_ROLES), async (c) => {

@@ -81,8 +81,8 @@ usersRouter.post('/', requireRoles('Owner'), async (c) => {
     tabPerms: data.tabPerms || null,
   };
 
-  await db.insert(schema.users).values(newUser);
-  return c.json(safeUser(newUser), 201);
+  const [inserted] = await db.insert(schema.users).values(newUser).returning();
+  return c.json(safeUser(inserted), 201);
 });
 
 usersRouter.put('/:id', requireRoles('Owner'), async (c) => {

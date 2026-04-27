@@ -68,8 +68,8 @@ posRouter.post('/', requireRoles('Owner', 'All India Manager'), async (c) => {
     zoneAllocations: data.zoneAllocations || {},
   };
 
-  await db.insert(schema.pos).values(po);
-  return c.json(mapPO(po), 201);
+  const [inserted] = await db.insert(schema.pos).values(po).returning();
+  return c.json(mapPO(inserted), 201);
 });
 
 posRouter.put('/:id', requireRoles('Owner', 'All India Manager'), async (c) => {

@@ -35,8 +35,8 @@ receiverRouter.post('/', requireRoles('Vendor', 'Owner'), async (c) => {
     createdAt: today(),
   };
 
-  await db.insert(schema.serviceReceivers).values(receiver);
-  return c.json(receiver, 201);
+  const [inserted] = await db.insert(schema.serviceReceivers).values(receiver).returning();
+  return c.json(inserted, 201);
 });
 
 receiverRouter.put('/:id', async (c) => {

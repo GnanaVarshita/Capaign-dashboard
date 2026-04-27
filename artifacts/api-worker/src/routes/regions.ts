@@ -22,8 +22,8 @@ regionsRouter.post('/', requireRoles('Owner'), async (c) => {
     states: data.states || [],
     zones: data.zones || [],
   };
-  await db.insert(schema.regions).values(region).onConflictDoNothing();
-  return c.json(region, 201);
+  const [inserted] = await db.insert(schema.regions).values(region).onConflictDoNothing().returning();
+  return c.json(inserted || region, 201);
 });
 
 regionsRouter.put('/:name', requireRoles('Owner'), async (c) => {

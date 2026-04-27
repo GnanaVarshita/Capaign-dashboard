@@ -79,8 +79,8 @@ vendorRouter.put('/:vendorId', async (c) => {
       ifsc: updates.ifsc || null,
       pan: updates.pan || null,
     };
-    await db.insert(schema.vendorProfiles).values(profile);
-    return c.json(profile);
+    const [inserted] = await db.insert(schema.vendorProfiles).values(profile).returning();
+    return c.json(inserted);
   }
 });
 

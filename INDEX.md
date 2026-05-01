@@ -68,7 +68,7 @@ git config --global user.name "Your Name"
 git config --global user.email "your@email.com"
 
 # Add remote
-git remote add origin https://github.com/GnanaVarshita/Capaign-dashboard.git
+git remote add origin https://github.com/GnanaVarshita/Campaign-Dashboard.git
 
 # Push code
 git add .
@@ -83,7 +83,7 @@ git push -u origin main
 # 4. Save
 
 # View live
-# https://GnanaVarshita.github.io/Capaign-dashboard/
+# https://GnanaVarshita.github.io/Campaign-Dashboard/
 ```
 
 ---
@@ -128,10 +128,10 @@ git push -u origin main
 → QUICK_START.md → Step 5: Set Up GitHub Pages Deployment
 
 **Q: Is my app deployed?**
-→ Check GitHub Actions tab at: github.com/GnanaVarshita/Capaign-dashboard/actions
+→ Check GitHub Actions tab at: github.com/GnanaVarshita/Campaign-Dashboard/actions
 
 **Q: Can I see my deployed app?**
-→ Visit: https://GnanaVarshita.github.io/Capaign-dashboard/
+→ Visit: https://GnanaVarshita.github.io/Campaign-Dashboard/
 
 **Q: How do I make changes after setup?**
 → QUICK_START.md → Daily Workflow section
@@ -194,14 +194,14 @@ Total reading time: ~60 minutes
 - [CHECKLIST.md](CHECKLIST.md) - Progress tracker
 
 ### Your GitHub Repo
-- [Repository](https://github.com/GnanaVarshita/Capaign-dashboard)
-- [Settings](https://github.com/GnanaVarshita/Capaign-dashboard/settings)
-- [Pages Settings](https://github.com/GnanaVarshita/Capaign-dashboard/settings/pages)
-- [Actions](https://github.com/GnanaVarshita/Capaign-dashboard/actions)
-- [Deployments](https://github.com/GnanaVarshita/Capaign-dashboard/deployments)
+- [Repository](https://github.com/GnanaVarshita/Campaign-Dashboard)
+- [Settings](https://github.com/GnanaVarshita/Campaign-Dashboard/settings)
+- [Pages Settings](https://github.com/GnanaVarshita/Campaign-Dashboard/settings/pages)
+- [Actions](https://github.com/GnanaVarshita/Campaign-Dashboard/actions)
+- [Deployments](https://github.com/GnanaVarshita/Campaign-Dashboard/deployments)
 
 ### Your Live App
-- [Live App](https://GnanaVarshita.github.io/Capaign-dashboard/)
+- [Live App](https://GnanaVarshita.github.io/Campaign-Dashboard/)
 
 ### External Resources
 - [GitHub Docs](https://docs.github.com/)

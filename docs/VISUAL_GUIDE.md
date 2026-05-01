@@ -48,9 +48,9 @@ Your Project Files                  GitHub Repository          Your Live App
 git add .              ┌──────────────────────────────────┐
      ↓                │                                     │
 git commit            │  www.github.com/GnanaVarshita/    │
-     ↓                │  Capaign-dashboard                 │
+     ↓                │  Campaign-Dashboard                 │
 git push ────────────→│                                     │  GnanaVarshita.github.io/
-     ↓                │  • Code repository                │  Capaign-dashboard/
+     ↓                │  • Code repository                │  Campaign-Dashboard/
      │                │  • Issues & PRs                   │
      │                │  • Actions & Workflows             │ ← Automatic Deploy
      │                │────────────────────────────────────│ 
@@ -78,7 +78,7 @@ git config --global user.email "your.email@gmail.com"
 ### Command 2: Add GitHub Remote
 ```bash
 cd ~/Gnana-Dev/Campaign-Dashboard
-git remote add origin https://github.com/GnanaVarshita/Capaign-dashboard.git
+git remote add origin https://github.com/GnanaVarshita/Campaign-Dashboard.git
 git remote -v  # Verify it worked
 ```
 
@@ -91,14 +91,14 @@ git push -u origin main
 ```
 
 ### Command 4: Enable GitHub Pages (In Browser)
-1. Go: https://github.com/GnanaVarshita/Capaign-dashboard
+1. Go: https://github.com/GnanaVarshita/Campaign-Dashboard
 2. Click: Settings → Pages
 3. Source: Deploy from a branch → gh-pages → /root
 4. Click: Save
 5. Wait: 2-3 minutes
 
 ### Command 5: View Your App
-Open: https://GnanaVarshita.github.io/Capaign-dashboard/
+Open: https://GnanaVarshita.github.io/Campaign-Dashboard/
 
 ---
 
@@ -141,7 +141,7 @@ Time    Status          What's Happening
 ```
 ✅ Code safe on GitHub
 ✅ Complete backup in cloud
-✅ Share live link: https://GnanaVarshita.github.io/Capaign-dashboard/
+✅ Share live link: https://GnanaVarshita.github.io/Campaign-Dashboard/
 ✅ Auto-deploy on every push
 ✅ Deployment history visible
 ✅ Collaborators can contribute
@@ -207,8 +207,8 @@ If you have multiple repos, you can deploy all of them:
 ```
 Your GitHub Account
 │
-├── Repo 1: Capaign-dashboard
-│   └── Deployed at: GnanaVarshita.github.io/Capaign-dashboard/
+├── Repo 1: Campaign-Dashboard
+│   └── Deployed at: GnanaVarshita.github.io/Campaign-Dashboard/
 │
 ├── Repo 2: another-project  
 │   └── Deployed at: GnanaVarshita.github.io/another-project/
@@ -365,12 +365,12 @@ Then: Create Pull Request on GitHub
 
 Once deployed, share this link:
 
-**Standard**: https://GnanaVarshita.github.io/Capaign-dashboard/
+**Standard**: https://GnanaVarshita.github.io/Campaign-Dashboard/
 
 Or in email/chat:
 ```
 Check out my Ad Campaign Dashboard:
-https://GnanaVarshita.github.io/Capaign-dashboard/
+https://GnanaVarshita.github.io/Campaign-Dashboard/
 
 Status:
 - Territory Management: ✓ Active

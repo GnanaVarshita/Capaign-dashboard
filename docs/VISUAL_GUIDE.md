@@ -3,7 +3,7 @@
 ## 📊 Project Structure After Setup
 
 ```
-Campaign-Dashboard/
+Campaign-dashboard/
 │
 ├── 📁 .github/
 │   └── workflows/
@@ -48,9 +48,9 @@ Your Project Files                  GitHub Repository          Your Live App
 git add .              ┌──────────────────────────────────┐
      ↓                │                                     │
 git commit            │  www.github.com/GnanaVarshita/    │
-     ↓                │  Campaign-Dashboard                 │
+     ↓                │  Campaign-dashboard                 │
 git push ────────────→│                                     │  GnanaVarshita.github.io/
-     ↓                │  • Code repository                │  Campaign-Dashboard/
+     ↓                │  • Code repository                │  Campaign-dashboard/
      │                │  • Issues & PRs                   │
      │                │  • Actions & Workflows             │ ← Automatic Deploy
      │                │────────────────────────────────────│ 
@@ -77,8 +77,8 @@ git config --global user.email "your.email@gmail.com"
 
 ### Command 2: Add GitHub Remote
 ```bash
-cd ~/Gnana-Dev/Campaign-Dashboard
-git remote add origin https://github.com/GnanaVarshita/Campaign-Dashboard.git
+cd ~/Gnana-Dev/Campaign-dashboard
+git remote add origin https://github.com/GnanaVarshita/Campaign-dashboard.git
 git remote -v  # Verify it worked
 ```
 
@@ -91,14 +91,14 @@ git push -u origin main
 ```
 
 ### Command 4: Enable GitHub Pages (In Browser)
-1. Go: https://github.com/GnanaVarshita/Campaign-Dashboard
+1. Go: https://github.com/GnanaVarshita/Campaign-dashboard
 2. Click: Settings → Pages
 3. Source: Deploy from a branch → gh-pages → /root
 4. Click: Save
 5. Wait: 2-3 minutes
 
 ### Command 5: View Your App
-Open: https://GnanaVarshita.github.io/Campaign-Dashboard/
+Open: https://GnanaVarshita.github.io/Campaign-dashboard/
 
 ---
 
@@ -141,7 +141,7 @@ Time    Status          What's Happening
 ```
 ✅ Code safe on GitHub
 ✅ Complete backup in cloud
-✅ Share live link: https://GnanaVarshita.github.io/Campaign-Dashboard/
+✅ Share live link: https://GnanaVarshita.github.io/Campaign-dashboard/
 ✅ Auto-deploy on every push
 ✅ Deployment history visible
 ✅ Collaborators can contribute
@@ -207,8 +207,8 @@ If you have multiple repos, you can deploy all of them:
 ```
 Your GitHub Account
 │
-├── Repo 1: Campaign-Dashboard
-│   └── Deployed at: GnanaVarshita.github.io/Campaign-Dashboard/
+├── Repo 1: Campaign-dashboard
+│   └── Deployed at: GnanaVarshita.github.io/Campaign-dashboard/
 │
 ├── Repo 2: another-project  
 │   └── Deployed at: GnanaVarshita.github.io/another-project/
@@ -365,12 +365,12 @@ Then: Create Pull Request on GitHub
 
 Once deployed, share this link:
 
-**Standard**: https://GnanaVarshita.github.io/Campaign-Dashboard/
+**Standard**: https://GnanaVarshita.github.io/Campaign-dashboard/
 
 Or in email/chat:
 ```
 Check out my Ad Campaign Dashboard:
-https://GnanaVarshita.github.io/Campaign-Dashboard/
+https://GnanaVarshita.github.io/Campaign-dashboard/
 
 Status:
 - Territory Management: ✓ Active

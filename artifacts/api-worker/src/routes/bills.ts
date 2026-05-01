@@ -9,7 +9,7 @@ const billsRouter = new Hono<{ Bindings: Bindings }>();
 
 billsRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const allBills = await db.select().from(schema.bills);
   const bills =
     jwtUser.role === 'Vendor'
@@ -19,7 +19,7 @@ billsRouter.get('/', async (c) => {
 });
 
 billsRouter.get('/:id', async (c) => {
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const [bill] = await db
     .select()
     .from(schema.bills)

@@ -7,7 +7,7 @@ const router = new Hono<{ Bindings: Bindings }>();
 
 // GET /api/quotations
 router.get('/', async (c) => {
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const quotations = await db.select().from(schema.vendorQuotations).orderBy(desc(schema.vendorQuotations.createdAt));
   return c.json(quotations);
 });

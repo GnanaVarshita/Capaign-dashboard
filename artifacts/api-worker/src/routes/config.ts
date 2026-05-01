@@ -7,7 +7,7 @@ import type { Bindings } from '../types';
 const configRouter = new Hono<{ Bindings: Bindings }>();
 
 configRouter.get('/', async (c) => {
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const [productRows, cropRows, activityRows] = await Promise.all([
     db.select().from(schema.products),
     db.select().from(schema.crops),

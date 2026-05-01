@@ -78,7 +78,7 @@ groupRouter.put(
 
 budgetRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const [allRequests, allUsers] = await Promise.all([
     db.select().from(schema.budgetRequests),
     db.select().from(schema.users),

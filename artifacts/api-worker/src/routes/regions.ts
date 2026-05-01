@@ -7,7 +7,7 @@ import type { Bindings } from '../types';
 const regionsRouter = new Hono<{ Bindings: Bindings }>();
 
 regionsRouter.get('/', async (c) => {
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const regions = await db.select().from(schema.regions);
   return c.json(regions);
 });

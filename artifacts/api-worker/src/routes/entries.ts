@@ -9,7 +9,7 @@ const entriesRouter = new Hono<{ Bindings: Bindings }>();
 
 entriesRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const [allEntries, allUsers] = await Promise.all([
     db.select().from(schema.entries),
     db.select().from(schema.users),
@@ -21,7 +21,7 @@ entriesRouter.get('/', async (c) => {
 
 entriesRouter.get('/pending', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const [allEntries, allUsers] = await Promise.all([
     db.select().from(schema.entries),
     db.select().from(schema.users),
@@ -33,7 +33,7 @@ entriesRouter.get('/pending', async (c) => {
 
 entriesRouter.get('/mine', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const myEntries = await db
     .select()
     .from(schema.entries)

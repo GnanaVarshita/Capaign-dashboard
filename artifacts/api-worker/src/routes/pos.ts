@@ -14,7 +14,7 @@ function mapPO(po: typeof schema.pos.$inferSelect) {
 
 posRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const [allPos, allUsers, allEntries] = await Promise.all([
     db.select().from(schema.pos),
     db.select().from(schema.users),
@@ -27,7 +27,7 @@ posRouter.get('/', async (c) => {
 
 posRouter.get('/:id', async (c) => {
   const idOrNum = c.req.param('id');
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const [po] = await db
     .select()
     .from(schema.pos)

@@ -8,7 +8,7 @@ const vendorRouter = new Hono<{ Bindings: Bindings }>();
 
 vendorRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
 
   if (jwtUser.role === 'Vendor') {
     const [profile] = await db
@@ -18,9 +18,14 @@ vendorRouter.get('/', async (c) => {
     return c.json(profile ? { [jwtUser.id]: profile } : {});
   }
 
-  const allProfiles = await db.select().from(schema.vendorProfiles);
-  const record = Object.fromEntries(allProfiles.map((p) => [p.vendorId, p]));
-  return c.json(record);
+  try {
+    const allProfiles = await db.select().from(schema.vendorProfiles);
+    const record = Object.fromEntries(allProfiles.map((p) => [p.vendorId, p]));
+    return c.json(record);
+  } catch (error) {
+    console.error('Error fetching all vendor profiles:', error);
+    throw error;
+  }
 });
 
 vendorRouter.get('/:vendorId', async (c) => {

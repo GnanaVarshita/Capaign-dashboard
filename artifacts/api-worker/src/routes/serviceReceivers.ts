@@ -9,7 +9,7 @@ const receiverRouter = new Hono<{ Bindings: Bindings }>();
 
 receiverRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const allReceivers = await db.select().from(schema.serviceReceivers);
   const receivers =
     jwtUser.role === 'Vendor'

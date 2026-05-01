@@ -42,7 +42,7 @@ app.use('/api/*', authMiddleware);
 
 app.get('/api/me', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const [user] = await db
     .select()
     .from(schema.users)
@@ -70,7 +70,17 @@ app.notFound((c) => c.json({ error: 'Not found' }, 404));
 // Global error handler
 app.onError((err, c) => {
   console.error('Unhandled error:', err);
-  return c.json({ error: 'Internal server error' }, 500);
+  
+  // Ensure CORS is present even on errors
+  c.header('Access-Control-Allow-Origin', '*');
+  c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  return c.json({ 
+    error: 'Internal server error', 
+    message: err.message,
+    // stack: err.stack // Consider if we want to expose this
+  }, 500);
 });
 
 export default app;

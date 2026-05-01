@@ -10,7 +10,7 @@ const usersRouter = new Hono<{ Bindings: Bindings }>();
 
 usersRouter.get('/', async (c) => {
   const jwtUser = getUser(c);
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const allUsers = await db.select().from(schema.users);
 
   if (GLOBAL_ROLES.includes(jwtUser.role))
@@ -42,7 +42,7 @@ usersRouter.get('/', async (c) => {
 });
 
 usersRouter.get('/:id', async (c) => {
-  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString, true);
   const [user] = await db
     .select()
     .from(schema.users)

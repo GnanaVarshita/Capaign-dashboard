@@ -16,7 +16,15 @@ const approvalBadge = (s: string) =>
   <Badge variant="warning">Pending</Badge>;
 
 export default function POMasterTab() {
-  const { pos, setPOs, addPO, updatePO, lapsePO, approvePO, rejectPO, calcLiveSpent, calcPendingSpent, regions, products, setProducts, crops, setCrops, activities, setActivities, currentUser } = useAppContext();
+  const { 
+    pos, setPOs, addPO, updatePO, lapsePO, approvePO, rejectPO, 
+    calcLiveSpent, calcPendingSpent, 
+    regions, products, crops, activities,
+    addProduct: apiAddProduct, updateProduct: apiUpdateProduct, deleteProduct: apiDeleteProduct,
+    addActivity: apiAddActivity, updateActivity: apiUpdateActivity, deleteActivity: apiDeleteActivity,
+    addCrop: apiAddCrop, updateCrop: apiUpdateCrop, deleteCrop: apiDeleteCrop,
+    currentUser 
+  } = useAppContext();
   const u = currentUser!;
   const canManage = u.role === 'Owner' || u.perms.manage;
   const canApprove = u.role === 'Owner' || u.role === 'All India Manager';
@@ -162,9 +170,9 @@ export default function POMasterTab() {
   const saveProduct = () => {
     if (!productForm.name.trim()) return;
     if (editingProduct) {
-      setProducts(products.map(p => (p === editingProduct ? productForm.name : p)));
+      apiUpdateProduct(editingProduct, productForm.name);
     } else {
-      setProducts([...products, productForm.name]);
+      apiAddProduct(productForm.name);
     }
     setShowProductModal(false);
     setProductForm({ name: '', description: '' });
@@ -173,7 +181,7 @@ export default function POMasterTab() {
 
   const deleteProduct = (product: string) => {
     if (confirm(`Delete product "${product}"?`)) {
-      setProducts(products.filter(p => p !== product));
+      apiDeleteProduct(product);
     }
   };
 
@@ -193,9 +201,9 @@ export default function POMasterTab() {
   const saveActivity = () => {
     if (!activityForm.name.trim()) return;
     if (editingActivity) {
-      setActivities(activities.map(a => (a === editingActivity ? activityForm.name : a)));
+      apiUpdateActivity(editingActivity, activityForm.name);
     } else {
-      setActivities([...activities, activityForm.name]);
+      apiAddActivity(activityForm.name);
     }
     setShowActivityModal(false);
     setActivityForm({ name: '', description: '' });
@@ -204,7 +212,7 @@ export default function POMasterTab() {
 
   const deleteActivity = (activity: string) => {
     if (confirm(`Delete activity "${activity}"?`)) {
-      setActivities(activities.filter(a => a !== activity));
+      apiDeleteActivity(activity);
     }
   };
 
@@ -224,9 +232,9 @@ export default function POMasterTab() {
   const saveCrop = () => {
     if (!cropForm.name.trim()) return;
     if (editingCrop) {
-      setCrops(crops.map(c => (c === editingCrop ? cropForm.name : c)));
+      apiUpdateCrop(editingCrop, cropForm.name);
     } else {
-      setCrops([...crops, cropForm.name]);
+      apiAddCrop(cropForm.name);
     }
     setShowCropModal(false);
     setCropForm({ name: '', description: '' });
@@ -235,7 +243,7 @@ export default function POMasterTab() {
 
   const deleteCrop = (crop: string) => {
     if (confirm(`Delete crop "${crop}"?`)) {
-      setCrops(crops.filter(c => c !== crop));
+      apiDeleteCrop(crop);
     }
   };
 

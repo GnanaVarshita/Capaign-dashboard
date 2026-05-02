@@ -18,8 +18,10 @@ export default function SettingsTab() {
     updateUser,
     products,
     activities,
-    setProducts,
-    setActivities,
+    addProduct: apiAddProduct,
+    deleteProduct: apiDeleteProduct,
+    addActivity: apiAddActivity,
+    deleteActivity: apiDeleteActivity,
     toast,
   } = useAppContext();
   const u = currentUser!;
@@ -76,16 +78,14 @@ export default function SettingsTab() {
       toast("Product already exists", "error");
       return;
     }
-    setProducts([...products, t]);
+    apiAddProduct(t);
     setNewProduct("");
-    toast(`Product "${t}" added`, "success");
   };
 
   const removeProduct = (p: string) => {
     if (!confirm(`Remove product "${p}"? This may affect existing entries.`))
       return;
-    setProducts(products.filter((x) => x !== p));
-    toast(`Product "${p}" removed`, "success");
+    apiDeleteProduct(p);
   };
 
   const addActivity = () => {
@@ -95,16 +95,14 @@ export default function SettingsTab() {
       toast("Activity already exists", "error");
       return;
     }
-    setActivities([...activities, t]);
+    apiAddActivity(t);
     setNewActivity("");
-    toast(`Activity "${t}" added`, "success");
   };
 
   const removeActivity = (a: string) => {
     if (!confirm(`Remove activity "${a}"? This may affect existing entries.`))
       return;
-    setActivities(activities.filter((x) => x !== a));
-    toast(`Activity "${a}" removed`, "success");
+    apiDeleteActivity(a);
   };
 
   return (

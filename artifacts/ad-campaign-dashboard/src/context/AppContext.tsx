@@ -76,6 +76,9 @@ interface AppContextType {
   addActivity: (name: string) => void;
   updateActivity: (oldName: string, newName: string) => void;
   deleteActivity: (name: string) => void;
+  addCrop: (name: string) => void;
+  updateCrop: (oldName: string, newName: string) => void;
+  deleteCrop: (name: string) => void;
 
   // Vendors / Service Receivers
   serviceReceivers: ServiceReceiver[];
@@ -219,6 +222,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateActivity = useCallback((o: string, n: string) => { configHook.updateActivity(o, n); toast(`Activity updated.`); }, [configHook, toast]);
   const deleteActivity = useCallback((n: string) => { configHook.deleteActivity(n); toast(`Activity removed.`, 'info'); }, [configHook, toast]);
 
+  const addCrop    = useCallback((n: string) => { configHook.addCrop(n); toast(`Crop "${n}" added.`); }, [configHook, toast]);
+  const updateCrop = useCallback((o: string, n: string) => { configHook.updateCrop(o, n); toast(`Crop updated.`); }, [configHook, toast]);
+  const deleteCrop = useCallback((n: string) => { configHook.deleteCrop(n); toast(`Crop removed.`, 'info'); }, [configHook, toast]);
+
   const addServiceReceiver    = useCallback((d: Omit<ServiceReceiver, 'id'>) => { vendorHook.addServiceReceiver(d); toast('Service receiver added!'); }, [vendorHook, toast]);
   const updateServiceReceiver = useCallback((id: string, u: Partial<ServiceReceiver>) => { vendorHook.updateServiceReceiver(id, u); toast('Service receiver updated!'); }, [vendorHook, toast]);
   const deleteServiceReceiver = useCallback((id: string) => { vendorHook.deleteServiceReceiver(id); toast('Service receiver removed.'); }, [vendorHook, toast]);
@@ -285,6 +292,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       regions: configHook.regions, setRegions: () => {},
       addProduct, updateProduct, deleteProduct,
       addActivity, updateActivity, deleteActivity,
+      addCrop, updateCrop, deleteCrop,
 
       // Vendors
       serviceReceivers: vendorHook.serviceReceivers,

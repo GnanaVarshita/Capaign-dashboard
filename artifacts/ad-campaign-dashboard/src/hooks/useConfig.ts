@@ -61,6 +61,22 @@ export function useConfig() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
   });
 
+  const addCropMutation = useMutation({
+    mutationFn: (name: string) => api.post('/api/config/crops', { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
+  });
+
+  const updateCropMutation = useMutation({
+    mutationFn: ({ oldName, newName }: { oldName: string; newName: string }) => 
+      api.put(`/api/config/crops/${encodeURIComponent(oldName)}`, { name: newName }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
+  });
+
+  const deleteCropMutation = useMutation({
+    mutationFn: (name: string) => api.delete(`/api/config/crops/${encodeURIComponent(name)}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_QUERY_KEY }),
+  });
+
   const addRegionMutation = useMutation({
     mutationFn: (region: Region) => api.post('/api/regions', region),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: REGIONS_QUERY_KEY }),
@@ -81,6 +97,9 @@ export function useConfig() {
     addActivity: (name: string) => addActivityMutation.mutateAsync(name),
     updateActivity: (oldName: string, newName: string) => updateActivityMutation.mutateAsync({ oldName, newName }),
     deleteActivity: (name: string) => deleteActivityMutation.mutateAsync(name),
+    addCrop: (name: string) => addCropMutation.mutateAsync(name),
+    updateCrop: (oldName: string, newName: string) => updateCropMutation.mutateAsync({ oldName, newName }),
+    deleteCrop: (name: string) => deleteCropMutation.mutateAsync(name),
     addRegion: (region: Region) => addRegionMutation.mutateAsync(region),
     updateRegion: (name: string, updates: Partial<Region>) => updateRegionMutation.mutateAsync({ name, updates }),
   };

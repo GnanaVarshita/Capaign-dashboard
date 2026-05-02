@@ -81,6 +81,16 @@ configRouter.post('/crops', requireRoles('Owner', 'All India Manager'), async (c
   return c.json(inserted || { name }, 201);
 });
 
+configRouter.put('/crops/:name', requireRoles('Owner', 'All India Manager'), async (c) => {
+  const oldName = decodeURIComponent(c.req.param('name'));
+  const { name: newName } = await c.req.json();
+  if (!newName) return c.json({ error: 'name is required' }, 400);
+  const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
+  await db.delete(schema.crops).where(eq(schema.crops.name, oldName));
+  await db.insert(schema.crops).values({ name: newName }).onConflictDoNothing();
+  return c.json({ name: newName });
+});
+
 configRouter.delete('/crops/:name', requireRoles('Owner', 'All India Manager'), async (c) => {
   const name = decodeURIComponent(c.req.param('name'));
   const db = getDb(c.env?.DATABASE_URL || c.env?.HYPERDRIVE?.connectionString);
